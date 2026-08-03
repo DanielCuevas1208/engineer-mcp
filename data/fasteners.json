@@ -1,0 +1,62 @@
+[
+  {
+    "nominalDiameterMm": 5,
+    "pitchMm": 0.8,
+    "pitchDiameterMm": 4.48,
+    "minorDiameterMm": 4.134
+  },
+  {
+    "nominalDiameterMm": 6,
+    "pitchMm": 1.0,
+    "pitchDiameterMm": 5.35,
+    "minorDiameterMm": 4.917
+  },
+  {
+    "nominalDiameterMm": 8,
+    "pitchMm": 1.25,
+    "pitchDiameterMm": 7.188,
+    "minorDiameterMm": 6.647
+  },
+  {
+    "nominalDiameterMm": 10,
+    "pitchMm": 1.5,
+    "pitchDiameterMm": 9.026,
+    "minorDiameterMm": 8.376
+  },
+  {
+    "nominalDiameterMm": 12,
+    "pitchMm": 1.75,
+    "pitchDiameterMm": 10.863,
+    "minorDiameterMm": 10.106
+  },
+  {
+    "nominalDiameterMm": 16,
+    "pitchMm": 2.0,
+    "pitchDiameterMm": 14.701,
+    "minorDiameterMm": 13.835
+  },
+  {
+    "nominalDiameterMm": 20,
+    "pitchMm": 2.5,
+    "pitchDiameterMm": 18.376,
+    "minorDiameterMm": 17.294
+  },
+  {
+    "nominalDiameterMm": 24,
+    "pitchMm": 3.0,
+    "pitchDiameterMm": 22.051,
+    "minorDiameterMm": 20.752
+  },
+  {
+    "nominalDiameterMm": 30,
+    "pitchMm": 3.5,
+    "pitchDiameterMm": 27.727,
+    "minorDiameterMm": 26.211
+  },
+  {
+    "nominalDiameterMm": 36,
+    "pitchMm": 4.0,
+    "pitchDiameterMm": 33.402,
+    "minorDiameterMm": 31.67
+  }
+]

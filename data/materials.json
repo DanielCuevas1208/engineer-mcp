@@ -1,0 +1,110 @@
+[
+  {
+    "name": "Structural steel S275",
+    "category": "Steel",
+    "densityKgM3": 7850,
+    "elasticModulusGPa": 210,
+    "shearModulusGPa": 80.8,
+    "yieldStrengthMPa": 275,
+    "ultimateStrengthMPa": 430,
+    "elongationPct": 23,
+    "note": "Carbon steel to EN 10025-2. Yield value is the minimum nominal value.",
+    "referenceId": "shigley-2015"
+  },
+  {
+    "name": "Structural steel S355",
+    "category": "Steel",
+    "densityKgM3": 7850,
+    "elasticModulusGPa": 210,
+    "shearModulusGPa": 80.8,
+    "yieldStrengthMPa": 355,
+    "ultimateStrengthMPa": 490,
+    "elongationPct": 22,
+    "note": "Carbon steel to EN 10025-2. Yield value is the minimum nominal value.",
+    "referenceId": "shigley-2015"
+  },
+  {
+    "name": "Alloy steel 42CrMo4",
+    "category": "Steel",
+    "densityKgM3": 7850,
+    "elasticModulusGPa": 210,
+    "shearModulusGPa": 80.8,
+    "yieldStrengthMPa": 700,
+    "ultimateStrengthMPa": 1000,
+    "elongationPct": 12,
+    "note": "Quenched and tempered to EN 10083-3. Values are typical minimums.",
+    "referenceId": "machinery-handbook"
+  },
+  {
+    "name": "Stainless steel 304",
+    "category": "Steel",
+    "densityKgM3": 8000,
+    "elasticModulusGPa": 193,
+    "shearModulusGPa": 74,
+    "yieldStrengthMPa": 215,
+    "ultimateStrengthMPa": 505,
+    "elongationPct": 40,
+    "note": "Annealed austenitic stainless steel to ASTM A240.",
+    "referenceId": "machinery-handbook"
+  },
+  {
+    "name": "Aluminium 6061-T6",
+    "category": "Aluminium",
+    "densityKgM3": 2700,
+    "elasticModulusGPa": 68.9,
+    "shearModulusGPa": 26,
+    "yieldStrengthMPa": 276,
+    "ultimateStrengthMPa": 310,
+    "elongationPct": 12,
+    "note": "Wrought aluminium alloy to ASTM B221.",
+    "referenceId": "machinery-handbook"
+  },
+  {
+    "name": "Aluminium 7075-T6",
+    "category": "Aluminium",
+    "densityKgM3": 2810,
+    "elasticModulusGPa": 71.7,
+    "shearModulusGPa": 26.9,
+    "yieldStrengthMPa": 503,
+    "ultimateStrengthMPa": 572,
+    "elongationPct": 11,
+    "note": "High-strength wrought aluminium alloy to ASTM B221.",
+    "referenceId": "machinery-handbook"
+  },
+  {
+    "name": "Titanium Ti-6Al-4V",
+    "category": "Titanium",
+    "densityKgM3": 4430,
+    "elasticModulusGPa": 113.8,
+    "shearModulusGPa": 44,
+    "yieldStrengthMPa": 880,
+    "ultimateStrengthMPa": 950,
+    "elongationPct": 14,
+    "note": "Annealed alpha-beta titanium alloy to ASTM B265.",
+    "referenceId": "machinery-handbook"
+  },
+  {
+    "name": "Copper C11000",
+    "category": "Copper",
+    "densityKgM3": 8940,
+    "elasticModulusGPa": 117,
+    "shearModulusGPa": 44,
+    "yieldStrengthMPa": 69,
+    "ultimateStrengthMPa": 220,
+    "elongationPct": 45,
+    "note": "Electrolytic tough pitch copper, hard-drawn condition.",
+    "referenceId": "machinery-handbook"
+  },
+  {
+    "name": "Magnesium AZ31B",
+    "category": "Magnesium",
+    "densityKgM3": 1770,
+    "elasticModulusGPa": 45,
+    "shearModulusGPa": 17,
+    "yieldStrengthMPa": 200,
+    "ultimateStrengthMPa": 260,
+    "elongationPct": 15,
+    "note": "Wrought magnesium alloy to ASTM B90.",
+    "referenceId": "machinery-handbook"
+  }
+]

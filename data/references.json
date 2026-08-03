@@ -1,0 +1,58 @@
+{
+  "shigley-2015": {
+    "title": "Shigley's Mechanical Engineering Design",
+    "source": "McGraw-Hill Education",
+    "edition": "Tenth edition, 2015",
+    "section": "Chapters 3, 5, 8, 11, and 12",
+    "note": "Standard reference for strength, fatigue, fasteners, and bearings."
+  },
+  "roark-2011": {
+    "title": "Roark's Formulas for Stress and Strain",
+    "source": "McGraw-Hill Education",
+    "edition": "Eighth edition, 2011",
+    "section": "Tables for beams, shafts, torsion, and section properties",
+    "note": "Primary source for beam deflection and torsion formulas."
+  },
+  "iso-898-1": {
+    "title": "ISO 898-1 - Mechanical properties of fasteners made of carbon steel and alloy steel",
+    "source": "International Organization for Standardization",
+    "edition": "ISO 898-1:2013",
+    "section": "Property classes, proof stress, and yield strength",
+    "note": "Property class values apply to nominal diameters up to 16 mm."
+  },
+  "iso-724": {
+    "title": "ISO 724 - ISO general purpose metric screw threads - Basic dimensions",
+    "source": "International Organization for Standardization",
+    "edition": "ISO 724:1993",
+    "section": "Basic major, pitch, and minor diameters",
+    "note": "Coarse thread series basic dimensions."
+  },
+  "iso-281": {
+    "title": "ISO 281 - Rolling bearings - Dynamic load ratings and rating life",
+    "source": "International Organization for Standardization",
+    "edition": "ISO 281:2007",
+    "section": "Rating life L10 and load exponent",
+    "note": "Exponent is 3 for ball bearings and 10/3 for roller bearings."
+  },
+  "machinery-handbook": {
+    "title": "Machinery's Handbook",
+    "source": "Industrial Press",
+    "edition": "Thirty-first edition",
+    "section": "Strength of materials, screws, and bearing loads",
+    "note": "Tabulated material properties and fastener data."
+  },
+  "euler-bernoulli": {
+    "title": "Mechanics of Materials",
+    "source": "Standard beam theory, Euler-Bernoulli",
+    "edition": "Any standard university text",
+    "section": "Beam bending and deflection",
+    "note": "Applies to small deflections and elastic material behavior."
+  },
+  "rayleigh-shaft": {
+    "title": "Mechanical Vibration",
+    "source": "Rayleigh method for the first lateral mode",
+    "edition": "Any standard university text",
+    "section": "Critical speed of a uniform simply supported shaft",
+    "note": "Gives the first lateral critical speed for a uniform shaft."
+  }
+}
