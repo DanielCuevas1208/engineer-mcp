@@ -3,6 +3,7 @@ import {
   DIM_ANGLE,
   DIM_AREA,
   DIM_DENSITY,
+  DIM_DYNAMIC_VISCOSITY,
   DIM_ENERGY,
   DIM_FORCE,
   DIM_FREQUENCY,
@@ -12,6 +13,7 @@ import {
   DIM_PRESSURE,
   DIM_STIFFNESS,
   DIM_TEMPERATURE,
+  DIM_THERMAL_CONDUCTIVITY,
   DIM_TIME,
   DIM_TORQUE,
   DIM_VELOCITY,
@@ -140,6 +142,17 @@ export const UNITS: UnitDef[] = [
   unit({ canonical: "Hz", name: "hertz", category: "frequency", dim: DIM_FREQUENCY, factor: 1 }),
   unit({ canonical: "rpm", name: "revolution per minute", category: "frequency", dim: DIM_FREQUENCY, factor: 1 / 60 }),
   unit({ canonical: "kHz", name: "kilohertz", category: "frequency", dim: DIM_FREQUENCY, factor: 1e3 }),
+
+  unit({ canonical: "Pa·s", aliases: ["Pa.s", "Pas"], name: "pascal second", category: "dynamic_viscosity", dim: DIM_DYNAMIC_VISCOSITY, factor: 1 }),
+  unit({ canonical: "mPa·s", aliases: ["mPa.s", "mPas"], name: "millipascal second", category: "dynamic_viscosity", dim: DIM_DYNAMIC_VISCOSITY, factor: 1e-3 }),
+  unit({ canonical: "P", name: "poise", category: "dynamic_viscosity", dim: DIM_DYNAMIC_VISCOSITY, factor: 0.1 }),
+  unit({ canonical: "cP", name: "centipoise", category: "dynamic_viscosity", dim: DIM_DYNAMIC_VISCOSITY, factor: 1e-3 }),
+  unit({ canonical: "lbf·s/in2", aliases: ["lbf.s/in2"], name: "pound-force second per square inch", category: "dynamic_viscosity", dim: DIM_DYNAMIC_VISCOSITY, factor: 6894.757293168 }),
+
+  unit({ canonical: "W/(m·K)", aliases: ["W/(mK)", "W/mK", "W/m.K"], name: "watt per metre kelvin", category: "thermal_conductivity", dim: DIM_THERMAL_CONDUCTIVITY, factor: 1 }),
+  unit({ canonical: "W/(m·°C)", aliases: ["W/(mC)", "W/mC", "W/m.C"], name: "watt per metre degree Celsius", category: "thermal_conductivity", dim: DIM_THERMAL_CONDUCTIVITY, factor: 1 }),
+  unit({ canonical: "BTU/(ft·h·°F)", aliases: ["BTU/(ft.h.F)", "BTU/(fthF)"], name: "BTU per foot hour degree Fahrenheit", category: "thermal_conductivity", dim: DIM_THERMAL_CONDUCTIVITY, factor: 1.730735 }),
+  unit({ canonical: "kcal/(m·h·°C)", aliases: ["kcal/(m.h.C)", "kcal/(mhC)"], name: "kilocalorie per metre hour degree Celsius", category: "thermal_conductivity", dim: DIM_THERMAL_CONDUCTIVITY, factor: 1.163 }),
 ];
 
 export function normalizeSymbol(symbol: string): string {

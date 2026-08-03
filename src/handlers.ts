@@ -3,10 +3,13 @@ import {
   analyzeBeam,
   analyzeBearing,
   analyzeBolt,
+  analyzeFatigue,
   analyzeShaft,
   analyzeSpring,
   computeSection,
   vonMises,
+  type FatigueLoading,
+  type FatigueSurface,
   type SectionDef,
   type SpringEndType,
 } from "./engine/index.js";
@@ -106,6 +109,7 @@ type MaterialValues = {
   shearModulusPa?: number;
   densityKgM3?: number;
   yieldStrengthPa?: number;
+  ultimateStrengthPa: number;
 };
 
 function materialValues(ctx: AppContext, name: string): MaterialValues | undefined {
@@ -118,6 +122,7 @@ function materialValues(ctx: AppContext, name: string): MaterialValues | undefin
     shearModulusPa: material.shearModulusGPa ? material.shearModulusGPa * 1e9 : undefined,
     densityKgM3: material.densityKgM3,
     yieldStrengthPa: material.yieldStrengthMPa ? material.yieldStrengthMPa * 1e6 : undefined,
+    ultimateStrengthPa: material.ultimateStrengthMPa * 1e6,
   };
 }
 
@@ -437,6 +442,52 @@ function materialHandler(ctx: AppContext): Handler {
   };
 }
 
+function fatigueHandler(ctx: AppContext): Handler {
+  return (input) => {
+    const materialName = input.material as string | undefined;
+    const values = materialName ? materialValues(ctx, materialName) : undefined;
+    if (materialName && !values) {
+      return failure("fatigue_analysis", `Unknown material: ${materialName}`, input);
+    }
+
+    const ultimateStrength = (input.ultimateStrength as number | undefined) ?? values?.ultimateStrengthPa;
+    if (!ultimateStrength) {
+      return failure("fatigue_analysis", "Provide ultimateStrength or a known material.", input);
+    }
+    const yieldStrength = (input.yieldStrength as number | undefined) ?? values?.yieldStrengthPa;
+    if (!yieldStrength) {
+      return failure(
+        "fatigue_analysis",
+        "Provide yieldStrength. The selected material has no yield value in the database.",
+        input,
+      );
+    }
+
+    try {
+      const computation = analyzeFatigue({
+        alternatingStress: input.alternatingStress as number,
+        meanStress: input.meanStress as number,
+        loading: input.loading as FatigueLoading,
+        ultimateStrength,
+        yieldStrength,
+        surfaceCondition: input.surfaceCondition as FatigueSurface | undefined,
+        diameterMm: input.diameterMm as number | undefined,
+        reliabilityPct: input.reliabilityPct as number | undefined,
+        temperatureC: input.temperatureC as number | undefined,
+        surfaceFactor: input.surfaceFactor as number | undefined,
+        sizeFactor: input.sizeFactor as number | undefined,
+        loadFactor: input.loadFactor as number | undefined,
+        temperatureFactor: input.temperatureFactor as number | undefined,
+        reliabilityFactor: input.reliabilityFactor as number | undefined,
+        miscellaneousFactor: input.miscellaneousFactor as number | undefined,
+      });
+      return buildResult(ctx, "fatigue_analysis", computation, input.outputUnits as Record<string, string> | undefined);
+    } catch (error) {
+      return failure("fatigue_analysis", error instanceof Error ? error.message : String(error), input);
+    }
+  };
+}
+
 export function createHandlers(ctx: AppContext): Record<string, Handler> {
   return {
     beam_bending: beamHandler(ctx),
@@ -448,5 +499,6 @@ export function createHandlers(ctx: AppContext): Record<string, Handler> {
     von_mises: stressHandler(ctx),
     unit_convert: unitConvertHandler(ctx),
     material_lookup: materialHandler(ctx),
+    fatigue_analysis: fatigueHandler(ctx),
   };
 }

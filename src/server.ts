@@ -6,6 +6,7 @@ import {
   beamSchema,
   bearingSchema,
   boltSchema,
+  fatigueSchema,
   materialSchema,
   sectionPropsSchema,
   shaftSchema,
@@ -59,6 +60,11 @@ const TOOL_SCHEMAS: Record<string, ToolDef> = {
   material_lookup: {
     description: "Look up mechanical properties for common engineering materials from the curated database.",
     schema: materialSchema,
+  },
+  fatigue_analysis: {
+    description:
+      "Fatigue safety factors for a cyclic stress state. Uses the Soderberg, modified Goodman, Gerber, and ASME-elliptic criteria with Marin endurance-limit modifiers.",
+    schema: fatigueSchema,
   },
 };
 

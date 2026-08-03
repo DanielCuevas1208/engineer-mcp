@@ -41,12 +41,13 @@ Engineer MCP grows in independent releases. Each release stays useful on its own
 ### Complete
 
 - Helical compression spring design. The `spring_design` tool computes the spring rate, the shear stress, and the safety factor.
+- Fatigue analysis for cyclic loads. The `fatigue_analysis` tool applies the Marin endurance-limit modifiers and reports the Soderberg, Goodman, Gerber, ASME-elliptic, and yield safety factors.
+- Dynamic viscosity and thermal conductivity unit categories. The `unit_convert` tool converts these quantities like every other registered category.
 
 ### Remaining
 
-- Add fatigue analysis for cyclic loads.
 - Add press-fit and interference-fit calculators.
-- Add more unit categories, including viscosity and thermal conductivity.
+- Add more unit categories, including kinematic viscosity and electric current.
 - Add HTTP transport in addition to stdio.
 - Add a catalog of ISO and DIN standard sections.
 

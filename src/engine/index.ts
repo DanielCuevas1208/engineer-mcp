@@ -1,3 +1,18 @@
+export {
+  analyzeFatigue,
+  FATIGUE_METHOD,
+  fatigueSafetyFactor,
+  loadFactor,
+  reliabilityFactor,
+  sizeFactor,
+  surfaceFactor,
+  temperatureFactor,
+  unmodifiedEnduranceLimit,
+  type FatigueCriterion,
+  type FatigueInput,
+  type FatigueLoading,
+  type FatigueSurface,
+} from "./fatigue.js";
 export { analyzeBeam, BEAM_METHOD, type BeamInput, type BeamLoad, type BeamSupport } from "./beam.js";
 export { analyzeBearing, BEARING_METHOD, equivalentLoad, type BearingInput, type BearingType } from "./bearing.js";
 export { analyzeBolt, BOLT_METHOD, tensileStressArea, type BoltGradeData, type BoltInput } from "./bolt.js";

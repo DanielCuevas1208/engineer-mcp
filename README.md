@@ -2,11 +2,12 @@
 
 [![CI](https://github.com/DanielCuevas1208/engineer-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/DanielCuevas1208/engineer-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
 [![Node](https://img.shields.io/badge/Node-%3E%3D22.13-brightgreen.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](package.json)
 
 Engineer MCP is a Model Context Protocol server for mechanical-engineering calculations.
-It gives coding agents verified answers for beams, bolts, springs, shafts, bearings, stress, sections, and units.
+It gives coding agents verified answers for beams, bolts, springs, shafts, bearings, stress, fatigue, sections, and units.
 Every result shows the formula, the method, and the source.
 
 ## What it provides
@@ -23,6 +24,7 @@ The release covers these domains:
 - Shaft torsion and first critical speed.
 - Bearing rating life to ISO 281.
 - von Mises equivalent stress.
+- Fatigue safety factors for cyclic loads.
 - Cross-section properties.
 - Dimension-safe unit conversion.
 - Material property lookup.
@@ -53,6 +55,7 @@ Warnings surface when a method uses an approximation.
 | `shaft_analysis` | Torsion stress, twist, and critical speed. |
 | `bearing_life` | ISO 281 rating life in revolutions and hours. |
 | `von_mises` | Equivalent stress and yield safety factor. |
+| `fatigue_analysis` | Endurance limit, fatigue criteria, and governing safety factor. |
 | `unit_convert` | Conversion between compatible units. |
 | `material_lookup` | Curated mechanical properties of materials. |
 
@@ -154,6 +157,28 @@ Error: Category mismatch: N·m is torque, J is energy.
 Use a unit of the same quantity.
 ```
 
+A call to `fatigue_analysis` for a machined 20 mm S355 rod under alternating bending:
+
+```text
+Unmodified endurance limit               245 MPa
+Modified endurance limit               156.8 MPa
+Equivalent alternating stress            80 MPa
+Equivalent mean stress                  120 MPa
+Soderberg safety factor                1.179
+Modified Goodman safety factor         1.324
+Gerber safety factor                   1.643
+ASME-elliptic safety factor            1.634
+Yield safety factor                    1.775
+Governing fatigue safety factor        1.179
+
+Method: Stress-life fatigue analysis
+Formula: Se' = 0.5 Sut, Se = ka kb kc kd ke kf Se', ...
+References:
+  - Shigley's Mechanical Engineering Design (Tenth edition, 2015)
+```
+
+The fatigue report lists every Marin factor. It shows all four fatigue criteria plus the yield check. The governing factor is the minimum of the five.
+
 ## Development
 
 | Command | Purpose |
@@ -169,9 +194,9 @@ Use a unit of the same quantity.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, and the tools.
 
-- 98 tests across 10 files.
+- 134 tests across 11 files.
 - All tests pass on Node 22 and Node 24.
-- The CI workflow runs typecheck, tests, build, demo, and a package check.
+- The CI workflow runs typecheck, tests, build, a CLI smoke test, the demo, and a package check.
 
 Run `npm test` to reproduce the results.
 
@@ -184,6 +209,9 @@ Run `npm test` to reproduce the results.
 - The critical speed is a first-mode approximation.
 - The spring design covers static round-wire springs only.
   It does not estimate fatigue life for cyclic loads.
+- The fatigue analysis is a stress-life estimate for steel.
+  It does not model notch sensitivity, mean-stress scatter, or crack growth.
+  Verify the result with testing for a production part.
 - The built-in SQLite module of Node.js is still experimental.
 
 Check the cited sources for exact values.
@@ -197,12 +225,16 @@ Each release stays useful on its own.
 
 - Helical compression spring design.
   The `spring_design` tool reports the spring rate, the shear stress, and the safety factor.
+- Fatigue analysis for cyclic loads.
+  The `fatigue_analysis` tool applies the Marin endurance-limit modifiers.
+  It reports the Soderberg, modified Goodman, Gerber, ASME-elliptic, and yield safety factors.
+- Dynamic viscosity and thermal conductivity unit categories.
+  The `unit_convert` tool converts these quantities like every other registered category.
 
 ### Remaining
 
-- Add fatigue analysis for cyclic loads.
 - Add press-fit and interference-fit calculators.
-- Add more unit categories, including viscosity and thermal conductivity.
+- Add more unit categories, including kinematic viscosity and electric current.
 - Add HTTP transport.
 - Add a catalog of ISO and DIN standard sections.
 

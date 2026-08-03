@@ -76,6 +76,7 @@ type ToolHandlers = {
   von_mises: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
+  fatigue_analysis: Handler;
 };
 
 const toolHandlers = handlers as ToolHandlers;
@@ -91,6 +92,7 @@ const tools: NamedHandler[] = [
   ["unit_convert", toolHandlers.unit_convert],
   ["unit_convert (torque to energy)", toolHandlers.unit_convert],
   ["material_lookup", toolHandlers.material_lookup],
+  ["fatigue_analysis", toolHandlers.fatigue_analysis],
 ];
 
 const inputs: Array<Record<string, unknown>> = [
@@ -157,6 +159,16 @@ const inputs: Array<Record<string, unknown>> = [
   },
   {
     query: "steel",
+  },
+  {
+    material: "Structural steel S355",
+    alternatingStress: 80e6,
+    meanStress: 120e6,
+    loading: "bending",
+    surfaceCondition: "machined",
+    diameterMm: 20,
+    reliabilityPct: 99,
+    outputUnits: { enduranceLimit: "MPa", unmodifiedEnduranceLimit: "MPa", equivalentAlternatingStress: "MPa", equivalentMeanStress: "MPa" },
   },
 ];
 

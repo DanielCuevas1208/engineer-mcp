@@ -15,6 +15,7 @@ type Handlers = {
   von_mises: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
+  fatigue_analysis: Handler;
 };
 
 let ctx: AppContext;
@@ -31,7 +32,7 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("tool registry", () => {
-  it("registers all nine tools", () => {
+  it("registers all ten tools", () => {
     expect(listTools().sort()).toEqual(
       [
         "beam_bending",
@@ -43,6 +44,7 @@ describe("tool registry", () => {
         "von_mises",
         "unit_convert",
         "material_lookup",
+        "fatigue_analysis",
       ].sort(),
     );
   });
@@ -315,6 +317,53 @@ describe("material_lookup tool", () => {
   it("returns no match as a failure", () => {
     setup();
     const response = handlers.material_lookup({ query: "adamantium" });
+    expect(response.ok).toBe(false);
+  });
+});
+
+describe("fatigue_analysis tool", () => {
+  it("computes fatigue factors from a material and converts the endurance unit", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      material: "Structural steel S355",
+      alternatingStress: 80e6,
+      meanStress: 120e6,
+      loading: "bending",
+      diameterMm: 20,
+      reliabilityPct: 99,
+      outputUnits: { enduranceLimit: "MPa", equivalentAlternatingStress: "MPa" },
+    });
+    const result = expectOk(response);
+    expect(result.tool).toBe("fatigue_analysis");
+    expect(result.method.id).toBe("fatigue-analysis");
+    expect(result.references.length).toBeGreaterThan(0);
+    const endurance = result.quantities.find((q) => q.key === "enduranceLimit");
+    expect(endurance?.unit).toBe("MPa");
+    expect(endurance?.value).toBeGreaterThan(0);
+    expect(result.safetyFactor).toBeDefined();
+  });
+
+  it("reports an unknown material", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      material: "Unobtainium",
+      alternatingStress: 80e6,
+      meanStress: 0,
+      loading: "bending",
+    });
+    expect(response.ok).toBe(false);
+    if (!response.ok) {
+      expect(response.error).toContain("Unknown material");
+    }
+  });
+
+  it("rejects missing strength data", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      alternatingStress: 80e6,
+      meanStress: 0,
+      loading: "bending",
+    });
     expect(response.ok).toBe(false);
   });
 });

@@ -135,3 +135,66 @@ describe("stiffness units", () => {
     }
   });
 });
+
+describe("dynamic viscosity units", () => {
+  it("converts pascal seconds to centipoise", () => {
+    const outcome = convertUnit(1, "Pa·s", "cP");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(1000, 9);
+      expect(outcome.category).toBe("dynamic_viscosity");
+      expect(outcome.siSymbol).toBe("Pa·s");
+    }
+  });
+
+  it("converts poise to pascal seconds", () => {
+    const outcome = convertUnit(1, "P", "Pa·s");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(0.1, 9);
+    }
+  });
+
+  it("converts millipascal seconds to centipoise", () => {
+    const outcome = convertUnit(1, "mPa·s", "cP");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(1, 9);
+    }
+  });
+
+  it("rejects a viscosity-to-pressure conversion", () => {
+    const outcome = convertUnit(10, "Pa·s", "Pa");
+    expect(outcome.ok).toBe(false);
+    if (!outcome.ok) {
+      expect(outcome.error).toContain("Dimension mismatch");
+    }
+  });
+});
+
+describe("thermal conductivity units", () => {
+  it("converts BTU per foot hour degree Fahrenheit", () => {
+    const outcome = convertUnit(1, "BTU/(ft·h·°F)", "W/(m·K)");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(1.730735, 6);
+      expect(outcome.category).toBe("thermal_conductivity");
+    }
+  });
+
+  it("converts kilocalorie per metre hour degree Celsius", () => {
+    const outcome = convertUnit(1, "kcal/(m·h·°C)", "W/(m·K)");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(1.163, 6);
+    }
+  });
+
+  it("finds the SI symbol for thermal conductivity", () => {
+    const outcome = convertUnit(1, "W/(m·°C)", "BTU/(ft·h·°F)");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.siSymbol).toBe("W/(m·K)");
+    }
+  });
+});

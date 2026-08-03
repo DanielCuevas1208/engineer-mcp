@@ -131,6 +131,40 @@ export const materialSchema = z.object({
   limit: z.number().int().min(1).max(50).optional().describe("Maximum number of rows to return. Defaults to 10."),
 });
 
+export const fatigueSchema = z.object({
+  alternatingStress: z.number().positive().describe(
+    "Alternating stress amplitude in pascals. For torsion loading, this is the shear stress amplitude.",
+  ),
+  meanStress: z.number().describe(
+    "Mean stress in pascals. Use zero for fully reversed loading. For torsion loading, this is the shear mean stress.",
+  ),
+  loading: z.enum(["bending", "axial", "torsion"]).describe("Loading type. Sets the load factor and the stress transformation."),
+  material: z.string().optional().describe("Material name from the database. Provides the ultimate and yield strength."),
+  ultimateStrength: z.number().positive().optional().describe("Ultimate tensile strength in pascals. Required when material is not set."),
+  yieldStrength: z.number().positive().optional().describe("Tensile yield strength in pascals. Required for the Soderberg, ASME-elliptic, and yield checks."),
+  surfaceCondition: z
+    .enum(["ground", "machined", "cold_drawn", "hot_rolled", "as_forged"])
+    .optional()
+    .describe("Surface finish of the part. Sets the surface factor. Defaults to machined."),
+  diameterMm: z.number().positive().optional().describe("Section diameter in millimetres. Sets the size factor for bending and torsion."),
+  reliabilityPct: z
+    .union([z.literal(50), z.literal(90), z.literal(95), z.literal(99), z.literal(99.9), z.literal(99.99), z.literal(99.999), z.literal(99.9999)])
+    .optional()
+    .describe("Desired reliability as a percentage. Sets the reliability factor. Defaults to 50."),
+  temperatureC: z.number().optional().describe("Operating temperature in degrees Celsius. Sets the temperature factor."),
+  surfaceFactor: z.number().positive().optional().describe("Override the surface factor k_a."),
+  sizeFactor: z.number().positive().optional().describe("Override the size factor k_b."),
+  loadFactor: z.number().positive().optional().describe("Override the load factor k_c."),
+  temperatureFactor: z.number().positive().optional().describe("Override the temperature factor k_d."),
+  reliabilityFactor: z.number().positive().optional().describe("Override the reliability factor k_e."),
+  miscellaneousFactor: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Miscellaneous factor k_f for stress concentrations and other effects. Defaults to 1."),
+  outputUnits,
+});
+
 export type BeamInput = z.infer<typeof beamSchema>;
 export type BoltInput = z.infer<typeof boltSchema>;
 export type ShaftInput = z.infer<typeof shaftSchema>;
@@ -140,3 +174,4 @@ export type SectionPropsInput = z.infer<typeof sectionPropsSchema>;
 export type StressInput = z.infer<typeof stressSchema>;
 export type UnitConvertInput = z.infer<typeof unitConvertSchema>;
 export type MaterialInput = z.infer<typeof materialSchema>;
+export type FatigueInput = z.infer<typeof fatigueSchema>;
