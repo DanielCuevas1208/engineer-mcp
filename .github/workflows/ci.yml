@@ -39,5 +39,8 @@ jobs:
       - name: Verify the demo runs
         run: npm run demo
 
+      - name: Verify the CLI lists tools
+        run: node dist/index.js --list
+
       - name: Verify the package contents
         run: npm pack --dry-run

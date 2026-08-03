@@ -41,10 +41,10 @@ Engineer MCP grows in independent releases. Each release stays useful on its own
 ### Complete
 
 - Helical compression spring design. The `spring_design` tool computes the spring rate, the shear stress, and the safety factor.
+- Fatigue analysis for cyclic loads. The `fatigue_analysis` tool reports infinite-life safety factors on four criteria.
 
 ### Remaining
 
-- Add fatigue analysis for cyclic loads.
 - Add press-fit and interference-fit calculators.
 - Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport in addition to stdio.

@@ -146,6 +146,35 @@ Inputs:
 - Cartesian mode uses `sigmaX`, `sigmaY`, `sigmaZ`, `tauXY`, `tauXZ`, `tauYZ`.
 - `yieldStrength`: enables the safety factor.
 
+## fatigue_analysis
+
+Compute the infinite-life fatigue safety factors of a constant-amplitude stress cycle.
+
+The tool evaluates four failure criteria. It reports one safety factor for each criterion. They are the modified Goodman, Soderberg, Gerber, and ASME-elliptic lines.
+
+Inputs:
+
+- `meanStress`: mean stress of the cycle in pascals.
+- `amplitudeStress`: alternating stress amplitude in pascals.
+- `material`: material name from the database. It provides the ultimate and yield strengths.
+- `ultimateStrength`: tensile ultimate strength in pascals. Required when no material is set.
+- `yieldStrength`: tensile yield strength in pascals. It enables the Soderberg, ASME-elliptic, and yield factors.
+- `enduranceLimit`: fully reversed endurance limit in pascals. The default is an estimate for steel.
+- `criterion`: primary criterion for the safety factor. The options are `goodman`, `soderberg`, `gerber`, and `asme_elliptic`. The default is `goodman`.
+
+Example:
+
+```json
+{
+  "meanStress": 150000000,
+  "amplitudeStress": 100000000,
+  "material": "Structural steel S355",
+  "enduranceLimit": 245000000
+}
+```
+
+The tool warns when the endurance limit is estimated. It warns when the amplitude exceeds the endurance limit. It warns when the cycle reaches yield at its peak or trough.
+
 ## unit_convert
 
 Convert a value between two units.

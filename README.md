@@ -23,6 +23,7 @@ The release covers these domains:
 - Shaft torsion and first critical speed.
 - Bearing rating life to ISO 281.
 - von Mises equivalent stress.
+- Fatigue safety factors for cyclic loads.
 - Cross-section properties.
 - Dimension-safe unit conversion.
 - Material property lookup.
@@ -53,6 +54,7 @@ Warnings surface when a method uses an approximation.
 | `shaft_analysis` | Torsion stress, twist, and critical speed. |
 | `bearing_life` | ISO 281 rating life in revolutions and hours. |
 | `von_mises` | Equivalent stress and yield safety factor. |
+| `fatigue_analysis` | Infinite-life fatigue factors on four criteria. |
 | `unit_convert` | Conversion between compatible units. |
 | `material_lookup` | Curated mechanical properties of materials. |
 
@@ -147,6 +149,27 @@ References:
   - Machinery's Handbook (Thirty-first edition)
 ```
 
+A call to `fatigue_analysis` for an S355 shaft under a 150 MPa mean stress and a 100 MPa amplitude:
+
+```text
+Mean stress                             150 MPa
+Stress amplitude                        100 MPa
+Stress ratio R                            0.2
+Endurance limit                         245 MPa
+Modified Goodman safety factor            1.4
+Soderberg safety factor                1.204
+Gerber safety factor                   1.748
+ASME-elliptic safety factor            1.702
+Yield safety factor                     1.42
+
+Method: Infinite-life fatigue analysis
+Formula: R = (sm - sa)/(sm + sa); Goodman: 1/n = sa/Se + sm/Sut; Soderberg: 1/n = sa/Se + sm/Sy
+References:
+  - Shigley's Mechanical Engineering Design (Tenth edition, 2015)
+```
+
+The endurance limit is an estimate unless you provide it. The tool warns when it estimates a value.
+
 A call to `unit_convert` with a torque-to-energy request fails safely:
 
 ```text
@@ -169,7 +192,7 @@ Use a unit of the same quantity.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, and the tools.
 
-- 98 tests across 10 files.
+- 126 tests across 11 files.
 - All tests pass on Node 22 and Node 24.
 - The CI workflow runs typecheck, tests, build, demo, and a package check.
 
@@ -183,7 +206,9 @@ Run `npm test` to reproduce the results.
 - The bearing factors are typical values for deep-groove ball bearings.
 - The critical speed is a first-mode approximation.
 - The spring design covers static round-wire springs only.
-  It does not estimate fatigue life for cyclic loads.
+  Use `fatigue_analysis` for cyclic loads.
+- The fatigue criteria assume a constant-amplitude cycle and an infinite life.
+  The endurance limit is an estimate for steel when you do not provide one.
 - The built-in SQLite module of Node.js is still experimental.
 
 Check the cited sources for exact values.
@@ -197,10 +222,11 @@ Each release stays useful on its own.
 
 - Helical compression spring design.
   The `spring_design` tool reports the spring rate, the shear stress, and the safety factor.
+- Fatigue analysis for cyclic loads.
+  The `fatigue_analysis` tool reports infinite-life safety factors on four criteria.
 
 ### Remaining
 
-- Add fatigue analysis for cyclic loads.
 - Add press-fit and interference-fit calculators.
 - Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport.
@@ -218,3 +244,5 @@ Read the boundary rules in [docs/integration.md](docs/integration.md).
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+See [CHANGELOG.md](CHANGELOG.md) for the release history.

@@ -126,6 +126,20 @@ export const unitConvertSchema = z.object({
   to: z.string().describe("Target unit symbol. Examples: psi, m, N, degF."),
 });
 
+export const fatigueSchema = z.object({
+  meanStress: z.number().describe("Mean stress of the cycle in pascals. May be negative for compression."),
+  amplitudeStress: z.number().positive().describe("Alternating stress amplitude of the cycle in pascals."),
+  material: z.string().optional().describe("Material name from the database. Provides the ultimate and yield strengths."),
+  ultimateStrength: z.number().positive().optional().describe("Tensile ultimate strength in pascals. Required when no material is set."),
+  yieldStrength: z.number().positive().optional().describe("Tensile yield strength in pascals. Enables the Soderberg, ASME-elliptic, and yield factors."),
+  enduranceLimit: z.number().positive().optional().describe("Fully reversed endurance limit in pascals. Defaults to an estimate for steel."),
+  criterion: z
+    .enum(["goodman", "soderberg", "gerber", "asme_elliptic"])
+    .optional()
+    .describe("Primary criterion for the safety factor. Defaults to goodman."),
+  outputUnits,
+});
+
 export const materialSchema = z.object({
   query: z.string().min(1).describe("Material name or category to search. Matches are case-insensitive."),
   limit: z.number().int().min(1).max(50).optional().describe("Maximum number of rows to return. Defaults to 10."),
@@ -139,4 +153,5 @@ export type BearingInput = z.infer<typeof bearingSchema>;
 export type SectionPropsInput = z.infer<typeof sectionPropsSchema>;
 export type StressInput = z.infer<typeof stressSchema>;
 export type UnitConvertInput = z.infer<typeof unitConvertSchema>;
+export type FatigueInput = z.infer<typeof fatigueSchema>;
 export type MaterialInput = z.infer<typeof materialSchema>;
