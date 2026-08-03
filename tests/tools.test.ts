@@ -13,6 +13,7 @@ type Handlers = {
   shaft_analysis: Handler;
   bearing_life: Handler;
   von_mises: Handler;
+  fatigue_analysis: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
 };
@@ -31,7 +32,7 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("tool registry", () => {
-  it("registers all nine tools", () => {
+  it("registers all ten tools", () => {
     expect(listTools().sort()).toEqual(
       [
         "beam_bending",
@@ -41,6 +42,7 @@ describe("tool registry", () => {
         "shaft_analysis",
         "bearing_life",
         "von_mises",
+        "fatigue_analysis",
         "unit_convert",
         "material_lookup",
       ].sort(),
@@ -280,6 +282,56 @@ describe("von_mises tool", () => {
   it("rejects cartesian mode without sigmaX and sigmaY", () => {
     setup();
     const response = handlers.von_mises({ mode: "cartesian", sigmaX: 100e6 });
+    expect(response.ok).toBe(false);
+  });
+});
+
+describe("fatigue_analysis tool", () => {
+  it("computes all four criteria and converts stresses", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      meanStress: 400e6,
+      alternatingStress: 200e6,
+      ultimateStrength: 1200e6,
+      yieldStrength: 950e6,
+      enduranceLimit: 500e6,
+      outputUnits: { meanStress: "MPa", alternatingStress: "MPa", enduranceLimit: "MPa" },
+    });
+    const result = expectOk(response);
+    expect(result.tool).toBe("fatigue_analysis");
+    expect(result.method.id).toBe("fatigue-analysis");
+    expect(result.references[0]?.id).toBe("shigley-2015");
+
+    const mean = result.quantities.find((q) => q.key === "meanStress");
+    expect(mean?.unit).toBe("MPa");
+    expect(mean?.value).toBeCloseTo(400, 6);
+    const soderberg = result.quantities.find((q) => q.key === "soderbergFactor");
+    expect(soderberg?.value).toBeCloseTo(1 / (200 / 500 + 400 / 950), 6);
+    expect(result.safetyFactor?.key).toBe("soderbergFactor");
+  });
+
+  it("fails on a zero load", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      meanStress: 0,
+      alternatingStress: 0,
+      ultimateStrength: 1000e6,
+      yieldStrength: 800e6,
+    });
+    expect(response.ok).toBe(false);
+    if (!response.ok) {
+      expect(response.error).toContain("positive");
+    }
+  });
+
+  it("fails on a negative alternating stress", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      meanStress: 100e6,
+      alternatingStress: -50e6,
+      ultimateStrength: 1000e6,
+      yieldStrength: 800e6,
+    });
     expect(response.ok).toBe(false);
   });
 });

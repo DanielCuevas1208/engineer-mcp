@@ -146,6 +146,40 @@ Inputs:
 - Cartesian mode uses `sigmaX`, `sigmaY`, `sigmaZ`, `tauXY`, `tauXZ`, `tauYZ`.
 - `yieldStrength`: enables the safety factor.
 
+## fatigue_analysis
+
+Compute the fatigue safety factor for a fluctuating stress.
+
+The tool applies the four standard failure criteria. They are Soderberg, modified Goodman, Gerber, and ASME-elliptic. Each criterion returns a safety factor for the same load cycle.
+
+Inputs:
+
+- `meanStress`: steady component of the stress in pascals.
+- `alternatingStress`: amplitude of the stress in pascals.
+- `ultimateStrength`: ultimate tensile strength Sut in pascals.
+- `yieldStrength`: tensile yield strength Sy in pascals.
+- `enduranceLimit`: endurance limit Se in pascals. The default is `0.5 x Sut`.
+- `criterion`: `soderberg`, `goodman`, `gerber`, `asme`, or `all`. The default is `all`.
+
+The tool always returns all four safety factors as quantities. The headline safety factor follows the selected criterion. For `all`, the headline factor is Soderberg, because it is the most conservative.
+
+The tool estimates the endurance limit when you omit it. It warns that modifying factors still apply. It warns when any safety factor drops below 1.
+
+Example:
+
+```json
+{
+  "meanStress": 400000000,
+  "alternatingStress": 200000000,
+  "ultimateStrength": 1200000000,
+  "yieldStrength": 950000000,
+  "enduranceLimit": 500000000,
+  "criterion": "goodman"
+}
+```
+
+The criteria compare the alternating stress and the mean stress against the endurance limit and the static strengths. This method is for an infinite-life design check.
+
 ## unit_convert
 
 Convert a value between two units.

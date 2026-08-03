@@ -36,6 +36,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Smoke test the built binary
+        run: node dist/index.js --list
+
       - name: Verify the demo runs
         run: npm run demo
 

@@ -6,7 +6,7 @@
 [![Node](https://img.shields.io/badge/Node-%3E%3D22.13-brightgreen.svg)](package.json)
 
 Engineer MCP is a Model Context Protocol server for mechanical-engineering calculations.
-It gives coding agents verified answers for beams, bolts, springs, shafts, bearings, stress, sections, and units.
+It gives coding agents verified answers for beams, bolts, springs, shafts, bearings, stress, fatigue, sections, and units.
 Every result shows the formula, the method, and the source.
 
 ## What it provides
@@ -23,6 +23,7 @@ The release covers these domains:
 - Shaft torsion and first critical speed.
 - Bearing rating life to ISO 281.
 - von Mises equivalent stress.
+- Fatigue safety factors for cyclic loads.
 - Cross-section properties.
 - Dimension-safe unit conversion.
 - Material property lookup.
@@ -53,6 +54,7 @@ Warnings surface when a method uses an approximation.
 | `shaft_analysis` | Torsion stress, twist, and critical speed. |
 | `bearing_life` | ISO 281 rating life in revolutions and hours. |
 | `von_mises` | Equivalent stress and yield safety factor. |
+| `fatigue_analysis` | Fatigue safety factors for cyclic loads. |
 | `unit_convert` | Conversion between compatible units. |
 | `material_lookup` | Curated mechanical properties of materials. |
 
@@ -154,6 +156,29 @@ Error: Category mismatch: N·m is torque, J is energy.
 Use a unit of the same quantity.
 ```
 
+A call to `fatigue_analysis` for a steel part under 400 MPa mean stress and 200 MPa alternating stress:
+
+```text
+Mean stress                             400 MPa
+Alternating stress                      200 MPa
+Stress ratio                             0.3333
+Endurance limit                         500 MPa
+Soderberg safety factor                  1.218
+Goodman safety factor                    1.364
+Gerber safety factor                     1.699
+ASME-elliptic safety factor               1.722
+
+Soderberg safety factor                  1.218
+  Factor for the Soderberg line from Se to Sy. It is the most conservative criterion.
+
+Method: Fatigue failure criteria for fluctuating stress
+Formula: Soderberg: sa/Se + sm/Sy = 1/n. Goodman: sa/Se + sm/Sut = 1/n. Gerber: n.sa/Se + (n.sm/Sut)^2 = 1. ASME-elliptic: (n.sa/Se)^2 + (n.sm/Sy)^2 = 1
+References:
+  - Shigley's Mechanical Engineering Design (McGraw-Hill Education, Tenth edition, 2015)
+```
+
+The tool always returns all four safety factors. It warns when a factor falls below 1.
+
 ## Development
 
 | Command | Purpose |
@@ -169,7 +194,7 @@ Use a unit of the same quantity.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, and the tools.
 
-- 98 tests across 10 files.
+- 115 tests across 11 files.
 - All tests pass on Node 22 and Node 24.
 - The CI workflow runs typecheck, tests, build, demo, and a package check.
 
@@ -183,7 +208,10 @@ Run `npm test` to reproduce the results.
 - The bearing factors are typical values for deep-groove ball bearings.
 - The critical speed is a first-mode approximation.
 - The spring design covers static round-wire springs only.
-  It does not estimate fatigue life for cyclic loads.
+  Use the `fatigue_analysis` tool for cyclic loads.
+- The fatigue criteria assume a tensile mean stress.
+  The endurance limit defaults to `0.5 x Sut`.
+  Apply modifying factors for surface, size, load, temperature, and reliability.
 - The built-in SQLite module of Node.js is still experimental.
 
 Check the cited sources for exact values.
@@ -197,10 +225,11 @@ Each release stays useful on its own.
 
 - Helical compression spring design.
   The `spring_design` tool reports the spring rate, the shear stress, and the safety factor.
+- Fatigue analysis for cyclic loads.
+  The `fatigue_analysis` tool returns safety factors for the Soderberg, Goodman, Gerber, and ASME-elliptic criteria.
 
 ### Remaining
 
-- Add fatigue analysis for cyclic loads.
 - Add press-fit and interference-fit calculators.
 - Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport.

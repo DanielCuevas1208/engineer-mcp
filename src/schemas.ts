@@ -106,6 +106,19 @@ export const bearingSchema = z.object({
   outputUnits,
 });
 
+export const fatigueSchema = z.object({
+  meanStress: z.number().min(0).describe("Steady component of the fluctuating stress in pascals. Use zero for a compressive mean."),
+  alternatingStress: z.number().min(0).describe("Amplitude of the fluctuating stress in pascals."),
+  ultimateStrength: z.number().positive().describe("Ultimate tensile strength Sut in pascals."),
+  yieldStrength: z.number().positive().describe("Tensile yield strength Sy in pascals."),
+  enduranceLimit: z.number().positive().optional().describe("Endurance limit Se in pascals. Defaults to 0.5 x Sut."),
+  criterion: z
+    .enum(["soderberg", "goodman", "gerber", "asme", "all"])
+    .optional()
+    .describe("Failure criterion for the headline safety factor. Defaults to all."),
+  outputUnits,
+});
+
 export const stressSchema = z.object({
   mode: z.enum(["principal", "cartesian"]).describe("Stress input mode. Principal uses sigma1-3. Cartesian uses sigmaX, sigmaY, and shear terms."),
   sigma1: z.number().optional().describe("First principal stress in pascals. Required in principal mode."),
@@ -137,6 +150,7 @@ export type ShaftInput = z.infer<typeof shaftSchema>;
 export type SpringInput = z.infer<typeof springSchema>;
 export type BearingInput = z.infer<typeof bearingSchema>;
 export type SectionPropsInput = z.infer<typeof sectionPropsSchema>;
+export type FatigueInput = z.infer<typeof fatigueSchema>;
 export type StressInput = z.infer<typeof stressSchema>;
 export type UnitConvertInput = z.infer<typeof unitConvertSchema>;
 export type MaterialInput = z.infer<typeof materialSchema>;
