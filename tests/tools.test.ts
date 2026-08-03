@@ -12,6 +12,7 @@ type Handlers = {
   spring_design: Handler;
   shaft_analysis: Handler;
   bearing_life: Handler;
+  press_fit: Handler;
   von_mises: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
@@ -31,7 +32,7 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("tool registry", () => {
-  it("registers all nine tools", () => {
+  it("registers all ten tools", () => {
     expect(listTools().sort()).toEqual(
       [
         "beam_bending",
@@ -40,6 +41,7 @@ describe("tool registry", () => {
         "spring_design",
         "shaft_analysis",
         "bearing_life",
+        "press_fit",
         "von_mises",
         "unit_convert",
         "material_lookup",
@@ -244,6 +246,62 @@ describe("bearing_life tool", () => {
     const result = expectOk(response);
     expect(result.quantities.find((q) => q.key === "l10Revolutions")?.value).toBeGreaterThan(0);
     expect(result.safetyFactor?.value).toBeGreaterThan(0);
+  });
+});
+
+describe("press_fit tool", () => {
+  it("computes an interference fit from materials and converts units", () => {
+    setup();
+    const response = handlers.press_fit({
+      hubOuterDiameter: 0.05,
+      interfaceDiameter: 0.025,
+      hubLength: 0.03,
+      diametralInterference: 0.00005,
+      hubMaterial: "Alloy steel 42CrMo4",
+      shaftMaterial: "Alloy steel 42CrMo4",
+      outputUnits: { contactPressure: "MPa", pressForce: "kN", torqueCapacity: "N·m" },
+    });
+    const result = expectOk(response);
+
+    expect(result.tool).toBe("press_fit");
+    expect(result.method.id).toBe("press-fit");
+    expect(result.safetyFactor?.key).toBe("hubSafetyFactor");
+    expect(result.references.length).toBeGreaterThan(0);
+
+    const pressure = result.quantities.find((q) => q.key === "contactPressure");
+    expect(pressure?.unit).toBe("MPa");
+    expect(pressure?.value).toBeCloseTo(157.5, -1);
+    const pressForce = result.quantities.find((q) => q.key === "pressForce");
+    expect(pressForce?.unit).toBe("kN");
+    const torque = result.quantities.find((q) => q.key === "torqueCapacity");
+    expect(torque?.unit).toBe("N·m");
+  });
+
+  it("rejects an unknown material", () => {
+    setup();
+    const response = handlers.press_fit({
+      hubOuterDiameter: 0.05,
+      interfaceDiameter: 0.025,
+      hubLength: 0.03,
+      diametralInterference: 0.00005,
+      hubMaterial: "Unobtainium",
+      shaftMaterial: "Alloy steel 42CrMo4",
+    });
+    expect(response.ok).toBe(false);
+  });
+
+  it("requires elastic moduli when no materials are given", () => {
+    setup();
+    const response = handlers.press_fit({
+      hubOuterDiameter: 0.05,
+      interfaceDiameter: 0.025,
+      hubLength: 0.03,
+      diametralInterference: 0.00005,
+    });
+    expect(response.ok).toBe(false);
+    if (!response.ok) {
+      expect(response.error).toContain("hubElasticModulus");
+    }
   });
 });
 

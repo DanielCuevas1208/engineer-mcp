@@ -126,6 +126,51 @@ export const unitConvertSchema = z.object({
   to: z.string().describe("Target unit symbol. Examples: psi, m, N, degF."),
 });
 
+export const pressFitSchema = z.object({
+  hubOuterDiameter: z.number().positive().describe("Hub outer diameter in metres."),
+  interfaceDiameter: z
+    .number()
+    .positive()
+    .describe("Interface diameter in metres. The hub bore and the shaft outside diameter meet here."),
+  shaftInnerDiameter: z
+    .number()
+    .nonnegative()
+    .optional()
+    .describe("Shaft inner diameter in metres. Omit or use zero for a solid shaft."),
+  hubLength: z.number().positive().describe("Hub engagement length in metres."),
+  diametralInterference: z
+    .number()
+    .positive()
+    .describe("Total diametral interference in metres. Half of this value acts as the radial interference."),
+  hubMaterial: z.string().optional().describe("Hub material name from the database."),
+  hubElasticModulus: z.number().positive().optional().describe("Hub elastic modulus in pascals. Optional when hubMaterial is set."),
+  hubPoissonRatio: z.number().min(0).lt(0.5).optional().describe("Hub Poisson ratio. Defaults to 0.3."),
+  hubYieldStrength: z.number().positive().optional().describe("Hub yield strength in pascals. Enables the hub safety factor."),
+  shaftMaterial: z.string().optional().describe("Shaft material name from the database."),
+  shaftElasticModulus: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Shaft elastic modulus in pascals. Optional when shaftMaterial is set."),
+  shaftPoissonRatio: z.number().min(0).lt(0.5).optional().describe("Shaft Poisson ratio. Defaults to 0.3."),
+  shaftYieldStrength: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Shaft yield strength in pascals. Enables the shaft safety factor for a hollow shaft."),
+  frictionCoefficient: z
+    .number()
+    .min(0)
+    .optional()
+    .describe("Coefficient of friction at the interface. Defaults to 0.15 for dry steel-on-steel."),
+  appliedAxialForce: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Applied axial force in newtons. Enables the axial joint safety factor."),
+  outputUnits,
+});
+
 export const materialSchema = z.object({
   query: z.string().min(1).describe("Material name or category to search. Matches are case-insensitive."),
   limit: z.number().int().min(1).max(50).optional().describe("Maximum number of rows to return. Defaults to 10."),
@@ -138,5 +183,6 @@ export type SpringInput = z.infer<typeof springSchema>;
 export type BearingInput = z.infer<typeof bearingSchema>;
 export type SectionPropsInput = z.infer<typeof sectionPropsSchema>;
 export type StressInput = z.infer<typeof stressSchema>;
+export type PressFitInput = z.infer<typeof pressFitSchema>;
 export type UnitConvertInput = z.infer<typeof unitConvertSchema>;
 export type MaterialInput = z.infer<typeof materialSchema>;

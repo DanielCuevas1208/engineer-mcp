@@ -73,6 +73,7 @@ type ToolHandlers = {
   spring_design: Handler;
   shaft_analysis: Handler;
   bearing_life: Handler;
+  press_fit: Handler;
   von_mises: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
@@ -87,6 +88,7 @@ const tools: NamedHandler[] = [
   ["spring_design", toolHandlers.spring_design],
   ["shaft_analysis", toolHandlers.shaft_analysis],
   ["bearing_life", toolHandlers.bearing_life],
+  ["press_fit", toolHandlers.press_fit],
   ["von_mises", toolHandlers.von_mises],
   ["unit_convert", toolHandlers.unit_convert],
   ["unit_convert (torque to energy)", toolHandlers.unit_convert],
@@ -136,6 +138,26 @@ const inputs: Array<Record<string, unknown>> = [
     equivalentLoad: 8500,
     speedRpm: 1500,
     requiredLifeHours: 20000,
+  },
+  {
+    hubOuterDiameter: 0.05,
+    interfaceDiameter: 0.025,
+    hubLength: 0.03,
+    diametralInterference: 0.00005,
+    hubMaterial: "Alloy steel 42CrMo4",
+    shaftMaterial: "Alloy steel 42CrMo4",
+    frictionCoefficient: 0.15,
+    appliedAxialForce: 20000,
+    outputUnits: {
+      contactPressure: "MPa",
+      hubTangentialStress: "MPa",
+      shaftTangentialStress: "MPa",
+      radialStress: "MPa",
+      hubVonMisesStress: "MPa",
+      shaftVonMisesStress: "MPa",
+      pressForce: "kN",
+      torqueCapacity: "N·m",
+    },
   },
   {
     mode: "cartesian",

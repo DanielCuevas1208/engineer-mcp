@@ -135,6 +135,44 @@ Inputs:
 - `speedRpm`: enables life in hours.
 - `requiredLifeHours`: enables the life margin.
 
+## press_fit
+
+Compute the contact pressure and stresses of an interference fit.
+
+The tool uses the Lamé thick-cylinder solution in plane stress. The hub carries tensile hoop stress. The shaft carries compressive hoop stress. A solid shaft sees biaxial compression equal to the contact pressure.
+
+Inputs:
+
+- `hubOuterDiameter`: hub outer diameter in metres.
+- `interfaceDiameter`: diameter where the hub bore meets the shaft outside in metres.
+- `shaftInnerDiameter`: shaft inner diameter in metres. Omit or use zero for a solid shaft.
+- `hubLength`: hub engagement length in metres.
+- `diametralInterference`: total diametral interference in metres.
+- `hubMaterial` and `shaftMaterial`: material names from the database.
+- `hubElasticModulus` and `shaftElasticModulus`: elastic moduli in pascals. Use these instead of materials.
+- `hubPoissonRatio` and `shaftPoissonRatio`: Poisson ratios. The default is `0.3`.
+- `hubYieldStrength` and `shaftYieldStrength`: yield strengths in pascals. They enable the safety factors.
+- `frictionCoefficient`: friction at the interface. The default is `0.15`.
+- `appliedAxialForce`: applied axial force in newtons. It enables the axial joint safety factor.
+
+The tool reports the contact pressure, the hoop stresses, the von Mises stresses, the press-in force, and the torque capacity. The hub safety factor is the primary safety factor. The shaft and axial joint factors appear as quantities.
+
+The tool warns on a thin hub. It warns when an applied axial force exceeds the press-in force.
+
+Example:
+
+```json
+{
+  "hubOuterDiameter": 0.05,
+  "interfaceDiameter": 0.025,
+  "hubLength": 0.03,
+  "diametralInterference": 0.00005,
+  "hubMaterial": "Alloy steel 42CrMo4",
+  "shaftMaterial": "Alloy steel 42CrMo4",
+  "outputUnits": { "contactPressure": "MPa", "pressForce": "kN" }
+}
+```
+
 ## von_mises
 
 Compute the von Mises equivalent stress and yield safety factor of a stress state.

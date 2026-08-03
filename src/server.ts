@@ -7,6 +7,7 @@ import {
   bearingSchema,
   boltSchema,
   materialSchema,
+  pressFitSchema,
   sectionPropsSchema,
   shaftSchema,
   springSchema,
@@ -47,6 +48,11 @@ const TOOL_SCHEMAS: Record<string, ToolDef> = {
   bearing_life: {
     description: "ISO 281 basic rating life L10 for ball and roller bearings, in revolutions and hours.",
     schema: bearingSchema,
+  },
+  press_fit: {
+    description:
+      "Interference fit analysis by Lamé thick-cylinder theory. Reports contact pressure, hub and shaft stresses, press-in force, and torque capacity.",
+    schema: pressFitSchema,
   },
   von_mises: {
     description: "von Mises equivalent stress, maximum shear stress, and yield safety factor for a stress state.",

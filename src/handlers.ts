@@ -3,6 +3,7 @@ import {
   analyzeBeam,
   analyzeBearing,
   analyzeBolt,
+  analyzePressFit,
   analyzeShaft,
   analyzeSpring,
   computeSection,
@@ -332,6 +333,52 @@ function bearingHandler(ctx: AppContext): Handler {
   };
 }
 
+function pressFitHandler(ctx: AppContext): Handler {
+  return (input) => {
+    const hubName = input.hubMaterial as string | undefined;
+    const hubValues = hubName ? materialValues(ctx, hubName) : undefined;
+    if (hubName && !hubValues) {
+      return failure("press_fit", `Unknown hub material: ${hubName}`, input);
+    }
+    const shaftName = input.shaftMaterial as string | undefined;
+    const shaftValues = shaftName ? materialValues(ctx, shaftName) : undefined;
+    if (shaftName && !shaftValues) {
+      return failure("press_fit", `Unknown shaft material: ${shaftName}`, input);
+    }
+
+    const hubElasticModulus = (input.hubElasticModulus as number | undefined) ?? hubValues?.elasticModulusPa;
+    const shaftElasticModulus = (input.shaftElasticModulus as number | undefined) ?? shaftValues?.elasticModulusPa;
+    if (!hubElasticModulus || !shaftElasticModulus) {
+      return failure(
+        "press_fit",
+        "Provide hubElasticModulus and shaftElasticModulus, or known hubMaterial and shaftMaterial.",
+        input,
+      );
+    }
+
+    try {
+      const computation = analyzePressFit({
+        hubOuterDiameter: input.hubOuterDiameter as number,
+        interfaceDiameter: input.interfaceDiameter as number,
+        shaftInnerDiameter: input.shaftInnerDiameter as number | undefined,
+        hubLength: input.hubLength as number,
+        diametralInterference: input.diametralInterference as number,
+        hubElasticModulus,
+        hubPoissonRatio: input.hubPoissonRatio as number | undefined,
+        hubYieldStrength: (input.hubYieldStrength as number | undefined) ?? hubValues?.yieldStrengthPa,
+        shaftElasticModulus,
+        shaftPoissonRatio: input.shaftPoissonRatio as number | undefined,
+        shaftYieldStrength: (input.shaftYieldStrength as number | undefined) ?? shaftValues?.yieldStrengthPa,
+        frictionCoefficient: input.frictionCoefficient as number | undefined,
+        appliedAxialForce: input.appliedAxialForce as number | undefined,
+      });
+      return buildResult(ctx, "press_fit", computation, input.outputUnits as Record<string, string> | undefined);
+    } catch (error) {
+      return failure("press_fit", error instanceof Error ? error.message : String(error), input);
+    }
+  };
+}
+
 function stressHandler(ctx: AppContext): Handler {
   return (input) => {
     const mode = input.mode as "principal" | "cartesian";
@@ -445,6 +492,7 @@ export function createHandlers(ctx: AppContext): Record<string, Handler> {
     shaft_analysis: shaftHandler(ctx),
     spring_design: springHandler(ctx),
     bearing_life: bearingHandler(ctx),
+    press_fit: pressFitHandler(ctx),
     von_mises: stressHandler(ctx),
     unit_convert: unitConvertHandler(ctx),
     material_lookup: materialHandler(ctx),

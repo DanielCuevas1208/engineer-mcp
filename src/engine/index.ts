@@ -1,4 +1,5 @@
 export { analyzeBeam, BEAM_METHOD, type BeamInput, type BeamLoad, type BeamSupport } from "./beam.js";
+export { analyzePressFit, planeStressVonMises, PRESS_FIT_METHOD, type FitInput } from "./fit.js";
 export { analyzeBearing, BEARING_METHOD, equivalentLoad, type BearingInput, type BearingType } from "./bearing.js";
 export { analyzeBolt, BOLT_METHOD, tensileStressArea, type BoltGradeData, type BoltInput } from "./bolt.js";
 export { computeSection, SECTION_METHOD, type SectionDef, type SectionProperties } from "./sections.js";

@@ -22,6 +22,7 @@ The release covers these domains:
 - Helical compression spring design.
 - Shaft torsion and first critical speed.
 - Bearing rating life to ISO 281.
+- Interference fit analysis by Lamé thick-cylinder theory.
 - von Mises equivalent stress.
 - Cross-section properties.
 - Dimension-safe unit conversion.
@@ -52,6 +53,7 @@ Warnings surface when a method uses an approximation.
 | `spring_design` | Spring rate, shear stress, and safety factor of a compression spring. |
 | `shaft_analysis` | Torsion stress, twist, and critical speed. |
 | `bearing_life` | ISO 281 rating life in revolutions and hours. |
+| `press_fit` | Contact pressure, stresses, and torque capacity of an interference fit. |
 | `von_mises` | Equivalent stress and yield safety factor. |
 | `unit_convert` | Conversion between compatible units. |
 | `material_lookup` | Curated mechanical properties of materials. |
@@ -147,6 +149,26 @@ References:
   - Machinery's Handbook (Thirty-first edition)
 ```
 
+A call to `press_fit` for a hardened-steel hub pressed onto a solid shaft with 0.05 mm of diametral interference:
+
+```text
+Interface contact pressure                157.5 MPa
+Hub tangential stress                    262.5 MPa
+Shaft tangential stress                 -157.5 MPa
+Radial stress at interface              -157.5 MPa
+Hub von Mises stress                     367.5 MPa
+Shaft von Mises stress                   157.5 MPa
+Press-in force                           55.67 kN
+Torque capacity                          695.8 N·m
+
+Method: Interference fit by Lamé thick-cylinder theory
+Formula: p = u / (r ((1/Eh)((ro^2+r^2)/(ro^2-r^2)+nh) + (1/Es)((r^2+ri^2)/(r^2-ri^2)-ns))), u = I/2, ...
+References:
+  - Shigley's Mechanical Engineering Design (Tenth edition, 2015)
+  - Machinery's Handbook (Thirty-first edition)
+  - Roark's Formulas for Stress and Strain (Eighth edition, 2011)
+```
+
 A call to `unit_convert` with a torque-to-energy request fails safely:
 
 ```text
@@ -169,7 +191,7 @@ Use a unit of the same quantity.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, and the tools.
 
-- 98 tests across 10 files.
+- 115 tests across 11 files.
 - All tests pass on Node 22 and Node 24.
 - The CI workflow runs typecheck, tests, build, demo, and a package check.
 
@@ -184,6 +206,8 @@ Run `npm test` to reproduce the results.
 - The critical speed is a first-mode approximation.
 - The spring design covers static round-wire springs only.
   It does not estimate fatigue life for cyclic loads.
+- The press fit uses plane stress and assumes a uniform friction coefficient.
+  It ignores rotation, temperature, and surface roughness effects.
 - The built-in SQLite module of Node.js is still experimental.
 
 Check the cited sources for exact values.
@@ -197,11 +221,12 @@ Each release stays useful on its own.
 
 - Helical compression spring design.
   The `spring_design` tool reports the spring rate, the shear stress, and the safety factor.
+- Press-fit and interference-fit analysis.
+  The `press_fit` tool reports the contact pressure, the stresses, the press-in force, and the torque capacity.
 
 ### Remaining
 
 - Add fatigue analysis for cyclic loads.
-- Add press-fit and interference-fit calculators.
 - Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport.
 - Add a catalog of ISO and DIN standard sections.

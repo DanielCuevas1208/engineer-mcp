@@ -41,11 +41,11 @@ Engineer MCP grows in independent releases. Each release stays useful on its own
 ### Complete
 
 - Helical compression spring design. The `spring_design` tool computes the spring rate, the shear stress, and the safety factor.
+- Press-fit and interference-fit analysis. The `press_fit` tool computes the contact pressure, the stresses, the press-in force, and the torque capacity.
 
 ### Remaining
 
 - Add fatigue analysis for cyclic loads.
-- Add press-fit and interference-fit calculators.
 - Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport in addition to stdio.
 - Add a catalog of ISO and DIN standard sections.
