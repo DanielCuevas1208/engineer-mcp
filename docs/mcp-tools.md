@@ -146,6 +146,27 @@ Inputs:
 - Cartesian mode uses `sigmaX`, `sigmaY`, `sigmaZ`, `tauXY`, `tauXZ`, `tauYZ`.
 - `yieldStrength`: enables the safety factor.
 
+## fatigue_analysis
+
+Compute the fatigue safety factor, corrected endurance limit, and predicted life of a fluctuating stress state.
+
+The tool defaults to the modified Goodman criterion. It also supports Gerber, Soderberg, and ASME-elliptic criteria.
+
+The endurance limit defaults to 0.5 x ultimate strength for steel. Supply a tested value when you have one.
+
+Inputs:
+
+- `material`: material name from the database. Provides the ultimate and yield strength.
+- `ultimateStrength`: ultimate tensile strength in pascals. Required when no material is set.
+- `yieldStrength`: tensile yield strength in pascals. Required for Soderberg and ASME-elliptic.
+- `enduranceLimit`: tested endurance limit in pascals. Defaults to the steel estimate.
+- `stressAmplitude`: alternating stress in pascals.
+- `meanStress`: mean stress in pascals. The default is zero.
+- `surfaceFactor`, `sizeFactor`, `loadFactor`, `temperatureFactor`, `reliabilityFactor`, `miscellaneousFactor`: Marin correction factors. Each defaults to 1.
+- `criterion`: `goodman`, `gerber`, `soderberg`, or `asme_elliptic`. The default is `goodman`.
+
+The tool warns when it estimates the endurance limit. It warns when the predicted life falls below 10^3 cycles.
+
 ## unit_convert
 
 Convert a value between two units.

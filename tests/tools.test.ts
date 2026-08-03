@@ -13,6 +13,7 @@ type Handlers = {
   shaft_analysis: Handler;
   bearing_life: Handler;
   von_mises: Handler;
+  fatigue_analysis: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
 };
@@ -31,7 +32,7 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("tool registry", () => {
-  it("registers all nine tools", () => {
+  it("registers all ten tools", () => {
     expect(listTools().sort()).toEqual(
       [
         "beam_bending",
@@ -41,6 +42,7 @@ describe("tool registry", () => {
         "shaft_analysis",
         "bearing_life",
         "von_mises",
+        "fatigue_analysis",
         "unit_convert",
         "material_lookup",
       ].sort(),
@@ -280,6 +282,41 @@ describe("von_mises tool", () => {
   it("rejects cartesian mode without sigmaX and sigmaY", () => {
     setup();
     const response = handlers.von_mises({ mode: "cartesian", sigmaX: 100e6 });
+    expect(response.ok).toBe(false);
+  });
+});
+
+describe("fatigue_analysis tool", () => {
+  it("computes a fatigue factor from a material", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      material: "Alloy steel 42CrMo4",
+      stressAmplitude: 200e6,
+      meanStress: 100e6,
+      outputUnits: { correctedEnduranceLimit: "MPa" },
+    });
+    const result = expectOk(response);
+    const corrected = result.quantities.find((q) => q.key === "correctedEnduranceLimit");
+    expect(corrected?.unit).toBe("MPa");
+    expect(result.safetyFactor?.value).toBeGreaterThan(0);
+    expect(result.references.length).toBeGreaterThan(0);
+  });
+
+  it("rejects an unknown material", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      material: "Unobtainium",
+      stressAmplitude: 200e6,
+    });
+    expect(response.ok).toBe(false);
+    if (!response.ok) {
+      expect(response.error).toContain("Unknown material");
+    }
+  });
+
+  it("requires the ultimate strength when no material is set", () => {
+    setup();
+    const response = handlers.fatigue_analysis({ stressAmplitude: 200e6 });
     expect(response.ok).toBe(false);
   });
 });

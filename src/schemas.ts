@@ -120,6 +120,53 @@ export const stressSchema = z.object({
   yieldStrength: z.number().positive().optional().describe("Tensile yield strength in pascals. Enables the safety factor."),
 });
 
+export const fatigueSchema = z.object({
+  material: z
+    .string()
+    .optional()
+    .describe("Material name from the database. Provides the ultimate and yield strength."),
+  ultimateStrength: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Ultimate tensile strength in pascals. Required when no material is set."),
+  yieldStrength: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Tensile yield strength in pascals. Required for the soderberg and asme_elliptic criteria."),
+  enduranceLimit: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Tested endurance limit in pascals. Defaults to 0.5 x ultimate strength for steel."),
+  stressAmplitude: z.number().nonnegative().describe("Alternating stress amplitude in pascals."),
+  meanStress: z.number().optional().describe("Mean stress in pascals. Defaults to zero."),
+  surfaceFactor: z.number().positive().optional().describe("Surface condition factor. Polished surfaces take 1. Defaults to 1."),
+  sizeFactor: z.number().positive().optional().describe("Size factor for parts larger than the test specimen. Defaults to 1."),
+  loadFactor: z.number().positive().optional().describe("Load factor. Bending takes 1, axial about 0.7, torsion about 0.577. Defaults to 1."),
+  temperatureFactor: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Temperature factor. Stays at 1 near room temperature. Defaults to 1."),
+  reliabilityFactor: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Reliability factor. About 0.9 for 90% reliability. Defaults to 1."),
+  miscellaneousFactor: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Miscellaneous effects factor for stress concentration or surface treatments. Defaults to 1."),
+  criterion: z
+    .enum(["goodman", "gerber", "soderberg", "asme_elliptic"])
+    .optional()
+    .describe("Mean-stress correction criterion. Defaults to goodman."),
+  outputUnits,
+});
+
 export const unitConvertSchema = z.object({
   value: z.number().describe("Numeric value to convert."),
   from: z.string().describe("Source unit symbol. Examples: MPa, mm, lbf, degC."),
@@ -138,5 +185,6 @@ export type SpringInput = z.infer<typeof springSchema>;
 export type BearingInput = z.infer<typeof bearingSchema>;
 export type SectionPropsInput = z.infer<typeof sectionPropsSchema>;
 export type StressInput = z.infer<typeof stressSchema>;
+export type FatigueInput = z.infer<typeof fatigueSchema>;
 export type UnitConvertInput = z.infer<typeof unitConvertSchema>;
 export type MaterialInput = z.infer<typeof materialSchema>;

@@ -40,11 +40,18 @@ Engineer MCP grows in independent releases. Each release stays useful on its own
 
 ### Complete
 
+- Beam bending stress, deflection, and safety factor. The `beam_bending` tool covers point and uniform loads on two supports.
+- Cross-section properties. The `section_properties` tool covers five common shapes.
+- ISO 898 bolt tensile design. The `bolt_strength` tool reports stress area, preload, and capacity.
 - Helical compression spring design. The `spring_design` tool computes the spring rate, the shear stress, and the safety factor.
+- Shaft torsion and critical speed. The `shaft_analysis` tool covers solid and hollow shafts.
+- ISO 281 bearing rating life. The `bearing_life` tool reports life in revolutions and hours.
+- von Mises equivalent stress. The `von_mises` tool covers principal and cartesian stress states.
+- Fatigue analysis for cyclic loads. The `fatigue_analysis` tool reports the corrected endurance limit, the safety factor by four criteria, and the predicted life.
+- Dimension-safe unit conversion and material lookup.
 
 ### Remaining
 
-- Add fatigue analysis for cyclic loads.
 - Add press-fit and interference-fit calculators.
 - Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport in addition to stdio.

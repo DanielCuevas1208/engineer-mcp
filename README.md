@@ -6,7 +6,7 @@
 [![Node](https://img.shields.io/badge/Node-%3E%3D22.13-brightgreen.svg)](package.json)
 
 Engineer MCP is a Model Context Protocol server for mechanical-engineering calculations.
-It gives coding agents verified answers for beams, bolts, springs, shafts, bearings, stress, sections, and units.
+It gives coding agents verified answers for beams, bolts, springs, shafts, bearings, fatigue, stress, sections, and units.
 Every result shows the formula, the method, and the source.
 
 ## What it provides
@@ -23,6 +23,7 @@ The release covers these domains:
 - Shaft torsion and first critical speed.
 - Bearing rating life to ISO 281.
 - von Mises equivalent stress.
+- Fatigue life and safety factor for cyclic stress.
 - Cross-section properties.
 - Dimension-safe unit conversion.
 - Material property lookup.
@@ -38,7 +39,7 @@ The unit layer knows the dimension of every unit.
 It rejects a conversion between incompatible quantities.
 For example, it rejects a torque-to-energy conversion.
 
-Safety factors appear only when you provide a yield strength.
+Yield-based safety factors appear only when you provide a yield strength.
 The tool never hides an assumption.
 Warnings surface when a method uses an approximation.
 
@@ -53,6 +54,7 @@ Warnings surface when a method uses an approximation.
 | `shaft_analysis` | Torsion stress, twist, and critical speed. |
 | `bearing_life` | ISO 281 rating life in revolutions and hours. |
 | `von_mises` | Equivalent stress and yield safety factor. |
+| `fatigue_analysis` | Fatigue safety factor, endurance limit, and predicted life for cyclic loads. |
 | `unit_convert` | Conversion between compatible units. |
 | `material_lookup` | Curated mechanical properties of materials. |
 
@@ -154,6 +156,24 @@ Error: Category mismatch: N·m is torque, J is energy.
 Use a unit of the same quantity.
 ```
 
+A call to `fatigue_analysis` for an S355 steel part with 180 MPa alternating stress and 40 MPa mean stress:
+
+```text
+Base endurance limit                     245 MPa
+Endurance correction factor             0.765
+Corrected endurance limit              187.4 MPa
+Fatigue strength at 10^3 cycles         441 MPa
+Equivalent fully reversed amplitude       196 MPa
+Predicted fatigue life                696874 cycles
+Fatigue safety factor                  0.9597
+
+Method: Fatigue analysis for fluctuating stress
+Formula: Se' = 0.5 Sut, Se = ka kb kc kd ke kf Se', Goodman: n = 1/(sa/Se + sm/Sut)
+References:
+  - Shigley's Mechanical Engineering Design (Tenth edition, 2015)
+  - Machinery's Handbook (Thirty-first edition)
+```
+
 ## Development
 
 | Command | Purpose |
@@ -169,7 +189,7 @@ Use a unit of the same quantity.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, and the tools.
 
-- 98 tests across 10 files.
+- 130 tests across 11 files.
 - All tests pass on Node 22 and Node 24.
 - The CI workflow runs typecheck, tests, build, demo, and a package check.
 
@@ -183,7 +203,10 @@ Run `npm test` to reproduce the results.
 - The bearing factors are typical values for deep-groove ball bearings.
 - The critical speed is a first-mode approximation.
 - The spring design covers static round-wire springs only.
-  It does not estimate fatigue life for cyclic loads.
+  Use `fatigue_analysis` for cyclic loads.
+- The fatigue analysis uses the stress-life method.
+  It assumes a fully reversed load corrected for the mean stress.
+  It estimates the endurance limit for steel unless you supply a tested value.
 - The built-in SQLite module of Node.js is still experimental.
 
 Check the cited sources for exact values.
@@ -195,12 +218,19 @@ Each release stays useful on its own.
 
 ### Complete
 
+- Beam bending stress, deflection, and safety factor.
+- Cross-section properties for five common shapes.
+- ISO 898 bolt tensile design.
 - Helical compression spring design.
-  The `spring_design` tool reports the spring rate, the shear stress, and the safety factor.
+- Shaft torsion and first lateral critical speed.
+- ISO 281 bearing rating life.
+- von Mises equivalent stress.
+- Fatigue analysis for cyclic loads.
+  The `fatigue_analysis` tool reports the corrected endurance limit, the safety factor by four criteria, and the predicted life.
+- Dimension-safe unit conversion and material lookup.
 
 ### Remaining
 
-- Add fatigue analysis for cyclic loads.
 - Add press-fit and interference-fit calculators.
 - Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport.
