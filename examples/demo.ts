@@ -70,6 +70,7 @@ type ToolHandlers = {
   beam_bending: Handler;
   section_properties: Handler;
   bolt_strength: Handler;
+  spring_design: Handler;
   shaft_analysis: Handler;
   bearing_life: Handler;
   von_mises: Handler;
@@ -83,6 +84,7 @@ const tools: NamedHandler[] = [
   ["beam_bending", toolHandlers.beam_bending],
   ["section_properties", toolHandlers.section_properties],
   ["bolt_strength", toolHandlers.bolt_strength],
+  ["spring_design", toolHandlers.spring_design],
   ["shaft_analysis", toolHandlers.shaft_analysis],
   ["bearing_life", toolHandlers.bearing_life],
   ["von_mises", toolHandlers.von_mises],
@@ -109,6 +111,17 @@ const inputs: Array<Record<string, unknown>> = [
     propertyClass: "8.8",
     axialLoad: 30000,
     outputUnits: { recommendedPreload: "kN" },
+  },
+  {
+    wireDiameter: 0.008,
+    meanDiameter: 0.04,
+    activeCoils: 4,
+    endType: "squared_ground",
+    freeLength: 0.09,
+    load: 2000,
+    shearModulus: 79.3e9,
+    shearYieldStrength: 700e6,
+    outputUnits: { maxShearStress: "MPa", springRate: "N/mm", deflection: "mm", solidHeight: "mm", workingLength: "mm" },
   },
   {
     outerDiameter: 0.05,

@@ -1,11 +1,12 @@
 # Engineer MCP
 
+[![CI](https://github.com/DanielCuevas1208/engineer-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/DanielCuevas1208/engineer-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 [![Node](https://img.shields.io/badge/Node-%3E%3D22.13-brightgreen.svg)](package.json)
 
 Engineer MCP is a Model Context Protocol server for mechanical-engineering calculations.
-It gives coding agents verified answers for beams, bolts, shafts, bearings, stress, sections, and units.
+It gives coding agents verified answers for beams, bolts, springs, shafts, bearings, stress, sections, and units.
 Every result shows the formula, the method, and the source.
 
 ## What it provides
@@ -18,6 +19,7 @@ The release covers these domains:
 
 - Beam bending stress and deflection.
 - Bolt tensile design to ISO 898.
+- Helical compression spring design.
 - Shaft torsion and first critical speed.
 - Bearing rating life to ISO 281.
 - von Mises equivalent stress.
@@ -47,6 +49,7 @@ Warnings surface when a method uses an approximation.
 | `beam_bending` | Bending stress, deflection, and safety factor. |
 | `section_properties` | Area, inertia, and section modulus of a shape. |
 | `bolt_strength` | Stress area, preload, and capacity of a bolt. |
+| `spring_design` | Spring rate, shear stress, and safety factor of a compression spring. |
 | `shaft_analysis` | Torsion stress, twist, and critical speed. |
 | `bearing_life` | ISO 281 rating life in revolutions and hours. |
 | `von_mises` | Equivalent stress and yield safety factor. |
@@ -124,6 +127,26 @@ References:
   - Mechanics of Materials (Euler-Bernoulli beam theory)
 ```
 
+A call to `spring_design` for a steel spring under 2 kN with squared and ground ends:
+
+```text
+Spring index                              5
+Wahl factor                            1.31
+Total coils                               6
+Solid height                             48 mm
+Spring rate                           158.6 N/mm
+Deflection at load                    12.61 mm
+Working length                        77.39 mm
+Maximum shear stress                  521.4 MPa
+Spring safety factor                  1.342
+
+Method: Helical compression spring design
+Formula: C = D/d, K_w = (4C-1)/(4C-4) + 0.615/C, tau = K_w 8FD/(pi d^3), k = G d^4/(8 D^3 Na), delta = F/k, Ls = d Nt
+References:
+  - Shigley's Mechanical Engineering Design (Tenth edition, 2015)
+  - Machinery's Handbook (Thirty-first edition)
+```
+
 A call to `unit_convert` with a torque-to-energy request fails safely:
 
 ```text
@@ -146,9 +169,9 @@ Use a unit of the same quantity.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, and the tools.
 
-- 73 tests across 9 files.
+- 98 tests across 10 files.
 - All tests pass on Node 22 and Node 24.
-- The CI workflow runs typecheck, tests, build, and demo.
+- The CI workflow runs typecheck, tests, build, demo, and a package check.
 
 Run `npm test` to reproduce the results.
 
@@ -159,6 +182,8 @@ Run `npm test` to reproduce the results.
 - The bolt tables cover coarse metric threads from M5 to M36.
 - The bearing factors are typical values for deep-groove ball bearings.
 - The critical speed is a first-mode approximation.
+- The spring design covers static round-wire springs only.
+  It does not estimate fatigue life for cyclic loads.
 - The built-in SQLite module of Node.js is still experimental.
 
 Check the cited sources for exact values.
@@ -168,10 +193,18 @@ Check the cited sources for exact values.
 The server grows in independent releases.
 Each release stays useful on its own.
 
+### Complete
+
+- Helical compression spring design.
+  The `spring_design` tool reports the spring rate, the shear stress, and the safety factor.
+
+### Remaining
+
 - Add fatigue analysis for cyclic loads.
-- Add press-fit and spring calculators.
-- Add more unit categories.
+- Add press-fit and interference-fit calculators.
+- Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport.
+- Add a catalog of ISO and DIN standard sections.
 
 See [docs/integration.md](docs/integration.md) for the EngineerKit plan.
 

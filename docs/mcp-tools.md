@@ -76,6 +76,40 @@ Inputs:
 - `preloadFraction`: preload as a fraction of proof load. The default is `0.75`.
 - `pitchMm`: thread pitch. The default comes from the database.
 
+## spring_design
+
+Compute the geometry, spring rate, shear stress, and safety factor of a helical compression spring.
+
+The tool uses the Wahl factor for the shear stress. It follows Shigley for the coil counts and the solid height.
+
+Inputs:
+
+- `wireDiameter`: wire diameter in metres.
+- `meanDiameter`: mean coil diameter in metres.
+- `activeCoils`: number of active coils.
+- `endType`: `plain`, `plain_ground`, `squared`, or `squared_ground`. The default is `squared_ground`.
+- `freeLength`: free length in metres.
+- `load`: applied axial load in newtons. Zero checks the geometry only.
+- `shearModulus`: shear modulus in pascals.
+- `shearYieldStrength`: torsional yield strength in pascals. Enables the safety factor.
+
+Example:
+
+```json
+{
+  "wireDiameter": 0.008,
+  "meanDiameter": 0.04,
+  "activeCoils": 4,
+  "endType": "squared_ground",
+  "freeLength": 0.09,
+  "load": 2000,
+  "shearModulus": 79300000000,
+  "shearYieldStrength": 700000000
+}
+```
+
+The tool warns on a spring index below 4 or above 12. It warns when the free-length ratio risks buckling. It warns when the load compresses the spring to solid height.
+
 ## shaft_analysis
 
 Compute the torsion stress, angle of twist, and first lateral critical speed of a shaft.

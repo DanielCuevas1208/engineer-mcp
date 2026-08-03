@@ -38,9 +38,14 @@ This server follows semantic versioning. Breaking a tool signature or the result
 
 Engineer MCP grows in independent releases. Each release stays useful on its own.
 
+### Complete
+
+- Helical compression spring design. The `spring_design` tool computes the spring rate, the shear stress, and the safety factor.
+
+### Remaining
+
 - Add fatigue analysis for cyclic loads.
 - Add press-fit and interference-fit calculators.
-- Add a spring calculator for helical compression springs.
 - Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport in addition to stdio.
 - Add a catalog of ISO and DIN standard sections.

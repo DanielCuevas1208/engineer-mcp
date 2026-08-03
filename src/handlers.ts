@@ -4,9 +4,11 @@ import {
   analyzeBearing,
   analyzeBolt,
   analyzeShaft,
+  analyzeSpring,
   computeSection,
   vonMises,
   type SectionDef,
+  type SpringEndType,
 } from "./engine/index.js";
 import type { Computation, MethodRecord, Quantity, ReferenceRecord, ToolFailure, ToolResponse, ToolResult } from "./types.js";
 import type { UnitOutcome } from "./units/index.js";
@@ -291,6 +293,26 @@ function shaftHandler(ctx: AppContext): Handler {
   };
 }
 
+function springHandler(ctx: AppContext): Handler {
+  return (input) => {
+    try {
+      const computation = analyzeSpring({
+        wireDiameter: input.wireDiameter as number,
+        meanDiameter: input.meanDiameter as number,
+        activeCoils: input.activeCoils as number,
+        endType: input.endType as SpringEndType | undefined,
+        freeLength: input.freeLength as number,
+        load: input.load as number,
+        shearModulus: input.shearModulus as number,
+        shearYieldStrength: input.shearYieldStrength as number | undefined,
+      });
+      return buildResult(ctx, "spring_design", computation, input.outputUnits as Record<string, string> | undefined);
+    } catch (error) {
+      return failure("spring_design", error instanceof Error ? error.message : String(error), input);
+    }
+  };
+}
+
 function bearingHandler(ctx: AppContext): Handler {
   return (input) => {
     try {
@@ -421,6 +443,7 @@ export function createHandlers(ctx: AppContext): Record<string, Handler> {
     section_properties: sectionPropsHandler(ctx),
     bolt_strength: boltHandler(ctx),
     shaft_analysis: shaftHandler(ctx),
+    spring_design: springHandler(ctx),
     bearing_life: bearingHandler(ctx),
     von_mises: stressHandler(ctx),
     unit_convert: unitConvertHandler(ctx),

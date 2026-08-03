@@ -76,6 +76,25 @@ export const shaftSchema = z.object({
   outputUnits,
 });
 
+export const springSchema = z.object({
+  wireDiameter: z.number().positive().describe("Wire diameter d in metres."),
+  meanDiameter: z.number().positive().describe("Mean coil diameter D in metres."),
+  activeCoils: z.number().positive().describe("Number of active coils Na."),
+  endType: z
+    .enum(["plain", "plain_ground", "squared", "squared_ground"])
+    .optional()
+    .describe("End condition. Sets the total coil count and solid height. Defaults to squared_ground."),
+  freeLength: z.number().positive().describe("Free length L0 in metres."),
+  load: z.number().min(0).describe("Applied axial load F in newtons. Zero checks the geometry only."),
+  shearModulus: z.number().positive().describe("Shear modulus G in pascals."),
+  shearYieldStrength: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Torsional yield strength Sys in pascals. Enables the safety factor."),
+  outputUnits,
+});
+
 export const bearingSchema = z.object({
   bearingType: z.enum(["ball", "roller"]).describe("Bearing type. Ball uses a life exponent of 3, roller uses 10/3."),
   dynamicLoadRating: z.number().positive().describe("Basic dynamic load rating C in newtons."),
@@ -115,6 +134,7 @@ export const materialSchema = z.object({
 export type BeamInput = z.infer<typeof beamSchema>;
 export type BoltInput = z.infer<typeof boltSchema>;
 export type ShaftInput = z.infer<typeof shaftSchema>;
+export type SpringInput = z.infer<typeof springSchema>;
 export type BearingInput = z.infer<typeof bearingSchema>;
 export type SectionPropsInput = z.infer<typeof sectionPropsSchema>;
 export type StressInput = z.infer<typeof stressSchema>;

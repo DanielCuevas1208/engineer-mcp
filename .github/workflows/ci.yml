@@ -38,3 +38,6 @@ jobs:
 
       - name: Verify the demo runs
         run: npm run demo
+
+      - name: Verify the package contents
+        run: npm pack --dry-run

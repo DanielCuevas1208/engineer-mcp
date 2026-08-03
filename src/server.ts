@@ -9,6 +9,7 @@ import {
   materialSchema,
   sectionPropsSchema,
   shaftSchema,
+  springSchema,
   stressSchema,
   unitConvertSchema,
 } from "./schemas.js";
@@ -33,6 +34,11 @@ const TOOL_SCHEMAS: Record<string, ToolDef> = {
   bolt_strength: {
     description: "Tensile stress area, proof strength, recommended preload, and safety factor for metric bolts.",
     schema: boltSchema,
+  },
+  spring_design: {
+    description:
+      "Helical compression spring geometry, spring rate, Wahl-corrected shear stress, and safety factor for round wire.",
+    schema: springSchema,
   },
   shaft_analysis: {
     description: "Torsion stress, angle of twist, and first lateral critical speed for solid or hollow shafts.",
