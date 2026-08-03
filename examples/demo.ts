@@ -90,6 +90,8 @@ const tools: NamedHandler[] = [
   ["von_mises", toolHandlers.von_mises],
   ["unit_convert", toolHandlers.unit_convert],
   ["unit_convert (torque to energy)", toolHandlers.unit_convert],
+  ["unit_convert (viscosity)", toolHandlers.unit_convert],
+  ["unit_convert (thermal conductivity)", toolHandlers.unit_convert],
   ["material_lookup", toolHandlers.material_lookup],
 ];
 
@@ -105,6 +107,7 @@ const inputs: Array<Record<string, unknown>> = [
   },
   {
     section: { shape: "i_beam", height: 0.3, flangeWidth: 0.15, flangeThickness: 0.012, webThickness: 0.008 },
+    outputUnits: { area: "cm2", secondMomentOfArea: "cm4", sectionModulus: "cm3" },
   },
   {
     nominalDiameterMm: 12,
@@ -154,6 +157,16 @@ const inputs: Array<Record<string, unknown>> = [
     value: 10,
     from: "N·m",
     to: "J",
+  },
+  {
+    value: 100,
+    from: "cP",
+    to: "Pa·s",
+  },
+  {
+    value: 205,
+    from: "W/(m·K)",
+    to: "BTU/(ft·h·degF)",
   },
   {
     query: "steel",

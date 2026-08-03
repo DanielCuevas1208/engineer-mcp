@@ -52,6 +52,7 @@ export const beamSchema = z.object({
 
 export const sectionPropsSchema = z.object({
   section: sectionSchema.describe("Cross-section shape and dimensions in metres."),
+  outputUnits,
 });
 
 export const boltSchema = z.object({
@@ -118,6 +119,7 @@ export const stressSchema = z.object({
   tauXZ: z.number().optional().describe("Shear stress in the xz plane, pascals."),
   tauYZ: z.number().optional().describe("Shear stress in the yz plane, pascals."),
   yieldStrength: z.number().positive().optional().describe("Tensile yield strength in pascals. Enables the safety factor."),
+  outputUnits,
 });
 
 export const unitConvertSchema = z.object({

@@ -55,6 +55,7 @@ Compute the area, moments of inertia, section moduli, and radius of gyration of 
 Inputs:
 
 - `section`: shape and dimensions in metres.
+- `outputUnits`: optional map of quantity key to requested output unit.
 
 Supported shapes:
 
@@ -145,6 +146,7 @@ Inputs:
 - Principal mode uses `sigma1`, `sigma2`, `sigma3`.
 - Cartesian mode uses `sigmaX`, `sigmaY`, `sigmaZ`, `tauXY`, `tauXZ`, `tauYZ`.
 - `yieldStrength`: enables the safety factor.
+- `outputUnits`: optional map of quantity key to requested output unit.
 
 ## unit_convert
 
@@ -157,6 +159,32 @@ Inputs:
 - `to`: target unit symbol.
 
 The converter rejects mismatched dimensions and mismatched quantity categories. For example, it rejects a torque-to-energy conversion.
+
+Supported categories:
+
+- Length: `m`, `mm`, `cm`, `km`, `in`, `ft`, `yd`, `mi`.
+- Mass: `kg`, `g`, `mg`, `t`, `lb`, `oz`.
+- Time: `s`, `ms`, `min`, `h`, `day`.
+- Angle: `rad`, `deg`, `rev`.
+- Temperature: `K`, `degC`, `degF`, `degR`.
+- Force: `N`, `kN`, `MN`, `lbf`, `kgf`, `dyn`.
+- Pressure: `Pa`, `kPa`, `MPa`, `GPa`, `bar`, `psi`, `ksi`, `atm`.
+- Torque: `N·m`, `kN·m`, `lbf·ft`, `lbf·in`, `kgf·m`.
+- Energy: `J`, `kJ`, `MJ`, `kWh`, `cal`, `kcal`, `BTU`.
+- Power: `W`, `kW`, `MW`, `hp`.
+- Velocity: `m/s`, `km/h`, `ft/s`, `mph`, `kn`.
+- Acceleration: `m/s2`, `g0`, `ft/s2`.
+- Area: `m2`, `mm2`, `cm2`, `in2`, `ft2`.
+- Volume: `m3`, `L`, `mL`, `cm3`, `in3`, `ft3`, `gal`.
+- Density: `kg/m3`, `g/cm3`, `lb/ft3`.
+- Stiffness: `N/m`, `N/mm`, `kN/m`, `lbf/in`.
+- Frequency: `Hz`, `rpm`, `kHz`.
+- Dynamic viscosity: `Pa·s`, `mPa·s`, `P`, `cP`, `lb/(ft·s)`, `lbf·s/ft2`.
+- Kinematic viscosity: `m2/s`, `mm2/s`, `St`, `cSt`, `ft2/s`.
+- Thermal conductivity: `W/(m·K)`, `W/(m·degC)`, `kW/(m·K)`, `BTU/(ft·h·degF)`, `kcal/(m·h·degC)`.
+- Heat flux: `W/m2`, `kW/m2`, `W/cm2`, `BTU/(ft2·h)`.
+- Heat transfer coefficient: `W/(m2·K)`, `W/(m2·degC)`, `BTU/(ft2·h·degF)`.
+- Second moment of area: `m4`, `cm4`, `mm4`, `in4`.
 
 ## material_lookup
 

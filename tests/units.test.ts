@@ -135,3 +135,39 @@ describe("stiffness units", () => {
     }
   });
 });
+
+describe("second moment of area units", () => {
+  it("converts cubic metres to cubic centimetres without confusion", () => {
+    const outcome = convertUnit(1, "m3", "cm3");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(1e6, 9);
+    }
+  });
+
+  it("converts metres to the fourth power to centimetres to the fourth power", () => {
+    const outcome = convertUnit(1, "m4", "cm4");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(1e8, 6);
+      expect(outcome.category).toBe("second moment of area");
+      expect(outcome.siSymbol).toBe("m4");
+    }
+  });
+
+  it("converts a real section inertia to centimetres to the fourth power", () => {
+    const outcome = convertUnit(8.871e-5, "m4", "cm4");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(8871, 0);
+    }
+  });
+
+  it("rejects a volume-to-second-moment conversion", () => {
+    const outcome = convertUnit(1, "m3", "m4");
+    expect(outcome.ok).toBe(false);
+    if (!outcome.ok) {
+      expect(outcome.error).toContain("Dimension mismatch");
+    }
+  });
+});

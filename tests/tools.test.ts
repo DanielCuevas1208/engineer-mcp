@@ -108,6 +108,18 @@ describe("section_properties tool", () => {
     expect(result.quantities.map((q) => q.key)).toContain("secondMomentOfArea");
     expect(result.quantities.map((q) => q.key)).toContain("sectionModulus");
   });
+
+  it("converts geometry quantities to requested output units", () => {
+    setup();
+    const response = handlers.section_properties({
+      section: { shape: "circle", diameter: 0.1 },
+      outputUnits: { area: "cm2", secondMomentOfArea: "cm4", sectionModulus: "cm3" },
+    });
+    const result = expectOk(response);
+    const area = result.quantities.find((q) => q.key === "area");
+    expect(area?.unit).toBe("cm2");
+    expect(area?.value).toBeCloseTo(78.5398, 3);
+  });
 });
 
 describe("bolt_strength tool", () => {
@@ -266,6 +278,21 @@ describe("von_mises tool", () => {
     setup();
     const response = handlers.von_mises({ mode: "principal", sigma1: 100e6, sigma2: 20e6, sigma3: -10e6 });
     expectOk(response);
+  });
+
+  it("converts stress to requested output units", () => {
+    setup();
+    const response = handlers.von_mises({
+      mode: "principal",
+      sigma1: 100e6,
+      sigma2: 20e6,
+      sigma3: -10e6,
+      outputUnits: { vonMisesStress: "MPa" },
+    });
+    const result = expectOk(response);
+    const stress = result.quantities.find((q) => q.key === "vonMisesStress");
+    expect(stress?.unit).toBe("MPa");
+    expect(stress?.value).toBeCloseTo(98.4886, 3);
   });
 
   it("rejects principal mode without all principal stresses", () => {

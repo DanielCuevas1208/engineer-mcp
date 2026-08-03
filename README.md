@@ -25,6 +25,7 @@ The release covers these domains:
 - von Mises equivalent stress.
 - Cross-section properties.
 - Dimension-safe unit conversion.
+- Fluid and thermal unit conversion.
 - Material property lookup.
 
 ## How results stay trustworthy
@@ -154,6 +155,32 @@ Error: Category mismatch: N·m is torque, J is energy.
 Use a unit of the same quantity.
 ```
 
+A call to `unit_convert` with a viscosity request:
+
+```text
+Converted value                         0.1 Pa·s
+  Value of 100 cP expressed in Pa·s.
+Value in SI                             0.1 Pa·s
+  Value of 100 cP in the SI base unit Pa·s.
+
+Method: Dimension-safe unit conversion
+Formula: converted = (value + offsetFrom) x factorFrom / factorTo - offsetTo
+```
+
+A call to `section_properties` with output unit requests:
+
+```text
+Cross-section area                    58.08 cm2
+Second moment of area (x-x)            8871 cm4
+Section modulus (x-x)                 591.4 cm3
+```
+
+The unit layer covers length, mass, time, angle, temperature, force,
+pressure, torque, energy, power, velocity, acceleration, area, volume,
+density, stiffness, frequency, dynamic viscosity, kinematic viscosity,
+thermal conductivity, heat flux, heat transfer coefficient, and second
+moment of area.
+
 ## Development
 
 | Command | Purpose |
@@ -169,7 +196,7 @@ Use a unit of the same quantity.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, and the tools.
 
-- 98 tests across 10 files.
+- 121 tests across 11 files.
 - All tests pass on Node 22 and Node 24.
 - The CI workflow runs typecheck, tests, build, demo, and a package check.
 
@@ -197,12 +224,14 @@ Each release stays useful on its own.
 
 - Helical compression spring design.
   The `spring_design` tool reports the spring rate, the shear stress, and the safety factor.
+- Fluid and thermal unit categories.
+  The unit layer converts dynamic and kinematic viscosity, thermal conductivity, heat flux, and heat transfer coefficient.
+  It also converts second moment of area for section properties.
 
 ### Remaining
 
 - Add fatigue analysis for cyclic loads.
 - Add press-fit and interference-fit calculators.
-- Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport.
 - Add a catalog of ISO and DIN standard sections.
 

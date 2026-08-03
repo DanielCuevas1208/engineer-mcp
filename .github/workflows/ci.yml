@@ -39,5 +39,10 @@ jobs:
       - name: Verify the demo runs
         run: npm run demo
 
+      - name: Smoke-test the CLI entry point
+        run: |
+          node dist/index.js --version
+          node dist/index.js --list | grep -q "beam_bending"
+
       - name: Verify the package contents
         run: npm pack --dry-run
