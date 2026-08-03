@@ -6,6 +6,7 @@ import {
   beamSchema,
   bearingSchema,
   boltSchema,
+  fatigueSchema,
   materialSchema,
   sectionPropsSchema,
   shaftSchema,
@@ -47,6 +48,11 @@ const TOOL_SCHEMAS: Record<string, ToolDef> = {
   bearing_life: {
     description: "ISO 281 basic rating life L10 for ball and roller bearings, in revolutions and hours.",
     schema: bearingSchema,
+  },
+  fatigue_analysis: {
+    description:
+      "Fatigue safety factor for a cyclic stress using the Goodman, Gerber, and Soderberg criteria with Shigley endurance-limit factors.",
+    schema: fatigueSchema,
   },
   von_mises: {
     description: "von Mises equivalent stress, maximum shear stress, and yield safety factor for a stress state.",

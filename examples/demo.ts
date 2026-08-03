@@ -73,6 +73,7 @@ type ToolHandlers = {
   spring_design: Handler;
   shaft_analysis: Handler;
   bearing_life: Handler;
+  fatigue_analysis: Handler;
   von_mises: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
@@ -87,6 +88,7 @@ const tools: NamedHandler[] = [
   ["spring_design", toolHandlers.spring_design],
   ["shaft_analysis", toolHandlers.shaft_analysis],
   ["bearing_life", toolHandlers.bearing_life],
+  ["fatigue_analysis", toolHandlers.fatigue_analysis],
   ["von_mises", toolHandlers.von_mises],
   ["unit_convert", toolHandlers.unit_convert],
   ["unit_convert (torque to energy)", toolHandlers.unit_convert],
@@ -136,6 +138,15 @@ const inputs: Array<Record<string, unknown>> = [
     equivalentLoad: 8500,
     speedRpm: 1500,
     requiredLifeHours: 20000,
+  },
+  {
+    meanStress: 100e6,
+    stressAmplitude: 200e6,
+    ultimateStrength: 1000e6,
+    yieldStrength: 700e6,
+    loading: "bending",
+    surfaceFinish: "machined",
+    outputUnits: { stressAmplitude: "MPa", meanStress: "MPa", enduranceLimit: "MPa" },
   },
   {
     mode: "cartesian",

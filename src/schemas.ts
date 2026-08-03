@@ -106,6 +106,36 @@ export const bearingSchema = z.object({
   outputUnits,
 });
 
+export const fatigueSchema = z.object({
+  meanStress: z
+    .number()
+    .describe("Mean stress Sm of the cycle in pascals. May be negative for a compressive mean."),
+  stressAmplitude: z.number().positive().describe("Alternating stress amplitude Sa of the cycle in pascals."),
+  ultimateStrength: z.number().positive().describe("Ultimate tensile strength Sut in pascals."),
+  yieldStrength: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Tensile yield strength Sy in pascals. Enables the Soderberg factor and the yield check."),
+  loading: z
+    .enum(["bending", "axial", "torsion"])
+    .optional()
+    .describe("Loading type. Sets the load factor. Defaults to bending."),
+  surfaceFinish: z
+    .enum(["ground", "machined", "cold_drawn", "hot_rolled", "as_forged"])
+    .optional()
+    .describe("Surface finish. Sets the surface factor. Defaults to machined."),
+  sizeFactor: z.number().positive().optional().describe("Marin size factor kb. Defaults to 1."),
+  temperatureFactor: z.number().positive().optional().describe("Marin temperature factor kd. Defaults to 1."),
+  reliabilityFactor: z.number().positive().optional().describe("Marin reliability factor ke. Defaults to 1."),
+  enduranceLimit: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Rotating-beam endurance limit Se' in pascals. Overrides the 0.5 Sut estimate."),
+  outputUnits,
+});
+
 export const stressSchema = z.object({
   mode: z.enum(["principal", "cartesian"]).describe("Stress input mode. Principal uses sigma1-3. Cartesian uses sigmaX, sigmaY, and shear terms."),
   sigma1: z.number().optional().describe("First principal stress in pascals. Required in principal mode."),
@@ -137,6 +167,7 @@ export type ShaftInput = z.infer<typeof shaftSchema>;
 export type SpringInput = z.infer<typeof springSchema>;
 export type BearingInput = z.infer<typeof bearingSchema>;
 export type SectionPropsInput = z.infer<typeof sectionPropsSchema>;
+export type FatigueInput = z.infer<typeof fatigueSchema>;
 export type StressInput = z.infer<typeof stressSchema>;
 export type UnitConvertInput = z.infer<typeof unitConvertSchema>;
 export type MaterialInput = z.infer<typeof materialSchema>;

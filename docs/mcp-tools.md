@@ -135,6 +135,45 @@ Inputs:
 - `speedRpm`: enables life in hours.
 - `requiredLifeHours`: enables the life margin.
 
+## fatigue_analysis
+
+Compute the fatigue safety factor of a cyclic stress state.
+The tool applies the Shigley endurance-limit factors and three mean-stress criteria.
+
+Inputs:
+
+- `meanStress`: mean stress Sm in pascals.
+  A negative value means a compressive mean.
+- `stressAmplitude`: alternating stress amplitude Sa in pascals.
+- `ultimateStrength`: ultimate tensile strength Sut in pascals.
+- `yieldStrength`: tensile yield strength Sy in pascals.
+  This enables the Soderberg factor and the yield check.
+- `loading`: `bending`, `axial`, or `torsion`.
+  The default is `bending`.
+- `surfaceFinish`: `ground`, `machined`, `cold_drawn`, `hot_rolled`, or `as_forged`.
+  The default is `machined`.
+- `sizeFactor`, `temperatureFactor`, `reliabilityFactor`: the Marin factors.
+  Each defaults to 1.
+- `enduranceLimit`: the rotating-beam endurance limit Se' in pascals.
+  This overrides the `0.5 Sut` estimate.
+
+The tool reports the stress ratio, the endurance limit, and the safety factor for each criterion.
+It reports a governing factor as the smallest of the criteria.
+It warns when the peak cycle stress exceeds the yield strength.
+
+Example:
+
+```json
+{
+  "meanStress": 100000000,
+  "stressAmplitude": 200000000,
+  "ultimateStrength": 1000000000,
+  "yieldStrength": 700000000,
+  "loading": "bending",
+  "surfaceFinish": "machined"
+}
+```
+
 ## von_mises
 
 Compute the von Mises equivalent stress and yield safety factor of a stress state.

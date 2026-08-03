@@ -22,6 +22,7 @@ The release covers these domains:
 - Helical compression spring design.
 - Shaft torsion and first critical speed.
 - Bearing rating life to ISO 281.
+- Fatigue life assessment for cyclic loads.
 - von Mises equivalent stress.
 - Cross-section properties.
 - Dimension-safe unit conversion.
@@ -52,6 +53,7 @@ Warnings surface when a method uses an approximation.
 | `spring_design` | Spring rate, shear stress, and safety factor of a compression spring. |
 | `shaft_analysis` | Torsion stress, twist, and critical speed. |
 | `bearing_life` | ISO 281 rating life in revolutions and hours. |
+| `fatigue_analysis` | Fatigue safety factor from the Goodman, Gerber, and Soderberg criteria. |
 | `von_mises` | Equivalent stress and yield safety factor. |
 | `unit_convert` | Conversion between compatible units. |
 | `material_lookup` | Curated mechanical properties of materials. |
@@ -147,6 +149,24 @@ References:
   - Machinery's Handbook (Thirty-first edition)
 ```
 
+A call to `fatigue_analysis` for a machined bending cycle on 42CrMo4 steel:
+
+```text
+Stress amplitude                        200 MPa
+Mean stress                             100 MPa
+Stress ratio                          -0.3333
+Endurance limit                       361.5 MPa
+Goodman safety factor                 1.531
+Gerber safety factor                  1.752
+Soderberg safety factor               1.437
+First-cycle yield safety factor       2.333
+
+Method: Fatigue life estimation for cyclic loading
+Formula: Se' = 0.5 Sut (Sut <= 1400 MPa), ka = a Sut^b, Se = ka kb kc kd ke Se', n = 1/(Sa/Se + Sm/Sut), n = 1/(Sa/Se + Sm/Sy)
+References:
+  - Shigley's Mechanical Engineering Design (Tenth edition, 2015)
+```
+
 A call to `unit_convert` with a torque-to-energy request fails safely:
 
 ```text
@@ -169,7 +189,7 @@ Use a unit of the same quantity.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, and the tools.
 
-- 98 tests across 10 files.
+- 119 tests across 11 files.
 - All tests pass on Node 22 and Node 24.
 - The CI workflow runs typecheck, tests, build, demo, and a package check.
 
@@ -184,6 +204,10 @@ Run `npm test` to reproduce the results.
 - The critical speed is a first-mode approximation.
 - The spring design covers static round-wire springs only.
   It does not estimate fatigue life for cyclic loads.
+  Use `fatigue_analysis` for the cyclic check.
+- The fatigue endurance limit uses the rotating-beam estimate for steel.
+  It assumes the material has no pre-existing cracks.
+  The surface and load factors are typical values.
 - The built-in SQLite module of Node.js is still experimental.
 
 Check the cited sources for exact values.
@@ -197,10 +221,11 @@ Each release stays useful on its own.
 
 - Helical compression spring design.
   The `spring_design` tool reports the spring rate, the shear stress, and the safety factor.
+- Fatigue analysis for cyclic loads.
+  The `fatigue_analysis` tool applies the Shigley endurance-limit factors and the Goodman, Gerber, and Soderberg criteria.
 
 ### Remaining
 
-- Add fatigue analysis for cyclic loads.
 - Add press-fit and interference-fit calculators.
 - Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport.

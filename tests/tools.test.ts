@@ -12,6 +12,7 @@ type Handlers = {
   spring_design: Handler;
   shaft_analysis: Handler;
   bearing_life: Handler;
+  fatigue_analysis: Handler;
   von_mises: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
@@ -31,7 +32,7 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("tool registry", () => {
-  it("registers all nine tools", () => {
+  it("registers all ten tools", () => {
     expect(listTools().sort()).toEqual(
       [
         "beam_bending",
@@ -40,6 +41,7 @@ describe("tool registry", () => {
         "spring_design",
         "shaft_analysis",
         "bearing_life",
+        "fatigue_analysis",
         "von_mises",
         "unit_convert",
         "material_lookup",
@@ -244,6 +246,49 @@ describe("bearing_life tool", () => {
     const result = expectOk(response);
     expect(result.quantities.find((q) => q.key === "l10Revolutions")?.value).toBeGreaterThan(0);
     expect(result.safetyFactor?.value).toBeGreaterThan(0);
+  });
+});
+
+describe("fatigue_analysis tool", () => {
+  it("computes the fatigue factors and converts units", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      meanStress: 100e6,
+      stressAmplitude: 200e6,
+      ultimateStrength: 1000e6,
+      yieldStrength: 700e6,
+      loading: "bending",
+      surfaceFinish: "machined",
+      outputUnits: { stressAmplitude: "MPa", meanStress: "MPa", enduranceLimit: "MPa" },
+    });
+    const result = expectOk(response);
+
+    expect(result.tool).toBe("fatigue_analysis");
+    expect(result.method.id).toBe("fatigue-analysis");
+    expect(result.references.length).toBeGreaterThan(0);
+    expect(result.references[0]).toHaveProperty("title");
+
+    const amplitude = result.quantities.find((q) => q.key === "stressAmplitude");
+    expect(amplitude?.unit).toBe("MPa");
+    expect(amplitude?.value).toBeCloseTo(200, 9);
+    const endurance = result.quantities.find((q) => q.key === "enduranceLimit");
+    expect(endurance?.unit).toBe("MPa");
+    expect(endurance?.value).toBeCloseTo(361.5318, 2);
+    expect(result.safetyFactor).toBeDefined();
+    expect(result.warnings.length).toBe(0);
+  });
+
+  it("reports a non-positive amplitude as a failure", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      meanStress: 0,
+      stressAmplitude: -5,
+      ultimateStrength: 1000e6,
+    });
+    expect(response.ok).toBe(false);
+    if (!response.ok) {
+      expect(response.error).toContain("stressAmplitude");
+    }
   });
 });
 
