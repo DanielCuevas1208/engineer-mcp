@@ -13,6 +13,7 @@ type Handlers = {
   shaft_analysis: Handler;
   bearing_life: Handler;
   von_mises: Handler;
+  fatigue_analysis: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
 };
@@ -31,7 +32,7 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("tool registry", () => {
-  it("registers all nine tools", () => {
+  it("registers all ten tools", () => {
     expect(listTools().sort()).toEqual(
       [
         "beam_bending",
@@ -41,6 +42,7 @@ describe("tool registry", () => {
         "shaft_analysis",
         "bearing_life",
         "von_mises",
+        "fatigue_analysis",
         "unit_convert",
         "material_lookup",
       ].sort(),
@@ -281,6 +283,44 @@ describe("von_mises tool", () => {
     setup();
     const response = handlers.von_mises({ mode: "cartesian", sigmaX: 100e6 });
     expect(response.ok).toBe(false);
+  });
+});
+
+describe("fatigue_analysis tool", () => {
+  it("computes fatigue factors with converted stress units", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      ultimateStrength: 1200e6,
+      yieldStrength: 950e6,
+      stressAmplitude: 200e6,
+      meanStress: 400e6,
+      enduranceLimit: 500e6,
+      outputUnits: { correctedEnduranceLimit: "MPa", peakStress: "MPa" },
+    });
+    const result = expectOk(response);
+
+    expect(result.tool).toBe("fatigue_analysis");
+    expect(result.method.id).toBe("fatigue-analysis");
+    expect(result.references.length).toBeGreaterThan(0);
+
+    const endurance = result.quantities.find((q) => q.key === "correctedEnduranceLimit");
+    expect(endurance?.unit).toBe("MPa");
+    expect(endurance?.value).toBeCloseTo(500, 6);
+    expect(result.safetyFactor).toBeDefined();
+  });
+
+  it("rejects the Soderberg criterion without a yield strength", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      ultimateStrength: 1200e6,
+      stressAmplitude: 200e6,
+      meanStress: 400e6,
+      criterion: "soderberg",
+    });
+    expect(response.ok).toBe(false);
+    if (!response.ok) {
+      expect(response.error).toContain("yieldStrength");
+    }
   });
 });
 

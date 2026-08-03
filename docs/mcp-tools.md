@@ -146,6 +146,45 @@ Inputs:
 - Cartesian mode uses `sigmaX`, `sigmaY`, `sigmaZ`, `tauXY`, `tauXZ`, `tauYZ`.
 - `yieldStrength`: enables the safety factor.
 
+## fatigue_analysis
+
+Compute fatigue safety factors for a fluctuating stress cycle.
+
+The tool returns every computable mean-stress criterion. Soderberg and ASME-elliptic need a yield strength. Goodman and Gerber need only the ultimate strength.
+
+The tool estimates the endurance limit as `0.5 x Sut` for steel when you do not supply one. It then applies the Marin factors for surface finish, size, load, temperature, reliability, and miscellaneous effects.
+
+The tool estimates the fatigue life from a fitted S-N curve. It reports infinite life when the equivalent amplitude stays below the corrected endurance limit.
+
+Inputs:
+
+- `ultimateStrength`: ultimate tensile strength Sut in pascals.
+- `stressAmplitude`: alternating stress amplitude in pascals.
+- `meanStress`: mean stress in pascals. The default is 0. A negative value is treated as zero.
+- `yieldStrength`: tensile yield strength in pascals. Enables the Soderberg and ASME-elliptic criteria.
+- `enduranceLimit`: rotating-beam endurance limit in pascals. The default is an estimate for steel.
+- `surfaceFinish`: `ground`, `machined`, `hot_rolled`, or `as_forged`. Sets the Marin surface factor.
+- `surfaceFactor`: explicit Marin surface factor. Overrides `surfaceFinish`.
+- `loading`: `bending`, `axial`, or `torsion`. Sets the Marin load factor.
+- `loadFactor`: explicit Marin load factor. Overrides `loading`.
+- `sizeFactor`, `temperatureFactor`, `reliabilityFactor`, `miscellaneousFactor`: other Marin factors. Each defaults to 1.
+- `criterion`: `soderberg`, `goodman`, `gerber`, or `asme_elliptic`. Sets the headline safety factor. The default is `goodman`.
+- `outputUnits`: optional unit overrides.
+
+Example:
+
+```json
+{
+  "ultimateStrength": 1200000000,
+  "yieldStrength": 950000000,
+  "stressAmplitude": 200000000,
+  "meanStress": 400000000,
+  "surfaceFinish": "machined"
+}
+```
+
+The tool warns when a safety factor falls below 1. It warns when the peak stress exceeds the yield strength. It warns when the predicted life falls below 10^3 cycles.
+
 ## unit_convert
 
 Convert a value between two units.

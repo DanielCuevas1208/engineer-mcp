@@ -3,12 +3,16 @@ import {
   analyzeBeam,
   analyzeBearing,
   analyzeBolt,
+  analyzeFatigue,
   analyzeShaft,
   analyzeSpring,
   computeSection,
   vonMises,
+  type FatigueCriterion,
+  type LoadingMode,
   type SectionDef,
   type SpringEndType,
+  type SurfaceFinish,
 } from "./engine/index.js";
 import type { Computation, MethodRecord, Quantity, ReferenceRecord, ToolFailure, ToolResponse, ToolResult } from "./types.js";
 import type { UnitOutcome } from "./units/index.js";
@@ -332,6 +336,32 @@ function bearingHandler(ctx: AppContext): Handler {
   };
 }
 
+function fatigueHandler(ctx: AppContext): Handler {
+  return (input) => {
+    try {
+      const computation = analyzeFatigue({
+        ultimateStrength: input.ultimateStrength as number,
+        yieldStrength: input.yieldStrength as number | undefined,
+        stressAmplitude: input.stressAmplitude as number,
+        meanStress: input.meanStress as number | undefined,
+        enduranceLimit: input.enduranceLimit as number | undefined,
+        surfaceFinish: input.surfaceFinish as SurfaceFinish | undefined,
+        surfaceFactor: input.surfaceFactor as number | undefined,
+        loading: input.loading as LoadingMode | undefined,
+        loadFactor: input.loadFactor as number | undefined,
+        sizeFactor: input.sizeFactor as number | undefined,
+        temperatureFactor: input.temperatureFactor as number | undefined,
+        reliabilityFactor: input.reliabilityFactor as number | undefined,
+        miscellaneousFactor: input.miscellaneousFactor as number | undefined,
+        criterion: input.criterion as FatigueCriterion | undefined,
+      });
+      return buildResult(ctx, "fatigue_analysis", computation, input.outputUnits as Record<string, string> | undefined);
+    } catch (error) {
+      return failure("fatigue_analysis", error instanceof Error ? error.message : String(error), input);
+    }
+  };
+}
+
 function stressHandler(ctx: AppContext): Handler {
   return (input) => {
     const mode = input.mode as "principal" | "cartesian";
@@ -446,6 +476,7 @@ export function createHandlers(ctx: AppContext): Record<string, Handler> {
     spring_design: springHandler(ctx),
     bearing_life: bearingHandler(ctx),
     von_mises: stressHandler(ctx),
+    fatigue_analysis: fatigueHandler(ctx),
     unit_convert: unitConvertHandler(ctx),
     material_lookup: materialHandler(ctx),
   };
