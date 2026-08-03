@@ -74,6 +74,7 @@ type ToolHandlers = {
   shaft_analysis: Handler;
   bearing_life: Handler;
   von_mises: Handler;
+  fatigue_analysis: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
 };
@@ -88,8 +89,10 @@ const tools: NamedHandler[] = [
   ["shaft_analysis", toolHandlers.shaft_analysis],
   ["bearing_life", toolHandlers.bearing_life],
   ["von_mises", toolHandlers.von_mises],
+  ["fatigue_analysis", toolHandlers.fatigue_analysis],
   ["unit_convert", toolHandlers.unit_convert],
   ["unit_convert (torque to energy)", toolHandlers.unit_convert],
+  ["unit_convert (dynamic to kinematic viscosity)", toolHandlers.unit_convert],
   ["material_lookup", toolHandlers.material_lookup],
 ];
 
@@ -146,6 +149,13 @@ const inputs: Array<Record<string, unknown>> = [
     outputUnits: { vonMisesStress: "MPa", maxShearStress: "MPa" },
   },
   {
+    meanStress: 100e6,
+    amplitudeStress: 80e6,
+    material: "Alloy steel 42CrMo4",
+    criterion: "all",
+    outputUnits: { meanStress: "MPa", amplitudeStress: "MPa", enduranceLimit: "MPa" },
+  },
+  {
     value: 1000,
     from: "psi",
     to: "MPa",
@@ -154,6 +164,11 @@ const inputs: Array<Record<string, unknown>> = [
     value: 10,
     from: "N·m",
     to: "J",
+  },
+  {
+    value: 1,
+    from: "Pa·s",
+    to: "cP",
   },
   {
     query: "steel",

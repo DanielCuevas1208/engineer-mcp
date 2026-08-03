@@ -146,6 +146,41 @@ Inputs:
 - Cartesian mode uses `sigmaX`, `sigmaY`, `sigmaZ`, `tauXY`, `tauXZ`, `tauYZ`.
 - `yieldStrength`: enables the safety factor.
 
+## fatigue_analysis
+
+Compute the fatigue safety factor of a part under constant-amplitude loading.
+
+The tool evaluates four failure criteria: Soderberg, modified Goodman, Gerber, and ASME-elliptic.
+It reports the governing factor and the first-cycle yield check.
+
+Inputs:
+
+- `meanStress`: mean component of the stress cycle in pascals. Compressive values are allowed.
+- `amplitudeStress`: alternating component in pascals. Zero means a steady load.
+- `material`: material name from the database. Provides the ultimate and yield strengths.
+- `ultimateStrength`: ultimate tensile strength in pascals. Required when material is not set.
+- `yieldStrength`: tensile yield strength in pascals. Enables the yield-based criteria.
+- `enduranceLimit`: fully reversed endurance limit in pascals. Defaults to half the ultimate strength, capped at 700 MPa.
+- `criterion`: one of `soderberg`, `goodman`, `gerber`, `asme_elliptic`, or `all`. Defaults to `all`.
+- `outputUnits`: optional unit overrides.
+
+Example:
+
+```json
+{
+  "meanStress": 100000000,
+  "amplitudeStress": 80000000,
+  "material": "Alloy steel 42CrMo4",
+  "outputUnits": { "meanStress": "MPa", "amplitudeStress": "MPa" }
+}
+```
+
+The tool warns when it estimates the endurance limit.
+It warns when the load is static.
+It warns when first-cycle yielding governs.
+The Soderberg and ASME-elliptic criteria need a yield strength.
+The other criteria do not.
+
 ## unit_convert
 
 Convert a value between two units.
@@ -156,7 +191,12 @@ Inputs:
 - `from`: source unit symbol.
 - `to`: target unit symbol.
 
-The converter rejects mismatched dimensions and mismatched quantity categories. For example, it rejects a torque-to-energy conversion.
+The converter rejects mismatched dimensions and mismatched quantity categories.
+For example, it rejects a torque-to-energy conversion.
+
+The registry covers length, mass, time, and temperature.
+It also covers force, pressure, torque, and energy.
+Other categories include power, velocity, area, volume, density, stiffness, frequency, viscosity, and thermal conductivity.
 
 ## material_lookup
 

@@ -13,6 +13,7 @@ type Handlers = {
   shaft_analysis: Handler;
   bearing_life: Handler;
   von_mises: Handler;
+  fatigue_analysis: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
 };
@@ -31,7 +32,7 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("tool registry", () => {
-  it("registers all nine tools", () => {
+  it("registers all ten tools", () => {
     expect(listTools().sort()).toEqual(
       [
         "beam_bending",
@@ -41,6 +42,7 @@ describe("tool registry", () => {
         "shaft_analysis",
         "bearing_life",
         "von_mises",
+        "fatigue_analysis",
         "unit_convert",
         "material_lookup",
       ].sort(),
@@ -316,5 +318,80 @@ describe("material_lookup tool", () => {
     setup();
     const response = handlers.material_lookup({ query: "adamantium" });
     expect(response.ok).toBe(false);
+  });
+});
+
+describe("fatigue_analysis tool", () => {
+  it("computes fatigue factors from explicit strengths", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      meanStress: 100e6,
+      amplitudeStress: 80e6,
+      ultimateStrength: 600e6,
+      yieldStrength: 450e6,
+      enduranceLimit: 250e6,
+    });
+    const result = expectOk(response);
+    expect(result.tool).toBe("fatigue_analysis");
+    expect(result.method.id).toBe("fatigue-analysis");
+    expect(result.references.length).toBeGreaterThan(0);
+    expect(result.safetyFactor).toBeDefined();
+    expect(result.safetyFactor?.value).toBeCloseTo(1.8443, 3);
+  });
+
+  it("takes strengths from a known material", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      meanStress: 60e6,
+      amplitudeStress: 120e6,
+      material: "Structural steel S355",
+      outputUnits: { enduranceLimit: "MPa" },
+    });
+    const result = expectOk(response);
+    const endurance = result.quantities.find((q) => q.key === "enduranceLimit");
+    expect(endurance?.unit).toBe("MPa");
+    expect(endurance?.value).toBeCloseTo(245, 3);
+    expect(result.warnings.some((w) => w.includes("Endurance limit estimated"))).toBe(true);
+  });
+
+  it("evaluates a single criterion", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      meanStress: 100e6,
+      amplitudeStress: 80e6,
+      ultimateStrength: 600e6,
+      yieldStrength: 450e6,
+      enduranceLimit: 250e6,
+      criterion: "gerber",
+    });
+    const result = expectOk(response);
+    const keys = result.quantities.map((q) => q.key);
+    expect(keys).toContain("gerberFactor");
+    expect(keys).not.toContain("goodmanFactor");
+  });
+
+  it("reports an unknown material", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      meanStress: 50e6,
+      amplitudeStress: 50e6,
+      material: "Unobtainium",
+    });
+    expect(response.ok).toBe(false);
+    if (!response.ok) {
+      expect(response.error).toContain("Unknown material");
+    }
+  });
+
+  it("rejects a missing ultimate strength", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      meanStress: 50e6,
+      amplitudeStress: 50e6,
+    });
+    expect(response.ok).toBe(false);
+    if (!response.ok) {
+      expect(response.error).toContain("ultimateStrength");
+    }
   });
 });

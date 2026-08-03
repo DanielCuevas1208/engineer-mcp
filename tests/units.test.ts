@@ -135,3 +135,58 @@ describe("stiffness units", () => {
     }
   });
 });
+
+describe("viscosity units", () => {
+  it("converts pascal seconds to centipoise", () => {
+    const outcome = convertUnit(1, "Pa·s", "cP");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(1000, 9);
+      expect(outcome.category).toBe("dynamic viscosity");
+      expect(outcome.siSymbol).toBe("Pa·s");
+    }
+  });
+
+  it("converts poise to pascal seconds", () => {
+    const outcome = convertUnit(1, "P", "Pa·s");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(0.1, 9);
+    }
+  });
+
+  it("converts stokes to centistokes", () => {
+    const outcome = convertUnit(1, "St", "cSt");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(100, 9);
+      expect(outcome.category).toBe("kinematic viscosity");
+      expect(outcome.siSymbol).toBe("m2/s");
+    }
+  });
+
+  it("rejects a dynamic-to-kinematic viscosity conversion", () => {
+    const outcome = convertUnit(1, "Pa·s", "m2/s");
+    expect(outcome.ok).toBe(false);
+  });
+});
+
+describe("thermal conductivity units", () => {
+  it("converts watts per metre kelvin to British thermal units", () => {
+    const outcome = convertUnit(1, "W/(m·K)", "BTU/(ft·h·°F)");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(1 / 1.73073467, 6);
+      expect(outcome.category).toBe("thermal conductivity");
+      expect(outcome.siSymbol).toBe("W/(m·K)");
+    }
+  });
+
+  it("rejects a thermal-conductivity to power conversion", () => {
+    const outcome = convertUnit(1, "W/(m·K)", "W");
+    expect(outcome.ok).toBe(false);
+    if (!outcome.ok) {
+      expect(outcome.error).toContain("Dimension mismatch");
+    }
+  });
+});

@@ -126,6 +126,38 @@ export const unitConvertSchema = z.object({
   to: z.string().describe("Target unit symbol. Examples: psi, m, N, degF."),
 });
 
+export const fatigueSchema = z.object({
+  meanStress: z.number().describe("Mean component of the stress cycle in pascals. Compressive values are allowed."),
+  amplitudeStress: z
+    .number()
+    .min(0)
+    .describe("Alternating component of the stress cycle in pascals. Zero means a steady load."),
+  material: z
+    .string()
+    .optional()
+    .describe("Material name from the database. Provides the ultimate and yield strengths."),
+  ultimateStrength: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Ultimate tensile strength in pascals. Required when material is not set."),
+  yieldStrength: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Tensile yield strength in pascals. Enables the Soderberg, ASME-elliptic, and first-cycle yield checks."),
+  enduranceLimit: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Fully reversed endurance limit in pascals. Defaults to half the ultimate strength, capped at 700 MPa."),
+  criterion: z
+    .enum(["soderberg", "goodman", "gerber", "asme_elliptic", "all"])
+    .optional()
+    .describe("Fatigue criterion to evaluate. Defaults to all."),
+  outputUnits,
+});
+
 export const materialSchema = z.object({
   query: z.string().min(1).describe("Material name or category to search. Matches are case-insensitive."),
   limit: z.number().int().min(1).max(50).optional().describe("Maximum number of rows to return. Defaults to 10."),
@@ -139,4 +171,5 @@ export type BearingInput = z.infer<typeof bearingSchema>;
 export type SectionPropsInput = z.infer<typeof sectionPropsSchema>;
 export type StressInput = z.infer<typeof stressSchema>;
 export type UnitConvertInput = z.infer<typeof unitConvertSchema>;
+export type FatigueInput = z.infer<typeof fatigueSchema>;
 export type MaterialInput = z.infer<typeof materialSchema>;

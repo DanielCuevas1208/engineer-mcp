@@ -3,15 +3,18 @@ import {
   DIM_ANGLE,
   DIM_AREA,
   DIM_DENSITY,
+  DIM_DYNAMIC_VISCOSITY,
   DIM_ENERGY,
   DIM_FORCE,
   DIM_FREQUENCY,
+  DIM_KINEMATIC_VISCOSITY,
   DIM_LENGTH,
   DIM_MASS,
   DIM_POWER,
   DIM_PRESSURE,
   DIM_STIFFNESS,
   DIM_TEMPERATURE,
+  DIM_THERMAL_CONDUCTIVITY,
   DIM_TIME,
   DIM_TORQUE,
   DIM_VELOCITY,
@@ -140,6 +143,19 @@ export const UNITS: UnitDef[] = [
   unit({ canonical: "Hz", name: "hertz", category: "frequency", dim: DIM_FREQUENCY, factor: 1 }),
   unit({ canonical: "rpm", name: "revolution per minute", category: "frequency", dim: DIM_FREQUENCY, factor: 1 / 60 }),
   unit({ canonical: "kHz", name: "kilohertz", category: "frequency", dim: DIM_FREQUENCY, factor: 1e3 }),
+
+  unit({ canonical: "Pa·s", aliases: ["N·s/m2", "Ns/m2", "kg/(m·s)"], name: "pascal second", category: "dynamic viscosity", dim: DIM_DYNAMIC_VISCOSITY, factor: 1 }),
+  unit({ canonical: "P", name: "poise", category: "dynamic viscosity", dim: DIM_DYNAMIC_VISCOSITY, factor: 0.1 }),
+  unit({ canonical: "cP", name: "centipoise", category: "dynamic viscosity", dim: DIM_DYNAMIC_VISCOSITY, factor: 1e-3 }),
+
+  unit({ canonical: "m2/s", name: "square metre per second", category: "kinematic viscosity", dim: DIM_KINEMATIC_VISCOSITY, factor: 1 }),
+  unit({ canonical: "St", name: "stokes", category: "kinematic viscosity", dim: DIM_KINEMATIC_VISCOSITY, factor: 1e-4 }),
+  unit({ canonical: "cSt", name: "centistokes", category: "kinematic viscosity", dim: DIM_KINEMATIC_VISCOSITY, factor: 1e-6 }),
+
+  unit({ canonical: "W/(m·K)", name: "watt per metre kelvin", category: "thermal conductivity", dim: DIM_THERMAL_CONDUCTIVITY, factor: 1 }),
+  unit({ canonical: "kW/(m·K)", name: "kilowatt per metre kelvin", category: "thermal conductivity", dim: DIM_THERMAL_CONDUCTIVITY, factor: 1e3 }),
+  unit({ canonical: "BTU/(ft·h·°F)", name: "British thermal unit per foot hour degree Fahrenheit", category: "thermal conductivity", dim: DIM_THERMAL_CONDUCTIVITY, factor: 1.73073467 }),
+  unit({ canonical: "cal/(cm·s·°C)", name: "calorie per centimetre second degree Celsius", category: "thermal conductivity", dim: DIM_THERMAL_CONDUCTIVITY, factor: 418.4 }),
 ];
 
 export function normalizeSymbol(symbol: string): string {
