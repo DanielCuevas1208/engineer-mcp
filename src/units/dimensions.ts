@@ -17,6 +17,7 @@ export const DIM_ACCELERATION: Dimension = [1, 0, -2, 0, 0];
 export const DIM_AREA: Dimension = [2, 0, 0, 0, 0];
 export const DIM_VOLUME: Dimension = [3, 0, 0, 0, 0];
 export const DIM_DENSITY: Dimension = [-3, 1, 0, 0, 0];
+export const DIM_STIFFNESS: Dimension = [0, 1, -2, 0, 0];
 export const DIM_FREQUENCY: Dimension = [0, 0, -1, 0, 0];
 
 export function dimensionsEqual(a: Dimension, b: Dimension): boolean {

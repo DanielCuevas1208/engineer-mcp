@@ -9,6 +9,7 @@ type Handlers = {
   beam_bending: Handler;
   section_properties: Handler;
   bolt_strength: Handler;
+  spring_design: Handler;
   shaft_analysis: Handler;
   bearing_life: Handler;
   von_mises: Handler;
@@ -30,12 +31,13 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("tool registry", () => {
-  it("registers all eight tools", () => {
+  it("registers all nine tools", () => {
     expect(listTools().sort()).toEqual(
       [
         "beam_bending",
         "section_properties",
         "bolt_strength",
+        "spring_design",
         "shaft_analysis",
         "bearing_life",
         "von_mises",
@@ -160,6 +162,72 @@ describe("shaft_analysis tool", () => {
       torque: 1000,
     });
     expect(response.ok).toBe(false);
+  });
+});
+
+describe("spring_design tool", () => {
+  it("computes a spring and converts its units", () => {
+    setup();
+    const response = handlers.spring_design({
+      wireDiameter: 0.008,
+      meanDiameter: 0.04,
+      activeCoils: 4,
+      endType: "squared_ground",
+      freeLength: 0.09,
+      load: 2000,
+      shearModulus: 79.3e9,
+      shearYieldStrength: 700e6,
+      outputUnits: { maxShearStress: "MPa", springRate: "N/mm", deflection: "mm", solidHeight: "mm", workingLength: "mm" },
+    });
+    const result = expectOk(response);
+
+    expect(result.tool).toBe("spring_design");
+    expect(result.method.id).toBe("spring-design");
+    expect(result.references.length).toBeGreaterThan(0);
+    expect(result.references[0]).toHaveProperty("title");
+
+    const stress = result.quantities.find((q) => q.key === "maxShearStress");
+    expect(stress?.unit).toBe("MPa");
+    expect(stress?.value).toBeCloseTo(521.4, 0);
+    const rate = result.quantities.find((q) => q.key === "springRate");
+    expect(rate?.unit).toBe("N/mm");
+    expect(rate?.value).toBeCloseTo(158.6, 0);
+    const deflection = result.quantities.find((q) => q.key === "deflection");
+    expect(deflection?.unit).toBe("mm");
+    expect(deflection?.value).toBeCloseTo(12.6, 0);
+    expect(result.safetyFactor).toBeDefined();
+    expect(result.warnings.length).toBe(0);
+  });
+
+  it("checks the geometry with a zero load", () => {
+    setup();
+    const response = handlers.spring_design({
+      wireDiameter: 0.004,
+      meanDiameter: 0.032,
+      activeCoils: 8,
+      freeLength: 0.16,
+      load: 0,
+      shearModulus: 79.3e9,
+    });
+    const result = expectOk(response);
+    expect(result.quantities.find((q) => q.key === "springRate")?.value).toBeGreaterThan(0);
+    expect(result.safetyFactor).toBeUndefined();
+  });
+
+  it("rejects a mean diameter that does not exceed the wire diameter", () => {
+    setup();
+    const response = handlers.spring_design({
+      wireDiameter: 0.01,
+      meanDiameter: 0.01,
+      activeCoils: 5,
+      freeLength: 0.1,
+      load: 100,
+      shearModulus: 79.3e9,
+    });
+    expect(response.ok).toBe(false);
+    if (!response.ok) {
+      expect(response.error).toContain("meanDiameter");
+    }
   });
 });
 

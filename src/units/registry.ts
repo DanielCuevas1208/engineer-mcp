@@ -10,6 +10,7 @@ import {
   DIM_MASS,
   DIM_POWER,
   DIM_PRESSURE,
+  DIM_STIFFNESS,
   DIM_TEMPERATURE,
   DIM_TIME,
   DIM_TORQUE,
@@ -130,6 +131,11 @@ export const UNITS: UnitDef[] = [
   unit({ canonical: "kg/m3", name: "kilogram per cubic metre", category: "density", dim: DIM_DENSITY, factor: 1 }),
   unit({ canonical: "g/cm3", name: "gram per cubic centimetre", category: "density", dim: DIM_DENSITY, factor: 1e3 }),
   unit({ canonical: "lb/ft3", name: "pound per cubic foot", category: "density", dim: DIM_DENSITY, factor: 16.01846337 }),
+
+  unit({ canonical: "N/m", name: "newton per metre", category: "stiffness", dim: DIM_STIFFNESS, factor: 1 }),
+  unit({ canonical: "N/mm", name: "newton per millimetre", category: "stiffness", dim: DIM_STIFFNESS, factor: 1e3 }),
+  unit({ canonical: "kN/m", name: "kilonewton per metre", category: "stiffness", dim: DIM_STIFFNESS, factor: 1e3 }),
+  unit({ canonical: "lbf/in", name: "pound-force per inch", category: "stiffness", dim: DIM_STIFFNESS, factor: 175.126835 }),
 
   unit({ canonical: "Hz", name: "hertz", category: "frequency", dim: DIM_FREQUENCY, factor: 1 }),
   unit({ canonical: "rpm", name: "revolution per minute", category: "frequency", dim: DIM_FREQUENCY, factor: 1 / 60 }),

@@ -107,3 +107,31 @@ describe("unit conversion", () => {
     }
   });
 });
+
+describe("stiffness units", () => {
+  it("converts newtons per millimetre to newtons per metre", () => {
+    const outcome = convertUnit(1, "N/mm", "N/m");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(1000, 9);
+      expect(outcome.category).toBe("stiffness");
+      expect(outcome.siSymbol).toBe("N/m");
+    }
+  });
+
+  it("converts newtons per metre to pound-force per inch", () => {
+    const outcome = convertUnit(1, "N/m", "lbf/in");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(1 / 175.126835, 6);
+    }
+  });
+
+  it("rejects a stiffness-to-pressure conversion", () => {
+    const outcome = convertUnit(10, "N/m", "Pa");
+    expect(outcome.ok).toBe(false);
+    if (!outcome.ok) {
+      expect(outcome.error).toContain("Dimension mismatch");
+    }
+  });
+});

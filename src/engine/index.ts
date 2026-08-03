@@ -3,4 +3,13 @@ export { analyzeBearing, BEARING_METHOD, equivalentLoad, type BearingInput, type
 export { analyzeBolt, BOLT_METHOD, tensileStressArea, type BoltGradeData, type BoltInput } from "./bolt.js";
 export { computeSection, SECTION_METHOD, type SectionDef, type SectionProperties } from "./sections.js";
 export { analyzeShaft, SHAFT_METHOD, type ShaftInput } from "./shaft.js";
+export {
+  analyzeSpring,
+  solidHeight,
+  SPRING_METHOD,
+  totalCoils,
+  wahlFactor,
+  type SpringEndType,
+  type SpringInput,
+} from "./spring.js";
 export { vonMises, VON_MISES_METHOD, type StressInput, type StressMode } from "./stress.js";

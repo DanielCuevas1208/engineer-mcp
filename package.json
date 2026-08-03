@@ -1,10 +1,18 @@
 {
   "name": "@engineerkit/engineer-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server for verified mechanical-engineering calculations, references, and material data.",
   "type": "module",
   "license": "MIT",
   "author": "EngineerKit",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DanielCuevas1208/engineer-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DanielCuevas1208/engineer-mcp/issues"
+  },
+  "homepage": "https://github.com/DanielCuevas1208/engineer-mcp#readme",
   "engines": {
     "node": ">=22.13.0"
   },
