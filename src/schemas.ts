@@ -107,6 +107,44 @@ export const unitConvertSchema = z.object({
   to: z.string().describe("Target unit symbol. Examples: psi, m, N, degF."),
 });
 
+export const fatigueSchema = z.object({
+  ultimateStrength: z.number().positive().describe("Ultimate tensile strength Sut in pascals."),
+  yieldStrength: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Tensile yield strength in pascals. Enables the yield check and the Soderberg criterion."),
+  stressAmplitude: z
+    .number()
+    .min(0)
+    .describe("Stress amplitude of the cycle in pascals. Zero means a purely static mean stress."),
+  meanStress: z
+    .number()
+    .optional()
+    .describe("Mean stress of the cycle in pascals. Defaults to zero for a fully reversed cycle."),
+  enduranceLimit: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Corrected endurance limit Se in pascals. When omitted, the tool estimates it with the Marin factors."),
+  surfaceFinish: z
+    .enum(["ground", "machined", "hot_rolled", "as_forged"])
+    .optional()
+    .describe("Surface finish. Sets the surface factor ka. Defaults to machined."),
+  loading: z.enum(["bending", "axial", "torsion"]).optional().describe("Loading mode. Sets the load factor kc. Defaults to bending."),
+  sizeFactor: z.number().positive().optional().describe("Size factor kb. Defaults to 1."),
+  criterion: z
+    .enum(["goodman", "soderberg", "gerber"])
+    .optional()
+    .describe("Mean stress failure criterion. Defaults to goodman."),
+  targetSafetyFactor: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Design safety factor. When set, the tool returns the allowable stress amplitude."),
+  outputUnits,
+});
+
 export const materialSchema = z.object({
   query: z.string().min(1).describe("Material name or category to search. Matches are case-insensitive."),
   limit: z.number().int().min(1).max(50).optional().describe("Maximum number of rows to return. Defaults to 10."),
@@ -120,3 +158,4 @@ export type SectionPropsInput = z.infer<typeof sectionPropsSchema>;
 export type StressInput = z.infer<typeof stressSchema>;
 export type UnitConvertInput = z.infer<typeof unitConvertSchema>;
 export type MaterialInput = z.infer<typeof materialSchema>;
+export type FatigueInput = z.infer<typeof fatigueSchema>;

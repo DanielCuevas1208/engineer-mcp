@@ -38,7 +38,12 @@ This server follows semantic versioning. Breaking a tool signature or the result
 
 Engineer MCP grows in independent releases. Each release stays useful on its own.
 
-- Add fatigue analysis for cyclic loads.
+### Complete
+
+- Fatigue analysis for cyclic loads. The `fatigue_analysis` tool estimates the endurance limit and the fatigue safety factor.
+
+### Remaining
+
 - Add press-fit and interference-fit calculators.
 - Add a spring calculator for helical compression springs.
 - Add more unit categories, including viscosity and thermal conductivity.

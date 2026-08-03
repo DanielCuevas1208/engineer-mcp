@@ -12,6 +12,7 @@ type Handlers = {
   shaft_analysis: Handler;
   bearing_life: Handler;
   von_mises: Handler;
+  fatigue_analysis: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
 };
@@ -30,7 +31,7 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("tool registry", () => {
-  it("registers all eight tools", () => {
+  it("registers all nine tools", () => {
     expect(listTools().sort()).toEqual(
       [
         "beam_bending",
@@ -39,6 +40,7 @@ describe("tool registry", () => {
         "shaft_analysis",
         "bearing_life",
         "von_mises",
+        "fatigue_analysis",
         "unit_convert",
         "material_lookup",
       ].sort(),
@@ -213,6 +215,54 @@ describe("von_mises tool", () => {
     setup();
     const response = handlers.von_mises({ mode: "cartesian", sigmaX: 100e6 });
     expect(response.ok).toBe(false);
+  });
+});
+
+describe("fatigue_analysis tool", () => {
+  it("computes the endurance limit and safety factor with converted units", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      ultimateStrength: 490e6,
+      yieldStrength: 355e6,
+      stressAmplitude: 120e6,
+      meanStress: 40e6,
+      surfaceFinish: "machined",
+      loading: "bending",
+      outputUnits: { enduranceLimit: "MPa", equivalentStressAmplitude: "MPa" },
+    });
+    const result = expectOk(response);
+
+    expect(result.tool).toBe("fatigue_analysis");
+    expect(result.method.id).toBe("fatigue-analysis");
+    expect(result.references.length).toBeGreaterThan(0);
+    expect(result.references[0]).toHaveProperty("title");
+
+    const endurance = result.quantities.find((q) => q.key === "enduranceLimit");
+    expect(endurance?.unit).toBe("MPa");
+    expect(endurance?.value).toBeGreaterThan(0);
+    expect(result.quantities.find((q) => q.key === "fatigueSafetyFactor")?.value).toBeGreaterThan(0);
+  });
+
+  it("uses a supplied endurance limit directly", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      ultimateStrength: 400e6,
+      stressAmplitude: 100e6,
+      enduranceLimit: 200e6,
+      outputUnits: { enduranceLimit: "MPa" },
+    });
+    const result = expectOk(response);
+    const endurance = result.quantities.find((q) => q.key === "enduranceLimit");
+    expect(endurance?.value).toBeCloseTo(200, 9);
+  });
+
+  it("rejects missing stress inputs", () => {
+    setup();
+    const response = handlers.fatigue_analysis({ ultimateStrength: 400e6 });
+    expect(response.ok).toBe(false);
+    if (!response.ok) {
+      expect(response.error).toContain("stressAmplitude");
+    }
   });
 });
 

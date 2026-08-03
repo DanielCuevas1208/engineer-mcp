@@ -112,6 +112,40 @@ Inputs:
 - Cartesian mode uses `sigmaX`, `sigmaY`, `sigmaZ`, `tauXY`, `tauXZ`, `tauYZ`.
 - `yieldStrength`: enables the safety factor.
 
+## fatigue_analysis
+
+Compute the fatigue safety factor, corrected endurance limit, and estimated life of a cyclic stress.
+
+The tool follows the stress-life method of Shigley. It applies the Marin factors to estimate the endurance limit. It uses a mean stress failure line for the safety factor.
+
+Inputs:
+
+- `ultimateStrength`: ultimate tensile strength Sut in pascals.
+- `yieldStrength`: tensile yield strength in pascals. Enables the yield check and the Soderberg criterion.
+- `stressAmplitude`: stress amplitude of the cycle in pascals.
+- `meanStress`: mean stress of the cycle in pascals. The default is zero for a fully reversed cycle.
+- `enduranceLimit`: corrected endurance limit Se in pascals. When omitted, the tool estimates it from the Marin factors.
+- `surfaceFinish`: `ground`, `machined`, `hot_rolled`, or `as_forged`. Sets the surface factor ka. The default is `machined`.
+- `loading`: `bending`, `axial`, or `torsion`. Sets the load factor kc. The default is `bending`.
+- `sizeFactor`: size factor kb. The default is 1.
+- `criterion`: `goodman`, `soderberg`, or `gerber`. Sets the mean stress failure line. The default is `goodman`.
+- `targetSafetyFactor`: design safety factor. When set, the tool returns the allowable stress amplitude.
+
+Example:
+
+```json
+{
+  "ultimateStrength": 490000000,
+  "yieldStrength": 355000000,
+  "stressAmplitude": 220000000,
+  "meanStress": 60000000,
+  "surfaceFinish": "machined",
+  "loading": "bending"
+}
+```
+
+The tool reports a warning when the peak stress exceeds yield strength. It reports a warning when the fatigue safety factor falls below 1.
+
 ## unit_convert
 
 Convert a value between two units.

@@ -6,6 +6,7 @@ import {
   beamSchema,
   bearingSchema,
   boltSchema,
+  fatigueSchema,
   materialSchema,
   sectionPropsSchema,
   shaftSchema,
@@ -45,6 +46,11 @@ const TOOL_SCHEMAS: Record<string, ToolDef> = {
   von_mises: {
     description: "von Mises equivalent stress, maximum shear stress, and yield safety factor for a stress state.",
     schema: stressSchema,
+  },
+  fatigue_analysis: {
+    description:
+      "Corrected endurance limit, fatigue safety factor, and estimated life for a cyclic stress. Uses the Marin factors and the Goodman, Soderberg, or Gerber mean stress criterion.",
+    schema: fatigueSchema,
   },
   unit_convert: {
     description: "Convert a value between compatible units. Rejects mismatched dimensions and quantity categories.",

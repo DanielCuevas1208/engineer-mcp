@@ -73,6 +73,7 @@ type ToolHandlers = {
   shaft_analysis: Handler;
   bearing_life: Handler;
   von_mises: Handler;
+  fatigue_analysis: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
 };
@@ -86,6 +87,7 @@ const tools: NamedHandler[] = [
   ["shaft_analysis", toolHandlers.shaft_analysis],
   ["bearing_life", toolHandlers.bearing_life],
   ["von_mises", toolHandlers.von_mises],
+  ["fatigue_analysis", toolHandlers.fatigue_analysis],
   ["unit_convert", toolHandlers.unit_convert],
   ["unit_convert (torque to energy)", toolHandlers.unit_convert],
   ["material_lookup", toolHandlers.material_lookup],
@@ -131,6 +133,15 @@ const inputs: Array<Record<string, unknown>> = [
     tauXY: 25e6,
     yieldStrength: 355e6,
     outputUnits: { vonMisesStress: "MPa", maxShearStress: "MPa" },
+  },
+  {
+    ultimateStrength: 490e6,
+    yieldStrength: 355e6,
+    stressAmplitude: 220e6,
+    meanStress: 60e6,
+    surfaceFinish: "machined",
+    loading: "bending",
+    outputUnits: { enduranceLimit: "MPa", equivalentStressAmplitude: "MPa" },
   },
   {
     value: 1000,

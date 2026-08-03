@@ -3,10 +3,14 @@ import {
   analyzeBeam,
   analyzeBearing,
   analyzeBolt,
+  analyzeFatigue,
   analyzeShaft,
   computeSection,
   vonMises,
+  type FatigueCriterion,
+  type LoadingMode,
   type SectionDef,
+  type SurfaceFinish,
 } from "./engine/index.js";
 import type { Computation, MethodRecord, Quantity, ReferenceRecord, ToolFailure, ToolResponse, ToolResult } from "./types.js";
 import type { UnitOutcome } from "./units/index.js";
@@ -353,6 +357,28 @@ function stressHandler(ctx: AppContext): Handler {
   };
 }
 
+function fatigueHandler(ctx: AppContext): Handler {
+  return (input) => {
+    try {
+      const computation = analyzeFatigue({
+        ultimateStrength: input.ultimateStrength as number,
+        yieldStrength: input.yieldStrength as number | undefined,
+        stressAmplitude: input.stressAmplitude as number | undefined,
+        meanStress: input.meanStress as number | undefined,
+        enduranceLimit: input.enduranceLimit as number | undefined,
+        surfaceFinish: input.surfaceFinish as SurfaceFinish | undefined,
+        loading: input.loading as LoadingMode | undefined,
+        sizeFactor: input.sizeFactor as number | undefined,
+        criterion: input.criterion as FatigueCriterion | undefined,
+        targetSafetyFactor: input.targetSafetyFactor as number | undefined,
+      });
+      return buildResult(ctx, "fatigue_analysis", computation, input.outputUnits as Record<string, string> | undefined);
+    } catch (error) {
+      return failure("fatigue_analysis", error instanceof Error ? error.message : String(error), input);
+    }
+  };
+}
+
 function unitConvertHandler(ctx: AppContext): Handler {
   return (input) => {
     const value = input.value as number;
@@ -423,6 +449,7 @@ export function createHandlers(ctx: AppContext): Record<string, Handler> {
     shaft_analysis: shaftHandler(ctx),
     bearing_life: bearingHandler(ctx),
     von_mises: stressHandler(ctx),
+    fatigue_analysis: fatigueHandler(ctx),
     unit_convert: unitConvertHandler(ctx),
     material_lookup: materialHandler(ctx),
   };

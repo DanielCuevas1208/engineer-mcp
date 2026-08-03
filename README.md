@@ -1,11 +1,12 @@
 # Engineer MCP
 
+[![CI](https://github.com/DanielCuevas1208/engineer-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/DanielCuevas1208/engineer-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 [![Node](https://img.shields.io/badge/Node-%3E%3D22.13-brightgreen.svg)](package.json)
 
 Engineer MCP is a Model Context Protocol server for mechanical-engineering calculations.
-It gives coding agents verified answers for beams, bolts, shafts, bearings, stress, sections, and units.
+It gives coding agents verified answers for beams, bolts, shafts, bearings, stress, fatigue, sections, and units.
 Every result shows the formula, the method, and the source.
 
 ## What it provides
@@ -21,6 +22,7 @@ The release covers these domains:
 - Shaft torsion and first critical speed.
 - Bearing rating life to ISO 281.
 - von Mises equivalent stress.
+- Fatigue analysis for cyclic loads.
 - Cross-section properties.
 - Dimension-safe unit conversion.
 - Material property lookup.
@@ -50,6 +52,7 @@ Warnings surface when a method uses an approximation.
 | `shaft_analysis` | Torsion stress, twist, and critical speed. |
 | `bearing_life` | ISO 281 rating life in revolutions and hours. |
 | `von_mises` | Equivalent stress and yield safety factor. |
+| `fatigue_analysis` | Endurance limit, fatigue safety factor, and estimated life. |
 | `unit_convert` | Conversion between compatible units. |
 | `material_lookup` | Curated mechanical properties of materials. |
 
@@ -124,6 +127,22 @@ References:
   - Mechanics of Materials (Euler-Bernoulli beam theory)
 ```
 
+A call to `fatigue_analysis` for a machined S355 part with a 220 MPa amplitude and 60 MPa mean stress:
+
+```text
+Corrected endurance limit               214 MPa
+Fatigue safety factor                0.8692
+Equivalent fully reversed amplitude    250.7 MPa
+Yield safety factor                   1.268
+Estimated life to failure            220564 cycles
+
+Warning: The fatigue safety factor is below 1. Fatigue failure is predicted.
+Method: Stress-life fatigue analysis
+Formula: Se = ka kb kc (0.5 Sut), 1/n = Sa/Se + Sm/Sut
+References:
+  - Shigley's Mechanical Engineering Design (Tenth edition, 2015)
+```
+
 A call to `unit_convert` with a torque-to-energy request fails safely:
 
 ```text
@@ -146,9 +165,9 @@ Use a unit of the same quantity.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, and the tools.
 
-- 73 tests across 9 files.
+- 100 tests across 10 files.
 - All tests pass on Node 22 and Node 24.
-- The CI workflow runs typecheck, tests, build, and demo.
+- The CI workflow runs typecheck, tests, build, demo, and a package check.
 
 Run `npm test` to reproduce the results.
 
@@ -159,6 +178,7 @@ Run `npm test` to reproduce the results.
 - The bolt tables cover coarse metric threads from M5 to M36.
 - The bearing factors are typical values for deep-groove ball bearings.
 - The critical speed is a first-mode approximation.
+- The fatigue model uses typical Marin factors. Confirm critical designs with test data.
 - The built-in SQLite module of Node.js is still experimental.
 
 Check the cited sources for exact values.
@@ -168,10 +188,18 @@ Check the cited sources for exact values.
 The server grows in independent releases.
 Each release stays useful on its own.
 
-- Add fatigue analysis for cyclic loads.
-- Add press-fit and spring calculators.
-- Add more unit categories.
+### Complete
+
+- Fatigue analysis for cyclic loads.
+  The `fatigue_analysis` tool estimates the endurance limit and the safety factor.
+
+### Remaining
+
+- Add press-fit and interference-fit calculators.
+- Add a spring calculator for helical compression springs.
+- Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport.
+- Add a catalog of ISO and DIN standard sections.
 
 See [docs/integration.md](docs/integration.md) for the EngineerKit plan.
 
