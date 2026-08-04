@@ -38,8 +38,8 @@ const SECTION_CATALOG_METHOD: MethodRecord = {
   name: "Standard section catalog lookup",
   formula: "Database query of published rolled-section dimensions and section properties",
   notes:
-    "Dimensions, masses, and section properties follow the nominal values in the cited standard. Fillets and root radii are included.",
-  referenceIds: ["en-10365"],
+    "EN 10365 supplies nominal dimensions and masses. ArcelorMittal supplies the section-property columns. Fillets and root radii remain included.",
+  referenceIds: ["en-10365", "arcelormittal-sections"],
 };
 
 const UNIT_METHOD: MethodRecord = {
@@ -126,9 +126,9 @@ type SectionInput = SectionDef | { shape: "standard"; designation: string };
 function resolveStandardSection(
   ctx: AppContext,
   section: SectionInput | undefined,
-): { secondMomentOfArea: number; sectionModulus: number } | { error: string } {
+): { secondMomentOfArea: number; sectionModulus: number; referenceIds: string[] } | { error: string } {
   if (!section || section.shape !== "standard") {
-    return { secondMomentOfArea: 0, sectionModulus: 0 };
+    return { secondMomentOfArea: 0, sectionModulus: 0, referenceIds: [] };
   }
   const row = ctx.findSection(section.designation);
   if (!row) {
@@ -138,6 +138,7 @@ function resolveStandardSection(
   return {
     secondMomentOfArea: row.secondMomentCm4 * 1e-8,
     sectionModulus: row.sectionModulusCm3 * 1e-6,
+    referenceIds: [row.dimensionsReferenceId, row.propertiesReferenceId],
   };
 }
 
@@ -188,7 +189,7 @@ function beamHandler(ctx: AppContext): Handler {
         sectionModulus: usesStandard ? resolved.sectionModulus : (input.sectionModulus as number | undefined),
       });
       if (usesStandard) {
-        computation.referenceIds = [...computation.referenceIds, "en-10365"];
+        computation.referenceIds = [...computation.referenceIds, ...resolved.referenceIds];
       }
       return buildResult(ctx, "beam_bending", computation, input.outputUnits as Record<string, string> | undefined);
     } catch (error) {
@@ -262,7 +263,7 @@ function sectionPropsHandler(ctx: AppContext): Handler {
             description: "Radius of gyration about the strong axis, derived from the published values.",
           },
         ],
-        referenceIds: ["en-10365"],
+        referenceIds: [row.dimensionsReferenceId, row.propertiesReferenceId],
         warnings: [],
       };
       return buildResult(ctx, "section_properties", computation, input.outputUnits as Record<string, string> | undefined);

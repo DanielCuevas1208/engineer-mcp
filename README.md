@@ -26,6 +26,7 @@ The release covers these domains:
 - Cross-section properties.
 - Press and shrink fit analysis by Lamé theory.
 - Standard steel section catalog to EN 10365.
+  The catalog returns the separate source for published section properties.
 - Dimension-safe unit conversion, including viscosity and thermal conductivity.
 - Material property lookup.
 - Stdio and HTTP transports.
@@ -245,6 +246,7 @@ Rows:
 Method: Standard section catalog lookup
 References:
   - EN 10365 - Hot rolled steel channels, I and H sections - Dimensions and masses
+  - European sections - dimensions and section properties
 ```
 
 Pass a catalog designation to `beam_bending` to use the published section properties:
@@ -259,6 +261,7 @@ References:
   - Roark's Formulas for Stress and Strain (Eighth edition, 2011)
   - Mechanics of Materials (Euler-Bernoulli beam theory)
   - EN 10365 - Hot rolled steel channels, I and H sections - Dimensions and masses
+  - European sections - dimensions and section properties
 ```
 
 The same tools run over HTTP.
@@ -298,7 +301,7 @@ See [docs/transport.md](docs/transport.md) for the full HTTP reference.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, the tools, the catalog data, and the HTTP transport.
 
-- 180 tests across 15 files.
+- 182 tests across 15 files.
 - All tests pass on Node 22 and Node 24.
 - The HTTP tests run a real server on an ephemeral port.
   They complete the full handshake over a real TCP connection.
@@ -348,6 +351,8 @@ Each release stays useful on its own.
 - Standard steel section catalog.
   The `section_catalog` tool searches the published IPE, HEA, HEB, and UPN series.
   The `beam_bending` and `section_properties` tools accept a catalog designation.
+  The result cites EN 10365 for dimensions and masses.
+  It cites ArcelorMittal for section properties.
 - Press and shrink fit analysis.
   The `interference_fit` tool reports the interface pressure, the hoop stresses, and the friction capacity.
 - Fatigue analysis.

@@ -24,26 +24,32 @@ The other series step through the even numbers in their range.
 
 ## Source of the values
 
-The values come from the published tables of EN 10365.
-See the entry `en-10365` in `data/references.json` for the full citation.
-Every row stores the same reference id.
-The `section_catalog` tool returns this reference with each result.
+The catalog uses two sources.
+The result includes both source records.
+See `data/references.json` for the full citations and source URLs.
+
+- [EN 10365:2017](https://www.evs.ee/et/evs-en-10365-2017) defines nominal dimensions and masses.
+- [ArcelorMittal European section tables](https://sections.arcelormittal.com/repository2/Sections/5_1_5_ArcelorMittal_FR_EN_RU_web.pdf) provide the properties.
 
 Each property column has a defined source:
 
 | Column | Meaning | Source |
 | --- | --- | --- |
-| `heightMm` | Overall section height | Nominal dimension in the standard tables |
-| `flangeWidthMm` | Overall flange width | Nominal dimension in the standard tables |
-| `webThicknessMm` | Web thickness | Nominal dimension in the standard tables |
-| `flangeThicknessMm` | Flange thickness | Nominal dimension in the standard tables |
-| `areaCm2` | Cross-section area | Published value in the standard tables |
-| `massPerMetreKgM` | Mass per unit length | Published value in the standard tables |
-| `secondMomentCm4` | Second moment of area about the strong axis | Published value in the standard tables |
-| `sectionModulusCm3` | Elastic section modulus about the strong axis | Published value in the standard tables |
+| `heightMm` | Overall section height | EN 10365:2017, nominal dimensions |
+| `flangeWidthMm` | Overall flange width | EN 10365:2017, nominal dimensions |
+| `webThicknessMm` | Web thickness | EN 10365:2017, nominal dimensions |
+| `flangeThicknessMm` | Flange thickness | EN 10365:2017, nominal dimensions |
+| `areaCm2` | Cross-section area | ArcelorMittal European section tables |
+| `massPerMetreKgM` | Mass per unit length | EN 10365:2017, nominal masses |
+| `secondMomentCm4` | Second moment of area about the strong axis | ArcelorMittal European section tables |
+| `sectionModulusCm3` | Elastic section modulus about the strong axis | ArcelorMittal European section tables |
 
 Fillets and root radii are included in the published values.
 Do not compute the section properties from the nominal plate dimensions alone.
+
+The EN 10365 entry cites the standard scope.
+The ArcelorMittal entry cites the tables that supply area, inertia, and elastic modulus.
+Do not treat the standard as the source for those properties.
 
 ## Audit
 
@@ -61,7 +67,7 @@ The check allows a tolerance of 1 percent.
 The small deviation comes from the rounded values in the tables.
 
 The test file `tests/section-data-audit.test.ts` runs these rules.
-It also checks the covered range and the uniqueness of the designations.
+It also checks the covered range, the source split, and the uniqueness of the designations.
 Run `npm test` to reproduce the audit.
 
 ## Data files

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { loadSections, type SectionSeed } from "../src/assets.js";
+import { loadReferences, loadSections, type SectionSeed } from "../src/assets.js";
 
 const STEEL_DENSITY_KG_M3 = 7850;
 const MASS_TOLERANCE = 0.005;
@@ -25,6 +25,13 @@ function sectionsBySeries(sections: SectionSeed[]): Map<string, SectionSeed[]> {
 }
 
 describe("section catalog data audit", () => {
+  it("keeps dimensions and section properties linked to separate sources", () => {
+    const references = loadReferences();
+    expect(references["en-10365"]?.note).toContain("does not supply the section-property columns");
+    expect(references["arcelormittal-sections"]?.section).toContain("IPE tables");
+    expect(references["arcelormittal-sections"]?.url).toContain("ArcelorMittal_FR_EN_RU_web.pdf");
+  });
+
   it("keeps every designation unique", () => {
     const designations = loadSections().map((section) => section.designation);
     expect(new Set(designations).size).toBe(designations.length);

@@ -59,8 +59,17 @@
     "title": "EN 10365 - Hot rolled steel channels, I and H sections - Dimensions and masses",
     "source": "European Committee for Standardization",
     "edition": "EN 10365:2017",
-    "section": "Dimensions, masses, and section properties of rolled sections",
-    "note": "Nominal dimensions and section properties for IPE, HEA, HEB, and UPN series."
+    "section": "Scope and nominal dimensions and masses for IPE, HE, and UPN profiles",
+    "url": "https://www.evs.ee/et/evs-en-10365-2017",
+    "note": "This standard specifies nominal dimensions and masses. It does not supply the section-property columns used by this catalog."
+  },
+  "arcelormittal-sections": {
+    "title": "European sections - dimensions and section properties",
+    "source": "ArcelorMittal Europe",
+    "edition": "Section catalogue",
+    "section": "IPE tables pp. 72-77; HE tables pp. 80-87; UPN tables pp. 98-100",
+    "url": "https://sections.arcelormittal.com/repository2/Sections/5_1_5_ArcelorMittal_FR_EN_RU_web.pdf",
+    "note": "The catalog supplies the area, strong-axis inertia, and elastic section modulus used for the supported profiles."
   },
   "lame-cylinders": {
     "title": "Theory of Elasticity",

@@ -1,3 +1,7 @@
+import { DatabaseSync } from "node:sqlite";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createContext, type AppContext, type StandardSectionRow } from "../src/context.js";
 import { createHandlers, type Handler } from "../src/handlers.js";
@@ -23,6 +27,43 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("standard section catalog", () => {
+  it("backfills provenance for a legacy SQLite catalog", () => {
+    const directory = mkdtempSync(join(tmpdir(), "engineer-mcp-sections-"));
+    const path = join(directory, "catalog.sqlite");
+    const legacy = new DatabaseSync(path);
+    legacy.exec(`
+      CREATE TABLE standard_sections (
+        designation TEXT PRIMARY KEY,
+        series TEXT NOT NULL,
+        standard TEXT NOT NULL,
+        height_mm REAL NOT NULL,
+        flange_width_mm REAL NOT NULL,
+        web_thickness_mm REAL NOT NULL,
+        flange_thickness_mm REAL NOT NULL,
+        area_cm2 REAL NOT NULL,
+        mass_per_metre_kg_m REAL NOT NULL,
+        second_moment_cm4 REAL NOT NULL,
+        section_modulus_cm3 REAL NOT NULL,
+        reference_id TEXT
+      );
+    `);
+    legacy
+      .prepare("INSERT INTO standard_sections VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      .run("IPE 300", "IPE", "EN 10365", 300, 150, 7.1, 10.7, 53.8, 42.2, 8356, 557, "en-10365");
+    legacy.close();
+
+    const ctx = createContext(path);
+    try {
+      const section = ctx.findSection("IPE 300");
+      expect(section?.dimensionsReferenceId).toBe("en-10365");
+      expect(section?.propertiesReferenceId).toBe("arcelormittal-sections");
+      expect(ctx.references.has("arcelormittal-sections")).toBe(true);
+    } finally {
+      ctx.db.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("loads the catalog and finds a section by exact designation", () => {
     setup();
     const section = ctx.findSection("IPE 300");
@@ -31,6 +72,8 @@ describe("standard section catalog", () => {
     expect(section?.heightMm).toBe(300);
     expect(section?.secondMomentCm4).toBe(8356);
     expect(section?.sectionModulusCm3).toBe(557);
+    expect(section?.dimensionsReferenceId).toBe("en-10365");
+    expect(section?.propertiesReferenceId).toBe("arcelormittal-sections");
   });
 
   it("returns undefined for an unknown designation", () => {
@@ -72,7 +115,7 @@ describe("section_catalog tool", () => {
     const result = expectOk(response);
     expect(result.tool).toBe("section_catalog");
     expect(result.method.id).toBe("section-catalog");
-    expect(result.references[0]?.id).toBe("en-10365");
+    expect(result.references.map((reference) => reference.id)).toEqual(["en-10365", "arcelormittal-sections"]);
     expect(result.rows?.[0]).toMatchObject({
       designation: "HEB 200",
       series: "HEB",
@@ -117,6 +160,7 @@ describe("section_properties tool with a standard section", () => {
     expect(mass?.unit).toBe("kg/m");
 
     expect(result.references.some((ref) => ref.id === "en-10365")).toBe(true);
+    expect(result.references.some((ref) => ref.id === "arcelormittal-sections")).toBe(true);
   });
 
   it("converts quantities on request", () => {
@@ -168,6 +212,7 @@ describe("beam_bending tool with a standard section", () => {
     expect(result.quantities.find((q) => q.key === "maxBendingStress")?.value).toBeCloseTo(expectedStressPa / 1e6, 6);
     expect(result.quantities.find((q) => q.key === "maxDeflection")?.value).toBeCloseTo(expectedDeflection * 1000, 9);
     expect(result.references.some((ref) => ref.id === "en-10365")).toBe(true);
+    expect(result.references.some((ref) => ref.id === "arcelormittal-sections")).toBe(true);
   });
 
   it("reports an unknown standard designation", () => {

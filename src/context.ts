@@ -34,6 +34,8 @@ export type StandardSectionRow = {
   designation: string;
   series: string;
   standard: string;
+  dimensionsReferenceId: string;
+  propertiesReferenceId: string;
   heightMm: number;
   flangeWidthMm: number;
   webThicknessMm: number;
@@ -172,6 +174,8 @@ function mapSection(row: Record<string, unknown>): StandardSectionRow {
     designation: row.designation as string,
     series: row.series as string,
     standard: row.standard as string,
+    dimensionsReferenceId: row.reference_id as string,
+    propertiesReferenceId: row.properties_reference_id as string,
     heightMm: row.height_mm as number,
     flangeWidthMm: row.flange_width_mm as number,
     webThicknessMm: row.web_thickness_mm as number,

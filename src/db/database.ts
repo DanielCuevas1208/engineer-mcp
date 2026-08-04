@@ -53,7 +53,8 @@ CREATE TABLE IF NOT EXISTS standard_sections (
   mass_per_metre_kg_m REAL NOT NULL,
   second_moment_cm4 REAL NOT NULL,
   section_modulus_cm3 REAL NOT NULL,
-  reference_id TEXT
+  reference_id TEXT,
+  properties_reference_id TEXT
 );
 `;
 
@@ -61,8 +62,23 @@ export function createDatabase(path: string): DatabaseSync {
   const db = new DatabaseSync(path);
   db.exec("PRAGMA journal_mode = WAL;");
   db.exec(SCHEMA);
+  ensureSectionProvenanceColumns(db);
   seedIfEmpty(db);
+  backfillSectionPropertiesReference(db);
   return db;
+}
+
+function ensureSectionProvenanceColumns(db: DatabaseSync): void {
+  const columns = db.prepare("PRAGMA table_info(standard_sections)").all() as Array<{ name: string }>;
+  if (!columns.some((column) => column.name === "properties_reference_id")) {
+    db.exec("ALTER TABLE standard_sections ADD COLUMN properties_reference_id TEXT");
+  }
+}
+
+function backfillSectionPropertiesReference(db: DatabaseSync): void {
+  db.prepare(
+    "UPDATE standard_sections SET properties_reference_id = ? WHERE properties_reference_id IS NULL",
+  ).run("arcelormittal-sections");
 }
 
 function tableIsEmpty(db: DatabaseSync, table: string): boolean {
@@ -71,13 +87,19 @@ function tableIsEmpty(db: DatabaseSync, table: string): boolean {
 }
 
 export function seedIfEmpty(db: DatabaseSync): void {
-  if (tableIsEmpty(db, "sources")) {
-    const insert = db.prepare(
-      "INSERT INTO sources (id, title, source, edition, section, url, note) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    );
-    for (const [id, record] of Object.entries(loadReferences())) {
-      insert.run(id, record.title, record.source, record.edition ?? null, record.section ?? null, record.url ?? null, record.note ?? null);
-    }
+  const insertReference = db.prepare(
+    `INSERT INTO sources (id, title, source, edition, section, url, note)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       title = excluded.title,
+       source = excluded.source,
+       edition = excluded.edition,
+       section = excluded.section,
+       url = excluded.url,
+       note = excluded.note`,
+  );
+  for (const [id, record] of Object.entries(loadReferences())) {
+    insertReference.run(id, record.title, record.source, record.edition ?? null, record.section ?? null, record.url ?? null, record.note ?? null);
   }
 
   if (tableIsEmpty(db, "materials")) {
@@ -112,8 +134,8 @@ export function seedIfEmpty(db: DatabaseSync): void {
   if (tableIsEmpty(db, "standard_sections")) {
     const insert = db.prepare(
       `INSERT INTO standard_sections
-        (designation, series, standard, height_mm, flange_width_mm, web_thickness_mm, flange_thickness_mm, area_cm2, mass_per_metre_kg_m, second_moment_cm4, section_modulus_cm3, reference_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (designation, series, standard, height_mm, flange_width_mm, web_thickness_mm, flange_thickness_mm, area_cm2, mass_per_metre_kg_m, second_moment_cm4, section_modulus_cm3, reference_id, properties_reference_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     );
     for (const s of loadSections()) {
       insert.run(
@@ -129,6 +151,7 @@ export function seedIfEmpty(db: DatabaseSync): void {
         s.secondMomentCm4,
         s.sectionModulusCm3,
         "en-10365",
+        "arcelormittal-sections",
       );
     }
   }
