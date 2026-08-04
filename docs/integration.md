@@ -28,7 +28,7 @@ Adopt these conventions to stay compatible.
 
 ## Data boundary
 
-The material and fastener tables live in `data/`. The database seeds from these files on first start. Use the same JSON files as the single source of truth. Do not edit the generated SQLite file directly.
+The material, fastener, and section tables live in `data/`. The database seeds from these files on first start. Use the same JSON files as the single source of truth. Do not edit the generated SQLite file directly.
 
 ## Versioning
 

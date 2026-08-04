@@ -86,6 +86,9 @@ Inputs:
 
 The tool returns the published dimensions, mass, second moment of area, and section modulus of each match. Use it to find a designation, then pass that designation to `beam_bending` or `section_properties`.
 
+The catalog covers IPE 80 to IPE 500, HEA 100 to HEA 300, HEB 100 to HEB 300, and UPN 80 to UPN 300.
+See [section-catalog.md](section-catalog.md) for the full range, the value provenance, and the data audit.
+
 Example:
 
 ```json

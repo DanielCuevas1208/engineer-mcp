@@ -60,6 +60,7 @@ Warnings surface when a method uses an approximation.
 | `section_catalog` | Published IPE, HEA, HEB, and UPN steel sections. |
 
 See [docs/mcp-tools.md](docs/mcp-tools.md) for the full reference.
+See [docs/section-catalog.md](docs/section-catalog.md) for the covered range, the value provenance, and the data audit.
 
 ## Architecture
 
@@ -218,9 +219,9 @@ References:
 ## Test status
 
 The test suite is deterministic and offline.
-It covers the engines, the unit layer, the database, and the tools.
+It covers the engines, the unit layer, the database, the tools, and the catalog data.
 
-- 128 tests across 12 files.
+- 135 tests across 13 files.
 - All tests pass on Node 22 and Node 24.
 - The CI workflow runs typecheck, tests, build, demo, and a package check.
 - The CI workflow verifies the CLI contract over standard output.
