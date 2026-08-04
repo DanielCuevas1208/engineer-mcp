@@ -422,25 +422,6 @@ function springHandler(ctx: AppContext): Handler {
   };
 }
 
-function bearingHandler(ctx: AppContext): Handler {
-  return (input) => {
-    try {
-      const computation = analyzeBearing({
-        bearingType: input.bearingType as "ball" | "roller",
-        dynamicLoadRating: input.dynamicLoadRating as number,
-        equivalentLoad: input.equivalentLoad as number | undefined,
-        radialLoad: input.radialLoad as number | undefined,
-        axialLoad: input.axialLoad as number | undefined,
-        speedRpm: input.speedRpm as number | undefined,
-        requiredLifeHours: input.requiredLifeHours as number | undefined,
-      });
-      return buildResult(ctx, "bearing_life", computation, input.outputUnits as Record<string, string> | undefined);
-    } catch (error) {
-      return failure("bearing_life", error instanceof Error ? error.message : String(error), input);
-    }
-  };
-}
-
 function fitHandler(ctx: AppContext): Handler {
   return (input) => {
     try {
@@ -462,6 +443,25 @@ function fitHandler(ctx: AppContext): Handler {
       return buildResult(ctx, "interference_fit", computation, input.outputUnits as Record<string, string> | undefined);
     } catch (error) {
       return failure("interference_fit", error instanceof Error ? error.message : String(error), input);
+    }
+  };
+}
+
+function bearingHandler(ctx: AppContext): Handler {
+  return (input) => {
+    try {
+      const computation = analyzeBearing({
+        bearingType: input.bearingType as "ball" | "roller",
+        dynamicLoadRating: input.dynamicLoadRating as number,
+        equivalentLoad: input.equivalentLoad as number | undefined,
+        radialLoad: input.radialLoad as number | undefined,
+        axialLoad: input.axialLoad as number | undefined,
+        speedRpm: input.speedRpm as number | undefined,
+        requiredLifeHours: input.requiredLifeHours as number | undefined,
+      });
+      return buildResult(ctx, "bearing_life", computation, input.outputUnits as Record<string, string> | undefined);
+    } catch (error) {
+      return failure("bearing_life", error instanceof Error ? error.message : String(error), input);
     }
   };
 }

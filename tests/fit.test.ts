@@ -60,16 +60,6 @@ describe("press fit engine", () => {
     expect(result.quantities.map((q) => q.key)).toContain("torqueSafetyFactor");
   });
 
-  it("warns when a member exceeds its yield strength", () => {
-    const result = analyzePressFit({
-      ...BASE,
-      shaftYieldStrength: 20e6,
-      hubYieldStrength: 300e6,
-    });
-    expect(result.warnings.length).toBeGreaterThan(0);
-    expect(result.warnings.join(" ")).toContain("shaft yield strength");
-  });
-
   it("reports a higher hoop stress at the bore of a hollow shaft", () => {
     const solid = analyzePressFit({ ...BASE });
     const hollow = analyzePressFit({ ...BASE, shaftInnerRadius: 0.0125 });
@@ -78,6 +68,16 @@ describe("press fit engine", () => {
     const hollowStress = hollow.quantities.find((q) => q.key === "shaftTangentialStress")?.value ?? 0;
     expect(hollowStress).toBeCloseTo((2 * hollowPressure * 0.025 ** 2) / (0.025 ** 2 - 0.0125 ** 2), 6);
     expect(hollowStress).toBeGreaterThan(solidPressure);
+  });
+
+  it("warns when a member exceeds its yield strength", () => {
+    const result = analyzePressFit({
+      ...BASE,
+      shaftYieldStrength: 20e6,
+      hubYieldStrength: 300e6,
+    });
+    expect(result.warnings.length).toBeGreaterThan(0);
+    expect(result.warnings.join(" ")).toContain("shaft yield strength");
   });
 
   it("warns when the torque capacity falls below the required torque", () => {

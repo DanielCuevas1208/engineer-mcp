@@ -19,15 +19,15 @@ Options:
   -h, --help     Show this help and exit.
 `;
 
-function writeOut(message: string): void {
-  process.stdout.write(`${message}\n`);
-}
-
-function writeErr(message: string): void {
+function info(message: string): void {
   process.stderr.write(`${message}\n`);
 }
 
-function main(): void {
+function out(message: string): void {
+  process.stdout.write(`${message}\n`);
+}
+
+async function main(): Promise<void> {
   const { values } = parseArgs({
     options: {
       db: { type: "string" },
@@ -38,26 +38,22 @@ function main(): void {
   });
 
   if (values.help) {
-    writeOut(HELP);
+    out(HELP);
     return;
   }
   if (values.version) {
-    writeOut(`${SERVER_NAME} v${VERSION}`);
+    out(`${SERVER_NAME} v${VERSION}`);
     return;
   }
   if (values.list) {
-    writeOut("Available tools:");
+    out("Available tools:");
     for (const tool of listTools()) {
-      writeOut(`  - ${tool}`);
+      out(`  - ${tool}`);
     }
     return;
   }
 
   const dbPath = values.db ?? process.env.ENGINEER_MCP_DB ?? "engineer-mcp.sqlite";
-  void startServer(dbPath);
-}
-
-async function startServer(dbPath: string): Promise<void> {
   try {
     const { createContext } = await import("./context.js");
     const ctx = createContext(dbPath);
@@ -65,7 +61,7 @@ async function startServer(dbPath: string): Promise<void> {
     const transport = new StdioServerTransport();
     await server.connect(transport);
   } catch (error: unknown) {
-    writeErr(`Failed to start server: ${error instanceof Error ? error.message : String(error)}`);
+    info(`Failed to start server: ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   }
 }
