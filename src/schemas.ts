@@ -28,6 +28,10 @@ export const sectionSchema = z.discriminatedUnion("shape", [
     height: z.number().positive().describe("Outer height in metres."),
     thickness: z.number().positive().describe("Wall thickness in metres."),
   }),
+  z.object({
+    shape: z.literal("standard"),
+    designation: z.string().min(1).describe("Standard section designation from the catalog, for example IPE 300 or HEB 200."),
+  }),
 ]);
 
 const outputUnits = z.record(z.string()).optional().describe(
@@ -131,6 +135,11 @@ export const materialSchema = z.object({
   limit: z.number().int().min(1).max(50).optional().describe("Maximum number of rows to return. Defaults to 10."),
 });
 
+export const sectionCatalogSchema = z.object({
+  query: z.string().min(1).describe("Designation, series, or standard to search. Matches are case-insensitive."),
+  limit: z.number().int().min(1).max(50).optional().describe("Maximum number of rows to return. Defaults to 10."),
+});
+
 export type BeamInput = z.infer<typeof beamSchema>;
 export type BoltInput = z.infer<typeof boltSchema>;
 export type ShaftInput = z.infer<typeof shaftSchema>;
@@ -140,3 +149,4 @@ export type SectionPropsInput = z.infer<typeof sectionPropsSchema>;
 export type StressInput = z.infer<typeof stressSchema>;
 export type UnitConvertInput = z.infer<typeof unitConvertSchema>;
 export type MaterialInput = z.infer<typeof materialSchema>;
+export type SectionCatalogInput = z.infer<typeof sectionCatalogSchema>;

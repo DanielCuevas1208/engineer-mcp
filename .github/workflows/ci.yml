@@ -36,6 +36,12 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Verify the CLI contract
+        run: |
+          node dist/index.js --version | grep -q "^engineer-mcp"
+          node dist/index.js --list | grep -q "beam_bending"
+          node dist/index.js --list | grep -q "section_catalog"
+
       - name: Verify the demo runs
         run: npm run demo
 

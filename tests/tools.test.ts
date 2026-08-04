@@ -15,6 +15,7 @@ type Handlers = {
   von_mises: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
+  section_catalog: Handler;
 };
 
 let ctx: AppContext;
@@ -31,7 +32,7 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("tool registry", () => {
-  it("registers all nine tools", () => {
+  it("registers all ten tools", () => {
     expect(listTools().sort()).toEqual(
       [
         "beam_bending",
@@ -43,6 +44,7 @@ describe("tool registry", () => {
         "von_mises",
         "unit_convert",
         "material_lookup",
+        "section_catalog",
       ].sort(),
     );
   });

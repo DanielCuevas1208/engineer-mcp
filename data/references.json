@@ -54,5 +54,12 @@
     "edition": "Any standard university text",
     "section": "Critical speed of a uniform simply supported shaft",
     "note": "Gives the first lateral critical speed for a uniform shaft."
+  },
+  "en-10365": {
+    "title": "EN 10365 - Hot rolled steel channels, I and H sections - Dimensions and masses",
+    "source": "European Committee for Standardization",
+    "edition": "EN 10365:2017",
+    "section": "Dimensions, masses, and section properties of rolled sections",
+    "note": "Nominal dimensions and section properties for IPE, HEA, HEB, and UPN series."
   }
 }

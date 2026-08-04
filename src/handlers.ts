@@ -29,6 +29,15 @@ const MATERIAL_METHOD: MethodRecord = {
   referenceIds: [],
 };
 
+const SECTION_CATALOG_METHOD: MethodRecord = {
+  id: "section-catalog",
+  name: "Standard section catalog lookup",
+  formula: "Database query of published rolled-section dimensions and section properties",
+  notes:
+    "Dimensions, masses, and section properties follow the nominal values in the cited standard. Fillets and root radii are included.",
+  referenceIds: ["en-10365"],
+};
+
 const UNIT_METHOD: MethodRecord = {
   id: "unit-convert",
   name: "Dimension-safe unit conversion",
@@ -108,6 +117,26 @@ type MaterialValues = {
   yieldStrengthPa?: number;
 };
 
+type SectionInput = SectionDef | { shape: "standard"; designation: string };
+
+function resolveStandardSection(
+  ctx: AppContext,
+  section: SectionInput | undefined,
+): { secondMomentOfArea: number; sectionModulus: number } | { error: string } {
+  if (!section || section.shape !== "standard") {
+    return { secondMomentOfArea: 0, sectionModulus: 0 };
+  }
+  const row = ctx.findSection(section.designation);
+  if (!row) {
+    const series = ctx.listSectionSeries().join(", ");
+    return { error: `Unknown standard section: ${section.designation}. Available series: ${series}` };
+  }
+  return {
+    secondMomentOfArea: row.secondMomentCm4 * 1e-8,
+    sectionModulus: row.sectionModulusCm3 * 1e-6,
+  };
+}
+
 function materialValues(ctx: AppContext, name: string): MaterialValues | undefined {
   const material = ctx.findMaterial(name);
   if (!material) {
@@ -135,6 +164,13 @@ function beamHandler(ctx: AppContext): Handler {
     }
     const yieldStrength = (input.yieldStrength as number | undefined) ?? values?.yieldStrengthPa;
 
+    const section = input.section as SectionInput | undefined;
+    const resolved = resolveStandardSection(ctx, section);
+    if ("error" in resolved) {
+      return failure("beam_bending", resolved.error, input);
+    }
+    const usesStandard = section?.shape === "standard";
+
     try {
       const computation = analyzeBeam({
         support: input.support as "simply_supported" | "cantilever",
@@ -143,10 +179,13 @@ function beamHandler(ctx: AppContext): Handler {
         length: input.length as number,
         elasticModulus,
         yieldStrength,
-        section: input.section as SectionDef | undefined,
-        secondMomentOfArea: input.secondMomentOfArea as number | undefined,
-        sectionModulus: input.sectionModulus as number | undefined,
+        section: section && section.shape !== "standard" ? (section as SectionDef) : undefined,
+        secondMomentOfArea: usesStandard ? resolved.secondMomentOfArea : (input.secondMomentOfArea as number | undefined),
+        sectionModulus: usesStandard ? resolved.sectionModulus : (input.sectionModulus as number | undefined),
       });
+      if (usesStandard) {
+        computation.referenceIds = [...computation.referenceIds, "en-10365"];
+      }
       return buildResult(ctx, "beam_bending", computation, input.outputUnits as Record<string, string> | undefined);
     } catch (error) {
       return failure("beam_bending", error instanceof Error ? error.message : String(error), input);
@@ -156,8 +195,77 @@ function beamHandler(ctx: AppContext): Handler {
 
 function sectionPropsHandler(ctx: AppContext): Handler {
   return (input) => {
+    const section = input.section as SectionInput;
+    if (section.shape === "standard") {
+      const row = ctx.findSection(section.designation);
+      if (!row) {
+        const series = ctx.listSectionSeries().join(", ");
+        return failure("section_properties", `Unknown standard section: ${section.designation}. Available series: ${series}`, input);
+      }
+      const secondMomentOfArea = row.secondMomentCm4 * 1e-8;
+      const area = row.areaCm2 * 1e-4;
+      const computation: Computation = {
+        method: SECTION_CATALOG_METHOD,
+        inputs: { designation: row.designation, series: row.series, standard: row.standard },
+        quantities: [
+          {
+            key: "height",
+            label: "Section height",
+            value: row.heightMm * 1e-3,
+            unit: "m",
+            description: "Overall height of the rolled section.",
+          },
+          {
+            key: "flangeWidth",
+            label: "Flange width",
+            value: row.flangeWidthMm * 1e-3,
+            unit: "m",
+            description: "Width across the flanges.",
+          },
+          {
+            key: "area",
+            label: "Cross-section area",
+            value: area,
+            unit: "m2",
+            description: "Nominal cross-section area from the standard tables.",
+          },
+          {
+            key: "massPerMetre",
+            label: "Mass per metre",
+            value: row.massPerMetreKgM,
+            unit: "kg/m",
+            description: "Nominal mass per unit length from the standard tables.",
+          },
+          {
+            key: "secondMomentOfArea",
+            label: "Second moment of area (x-x)",
+            value: secondMomentOfArea,
+            unit: "m4",
+            description: "Published second moment of area about the strong axis.",
+          },
+          {
+            key: "sectionModulus",
+            label: "Section modulus (x-x)",
+            value: row.sectionModulusCm3 * 1e-6,
+            unit: "m3",
+            description: "Published elastic section modulus about the strong axis.",
+          },
+          {
+            key: "radiusOfGyration",
+            label: "Radius of gyration",
+            value: Math.sqrt(secondMomentOfArea / area),
+            unit: "m",
+            description: "Radius of gyration about the strong axis, derived from the published values.",
+          },
+        ],
+        referenceIds: ["en-10365"],
+        warnings: [],
+      };
+      return buildResult(ctx, "section_properties", computation, input.outputUnits as Record<string, string> | undefined);
+    }
+
     try {
-      const props = computeSection(input.section as SectionDef);
+      const props = computeSection(section as SectionDef);
       const computation: Computation = {
         method: {
           id: "section-properties",
@@ -437,6 +545,39 @@ function materialHandler(ctx: AppContext): Handler {
   };
 }
 
+function sectionCatalogHandler(ctx: AppContext): Handler {
+  return (input) => {
+    const query = input.query as string;
+    const limit = (input.limit as number | undefined) ?? 10;
+    const rows = ctx.searchSections(query, limit);
+    if (rows.length === 0) {
+      return failure("section_catalog", `No standard section matches the query: ${query}`, input);
+    }
+    return {
+      ok: true,
+      tool: "section_catalog",
+      method: SECTION_CATALOG_METHOD,
+      inputs: { query, limit },
+      quantities: [],
+      references: resolveReferences(ctx, SECTION_CATALOG_METHOD.referenceIds),
+      warnings: [],
+      rows: rows.map((row) => ({
+        designation: row.designation,
+        series: row.series,
+        standard: row.standard,
+        heightMm: row.heightMm,
+        flangeWidthMm: row.flangeWidthMm,
+        webThicknessMm: row.webThicknessMm,
+        flangeThicknessMm: row.flangeThicknessMm,
+        areaCm2: row.areaCm2,
+        massPerMetreKgM: row.massPerMetreKgM,
+        secondMomentCm4: row.secondMomentCm4,
+        sectionModulusCm3: row.sectionModulusCm3,
+      })),
+    };
+  };
+}
+
 export function createHandlers(ctx: AppContext): Record<string, Handler> {
   return {
     beam_bending: beamHandler(ctx),
@@ -448,5 +589,6 @@ export function createHandlers(ctx: AppContext): Record<string, Handler> {
     von_mises: stressHandler(ctx),
     unit_convert: unitConvertHandler(ctx),
     material_lookup: materialHandler(ctx),
+    section_catalog: sectionCatalogHandler(ctx),
   };
 }

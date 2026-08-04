@@ -7,6 +7,7 @@ import {
   bearingSchema,
   boltSchema,
   materialSchema,
+  sectionCatalogSchema,
   sectionPropsSchema,
   shaftSchema,
   springSchema,
@@ -59,6 +60,11 @@ const TOOL_SCHEMAS: Record<string, ToolDef> = {
   material_lookup: {
     description: "Look up mechanical properties for common engineering materials from the curated database.",
     schema: materialSchema,
+  },
+  section_catalog: {
+    description:
+      "Look up standard rolled steel sections from the catalog. Returns published dimensions, masses, and section properties.",
+    schema: sectionCatalogSchema,
   },
 };
 

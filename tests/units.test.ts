@@ -135,3 +135,49 @@ describe("stiffness units", () => {
     }
   });
 });
+
+describe("second moment of area units", () => {
+  it("converts cm4 to m4", () => {
+    const outcome = convertUnit(8356, "cm4", "m4");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(8356e-8, 9);
+      expect(outcome.category).toBe("second moment of area");
+    }
+  });
+
+  it("converts m4 to mm4", () => {
+    const outcome = convertUnit(1, "m4", "mm4");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(1e12, 9);
+    }
+  });
+
+  it("rejects a second moment to area conversion", () => {
+    const outcome = convertUnit(1, "m4", "m2");
+    expect(outcome.ok).toBe(false);
+    if (!outcome.ok) {
+      expect(outcome.error).toContain("Dimension mismatch");
+    }
+  });
+});
+
+describe("linear mass units", () => {
+  it("converts kilograms per metre to grams per metre", () => {
+    const outcome = convertUnit(42.2, "kg/m", "g/m");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(42200, 3);
+      expect(outcome.category).toBe("linear mass");
+    }
+  });
+
+  it("converts pounds per foot to kilograms per metre", () => {
+    const outcome = convertUnit(1, "lb/ft", "kg/m");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(1.4881639435696, 6);
+    }
+  });
+});

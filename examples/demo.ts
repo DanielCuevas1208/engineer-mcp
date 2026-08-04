@@ -34,7 +34,13 @@ function show(name: string, handler: Handler, input: Record<string, unknown>): v
   if (response.rows && response.rows.length > 0) {
     console.log("Rows:");
     for (const row of response.rows) {
-      console.log(`  - ${String(row.name)} | yield ${row.yieldStrengthMPa} MPa | E ${row.elasticModulusGPa} GPa | density ${row.densityKgM3} kg/m3`);
+      if (row.designation) {
+        console.log(
+          `  - ${String(row.designation)} | h ${row.heightMm} mm | I ${row.secondMomentCm4} cm4 | W ${row.sectionModulusCm3} cm3 | ${row.massPerMetreKgM} kg/m`,
+        );
+      } else {
+        console.log(`  - ${String(row.name)} | yield ${row.yieldStrengthMPa} MPa | E ${row.elasticModulusGPa} GPa | density ${row.densityKgM3} kg/m3`);
+      }
     }
   }
 
@@ -76,6 +82,7 @@ type ToolHandlers = {
   von_mises: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
+  section_catalog: Handler;
 };
 
 const toolHandlers = handlers as ToolHandlers;
@@ -91,6 +98,8 @@ const tools: NamedHandler[] = [
   ["unit_convert", toolHandlers.unit_convert],
   ["unit_convert (torque to energy)", toolHandlers.unit_convert],
   ["material_lookup", toolHandlers.material_lookup],
+  ["section_catalog", toolHandlers.section_catalog],
+  ["beam_bending (IPE 300)", toolHandlers.beam_bending],
 ];
 
 const inputs: Array<Record<string, unknown>> = [
@@ -157,6 +166,19 @@ const inputs: Array<Record<string, unknown>> = [
   },
   {
     query: "steel",
+  },
+  {
+    query: "IPE",
+    limit: 4,
+  },
+  {
+    support: "simply_supported",
+    load: "point",
+    loadMagnitude: 20000,
+    length: 3,
+    material: "Structural steel S355",
+    section: { shape: "standard", designation: "IPE 300" },
+    outputUnits: { maxBendingStress: "MPa", maxDeflection: "mm", maxBendingMoment: "kN·m" },
   },
 ];
 

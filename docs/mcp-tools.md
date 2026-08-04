@@ -31,7 +31,7 @@ Inputs:
 - `material`: material name from the database.
 - `elasticModulus`: Young's modulus in pascals.
 - `yieldStrength`: tensile yield strength in pascals.
-- `section`: cross-section shape and dimensions in metres.
+- `section`: cross-section shape and dimensions in metres. Use `{ "shape": "standard", "designation": "IPE 300" }` to use a catalog section.
 - `secondMomentOfArea` and `sectionModulus`: use these when you have no section.
 - `outputUnits`: optional unit overrides.
 
@@ -63,6 +63,37 @@ Supported shapes:
 - `hollow_circle` with `outerDiameter` and `innerDiameter`.
 - `i_beam` with `height`, `flangeWidth`, `flangeThickness`, and `webThickness`.
 - `box` with `width`, `height`, and `thickness`.
+- `standard` with `designation`. Use a catalog designation such as `IPE 300`.
+
+The `standard` shape returns the published values from the section catalog. It uses the strong axis for the second moment of area and the section modulus.
+
+Example:
+
+```json
+{
+  "section": { "shape": "standard", "designation": "IPE 300" }
+}
+```
+
+## section_catalog
+
+Search the catalog of standard rolled steel sections.
+
+Inputs:
+
+- `query`: a designation, series, or standard to match.
+- `limit`: the maximum number of rows. The default is 10.
+
+The tool returns the published dimensions, mass, second moment of area, and section modulus of each match. Use it to find a designation, then pass that designation to `beam_bending` or `section_properties`.
+
+Example:
+
+```json
+{
+  "query": "HEB",
+  "limit": 5
+}
+```
 
 ## bolt_strength
 

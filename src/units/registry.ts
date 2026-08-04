@@ -7,9 +7,11 @@ import {
   DIM_FORCE,
   DIM_FREQUENCY,
   DIM_LENGTH,
+  DIM_LINEAR_DENSITY,
   DIM_MASS,
   DIM_POWER,
   DIM_PRESSURE,
+  DIM_SECOND_MOMENT,
   DIM_STIFFNESS,
   DIM_TEMPERATURE,
   DIM_TIME,
@@ -128,9 +130,18 @@ export const UNITS: UnitDef[] = [
   unit({ canonical: "ft3", name: "cubic foot", category: "volume", dim: DIM_VOLUME, factor: 0.028316846592 }),
   unit({ canonical: "gal", name: "US gallon", category: "volume", dim: DIM_VOLUME, factor: 0.003785411784 }),
 
+  unit({ canonical: "m4", name: "metre to the fourth power", category: "second moment of area", dim: DIM_SECOND_MOMENT, factor: 1 }),
+  unit({ canonical: "cm4", name: "centimetre to the fourth power", category: "second moment of area", dim: DIM_SECOND_MOMENT, factor: 1e-8 }),
+  unit({ canonical: "mm4", name: "millimetre to the fourth power", category: "second moment of area", dim: DIM_SECOND_MOMENT, factor: 1e-12 }),
+  unit({ canonical: "in4", name: "inch to the fourth power", category: "second moment of area", dim: DIM_SECOND_MOMENT, factor: 0.0254 ** 4 }),
+
   unit({ canonical: "kg/m3", name: "kilogram per cubic metre", category: "density", dim: DIM_DENSITY, factor: 1 }),
   unit({ canonical: "g/cm3", name: "gram per cubic centimetre", category: "density", dim: DIM_DENSITY, factor: 1e3 }),
   unit({ canonical: "lb/ft3", name: "pound per cubic foot", category: "density", dim: DIM_DENSITY, factor: 16.01846337 }),
+
+  unit({ canonical: "kg/m", name: "kilogram per metre", category: "linear mass", dim: DIM_LINEAR_DENSITY, factor: 1 }),
+  unit({ canonical: "g/m", name: "gram per metre", category: "linear mass", dim: DIM_LINEAR_DENSITY, factor: 1e-3 }),
+  unit({ canonical: "lb/ft", name: "pound per foot", category: "linear mass", dim: DIM_LINEAR_DENSITY, factor: 1.4881639435696 }),
 
   unit({ canonical: "N/m", name: "newton per metre", category: "stiffness", dim: DIM_STIFFNESS, factor: 1 }),
   unit({ canonical: "N/mm", name: "newton per millimetre", category: "stiffness", dim: DIM_STIFFNESS, factor: 1e3 }),

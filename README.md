@@ -10,7 +10,6 @@ It gives coding agents verified answers for beams, bolts, springs, shafts, beari
 Every result shows the formula, the method, and the source.
 
 ## What it provides
-
 Use Engineer MCP inside an AI coding agent.
 The agent calls a tool and receives a complete engineering answer.
 The answer includes numbers, units, assumptions, and citations.
@@ -24,6 +23,7 @@ The release covers these domains:
 - Bearing rating life to ISO 281.
 - von Mises equivalent stress.
 - Cross-section properties.
+- Standard steel section catalog to EN 10365.
 - Dimension-safe unit conversion.
 - Material property lookup.
 
@@ -55,6 +55,7 @@ Warnings surface when a method uses an approximation.
 | `von_mises` | Equivalent stress and yield safety factor. |
 | `unit_convert` | Conversion between compatible units. |
 | `material_lookup` | Curated mechanical properties of materials. |
+| `section_catalog` | Published IPE, HEA, HEB, and UPN steel sections. |
 
 See [docs/mcp-tools.md](docs/mcp-tools.md) for the full reference.
 
@@ -83,7 +84,7 @@ Key directories:
 | `src/units/` | Dimension-safe unit conversion. |
 | `src/db/` | SQLite schema and seeding. |
 | `src/handlers.ts` | Tool orchestration and result envelopes. |
-| `data/` | Material, fastener, and reference data. |
+| `data/` | Material, fastener, section, and reference data. |
 
 ## Quick start
 
@@ -154,6 +155,34 @@ Error: Category mismatch: N·m is torque, J is energy.
 Use a unit of the same quantity.
 ```
 
+A call to `section_catalog` for the HEB series returns the published sections:
+
+```text
+Rows:
+  - HEB 100 | h 100 mm | I 450 cm4 | W 89.9 cm3 | 20.4 kg/m
+  - HEB 120 | h 120 mm | I 864 cm4 | W 144 cm3 | 26.7 kg/m
+  - HEB 140 | h 140 mm | I 1509 cm4 | W 216 cm3 | 33.7 kg/m
+  - HEB 160 | h 160 mm | I 2492 cm4 | W 311 cm3 | 42.6 kg/m
+
+Method: Standard section catalog lookup
+References:
+  - EN 10365 - Hot rolled steel channels, I and H sections - Dimensions and masses
+```
+
+Pass a catalog designation to `beam_bending` to use the published section properties:
+
+```text
+Maximum bending moment                   15 kN·m
+Maximum bending stress                26.93 MPa
+Maximum deflection                   0.6411 mm
+Bending safety factor                 13.18
+
+References:
+  - Roark's Formulas for Stress and Strain (Eighth edition, 2011)
+  - Mechanics of Materials (Euler-Bernoulli beam theory)
+  - EN 10365 - Hot rolled steel channels, I and H sections - Dimensions and masses
+```
+
 ## Development
 
 | Command | Purpose |
@@ -169,9 +198,10 @@ Use a unit of the same quantity.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, and the tools.
 
-- 98 tests across 10 files.
+- 116 tests across 11 files.
 - All tests pass on Node 22 and Node 24.
 - The CI workflow runs typecheck, tests, build, demo, and a package check.
+- The CI workflow verifies the CLI contract over standard output.
 
 Run `npm test` to reproduce the results.
 
@@ -184,6 +214,8 @@ Run `npm test` to reproduce the results.
 - The critical speed is a first-mode approximation.
 - The spring design covers static round-wire springs only.
   It does not estimate fatigue life for cyclic loads.
+- The section catalog covers common IPE, HEA, HEB, and UPN sizes.
+  It does not include every size in the standard.
 - The built-in SQLite module of Node.js is still experimental.
 
 Check the cited sources for exact values.
@@ -197,6 +229,9 @@ Each release stays useful on its own.
 
 - Helical compression spring design.
   The `spring_design` tool reports the spring rate, the shear stress, and the safety factor.
+- Standard steel section catalog.
+  The `section_catalog` tool searches the published IPE, HEA, HEB, and UPN series.
+  The `beam_bending` and `section_properties` tools accept a catalog designation.
 
 ### Remaining
 
@@ -204,7 +239,6 @@ Each release stays useful on its own.
 - Add press-fit and interference-fit calculators.
 - Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport.
-- Add a catalog of ISO and DIN standard sections.
 
 See [docs/integration.md](docs/integration.md) for the EngineerKit plan.
 

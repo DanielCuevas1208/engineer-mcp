@@ -41,6 +41,7 @@ Engineer MCP grows in independent releases. Each release stays useful on its own
 ### Complete
 
 - Helical compression spring design. The `spring_design` tool computes the spring rate, the shear stress, and the safety factor.
+- Standard section catalog. The `section_catalog` tool searches published IPE, HEA, HEB, and UPN sections. The `beam_bending` and `section_properties` tools accept a standard designation.
 
 ### Remaining
 
@@ -48,6 +49,5 @@ Engineer MCP grows in independent releases. Each release stays useful on its own
 - Add press-fit and interference-fit calculators.
 - Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport in addition to stdio.
-- Add a catalog of ISO and DIN standard sections.
 
 Keep each release small and deterministic. Run the full test suite before release.

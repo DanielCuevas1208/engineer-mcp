@@ -20,7 +20,11 @@ Options:
   -h, --help     Show this help and exit.
 `;
 
-function info(message: string): void {
+function writeOut(message: string): void {
+  process.stdout.write(`${message}\n`);
+}
+
+function writeErr(message: string): void {
   process.stderr.write(`${message}\n`);
 }
 
@@ -35,17 +39,17 @@ function main(): void {
   });
 
   if (values.help) {
-    info(HELP);
+    writeOut(HELP);
     return;
   }
   if (values.version) {
-    info(`${SERVER_NAME} v${VERSION}`);
+    writeOut(`${SERVER_NAME} v${VERSION}`);
     return;
   }
   if (values.list) {
-    info("Available tools:");
+    writeOut("Available tools:");
     for (const tool of listTools()) {
-      info(`  - ${tool}`);
+      writeOut(`  - ${tool}`);
     }
     return;
   }
@@ -56,7 +60,7 @@ function main(): void {
   const transport = new StdioServerTransport();
 
   server.connect(transport).catch((error: unknown) => {
-    info(`Failed to start server: ${error instanceof Error ? error.message : String(error)}`);
+    writeErr(`Failed to start server: ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   });
 }

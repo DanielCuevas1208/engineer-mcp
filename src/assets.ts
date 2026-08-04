@@ -34,9 +34,24 @@ export type GradeSeed = {
   ultimateStressMPa: number;
 };
 
+export type SectionSeed = {
+  designation: string;
+  series: string;
+  standard: string;
+  heightMm: number;
+  flangeWidthMm: number;
+  webThicknessMm: number;
+  flangeThicknessMm: number;
+  areaCm2: number;
+  massPerMetreKgM: number;
+  secondMomentCm4: number;
+  sectionModulusCm3: number;
+};
+
 const MATERIALS_PATH = "../data/materials.json";
 const FASTENERS_PATH = "../data/fasteners.json";
 const REFERENCES_PATH = "../data/references.json";
+const SECTIONS_PATH = "../data/sections.json";
 
 export function loadMaterials(): MaterialSeed[] {
   return readJson<MaterialSeed[]>(MATERIALS_PATH);
@@ -48,6 +63,10 @@ export function loadFasteners(): FastenerSeed[] {
 
 export function loadReferences(): Record<string, ReferenceRecord> {
   return readJson<Record<string, ReferenceRecord>>(REFERENCES_PATH);
+}
+
+export function loadSections(): SectionSeed[] {
+  return readJson<SectionSeed[]>(SECTIONS_PATH);
 }
 
 export const BOLT_GRADES: GradeSeed[] = [

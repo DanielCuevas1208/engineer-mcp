@@ -1,5 +1,5 @@
 import { DatabaseSync } from "node:sqlite";
-import { BOLT_GRADES, loadFasteners, loadMaterials, loadReferences } from "../assets.js";
+import { BOLT_GRADES, loadFasteners, loadMaterials, loadReferences, loadSections } from "../assets.js";
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS sources (
@@ -38,6 +38,21 @@ CREATE TABLE IF NOT EXISTS fasteners (
   pitch_mm REAL NOT NULL,
   pitch_diameter_mm REAL NOT NULL,
   minor_diameter_mm REAL NOT NULL,
+  reference_id TEXT
+);
+
+CREATE TABLE IF NOT EXISTS standard_sections (
+  designation TEXT PRIMARY KEY,
+  series TEXT NOT NULL,
+  standard TEXT NOT NULL,
+  height_mm REAL NOT NULL,
+  flange_width_mm REAL NOT NULL,
+  web_thickness_mm REAL NOT NULL,
+  flange_thickness_mm REAL NOT NULL,
+  area_cm2 REAL NOT NULL,
+  mass_per_metre_kg_m REAL NOT NULL,
+  second_moment_cm4 REAL NOT NULL,
+  section_modulus_cm3 REAL NOT NULL,
   reference_id TEXT
 );
 `;
@@ -91,6 +106,30 @@ export function seedIfEmpty(db: DatabaseSync): void {
     );
     for (const f of loadFasteners()) {
       insert.run(f.nominalDiameterMm, f.pitchMm, f.pitchDiameterMm, f.minorDiameterMm, "iso-724");
+    }
+  }
+
+  if (tableIsEmpty(db, "standard_sections")) {
+    const insert = db.prepare(
+      `INSERT INTO standard_sections
+        (designation, series, standard, height_mm, flange_width_mm, web_thickness_mm, flange_thickness_mm, area_cm2, mass_per_metre_kg_m, second_moment_cm4, section_modulus_cm3, reference_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    );
+    for (const s of loadSections()) {
+      insert.run(
+        s.designation,
+        s.series,
+        s.standard,
+        s.heightMm,
+        s.flangeWidthMm,
+        s.webThicknessMm,
+        s.flangeThicknessMm,
+        s.areaCm2,
+        s.massPerMetreKgM,
+        s.secondMomentCm4,
+        s.sectionModulusCm3,
+        "en-10365",
+      );
     }
   }
 }
