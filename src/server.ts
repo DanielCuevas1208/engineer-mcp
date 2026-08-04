@@ -6,7 +6,9 @@ import {
   beamSchema,
   bearingSchema,
   boltSchema,
+  fatigueSchema,
   materialSchema,
+  pressFitSchema,
   sectionPropsSchema,
   shaftSchema,
   springSchema,
@@ -59,6 +61,16 @@ const TOOL_SCHEMAS: Record<string, ToolDef> = {
   material_lookup: {
     description: "Look up mechanical properties for common engineering materials from the curated database.",
     schema: materialSchema,
+  },
+  fatigue_analysis: {
+    description:
+      "Fatigue safety factors for a constant-amplitude stress cycle using the Soderberg, Goodman, Gerber, and ASME-elliptic criteria.",
+    schema: fatigueSchema,
+  },
+  press_fit: {
+    description:
+      "Contact pressure, stresses, press-in force, and torque capacity of an interference fit by Lamé thick-cylinder theory.",
+    schema: pressFitSchema,
   },
 };
 

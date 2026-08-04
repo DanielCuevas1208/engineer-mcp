@@ -22,9 +22,11 @@ The release covers these domains:
 - Helical compression spring design.
 - Shaft torsion and first critical speed.
 - Bearing rating life to ISO 281.
+- Fatigue life to the Soderberg, Goodman, Gerber, and ASME-elliptic criteria.
+- Press-fit and interference-fit joint design by Lamé theory.
 - von Mises equivalent stress.
 - Cross-section properties.
-- Dimension-safe unit conversion.
+- Dimension-safe unit conversion, including viscosity and thermal conductivity.
 - Material property lookup.
 
 ## How results stay trustworthy
@@ -52,6 +54,8 @@ Warnings surface when a method uses an approximation.
 | `spring_design` | Spring rate, shear stress, and safety factor of a compression spring. |
 | `shaft_analysis` | Torsion stress, twist, and critical speed. |
 | `bearing_life` | ISO 281 rating life in revolutions and hours. |
+| `fatigue_analysis` | Fatigue safety factors for a constant-amplitude stress cycle. |
+| `press_fit` | Contact pressure, stresses, and capacity of an interference fit. |
 | `von_mises` | Equivalent stress and yield safety factor. |
 | `unit_convert` | Conversion between compatible units. |
 | `material_lookup` | Curated mechanical properties of materials. |
@@ -147,6 +151,43 @@ References:
   - Machinery's Handbook (Thirty-first edition)
 ```
 
+A call to `fatigue_analysis` for a steel part under a fluctuating load:
+
+```text
+Endurance limit                         310 MPa
+Mean stress                             100 MPa
+Alternating stress                      100 MPa
+Soderberg fatigue factor              1.622
+Modified Goodman fatigue factor          2.067
+Gerber fatigue factor                 2.568
+ASME-elliptic fatigue factor          2.291
+First-cycle yield factor                1.7
+Governing fatigue factor              1.622
+
+Method: Constant-amplitude fatigue criteria
+Formula: Soderberg: Sa/Se + Sm/Sy = 1/n. Goodman: Sa/Se + Sm/Sut = 1/n
+References:
+  - Shigley's Mechanical Engineering Design (Tenth edition, 2015)
+```
+
+A call to `press_fit` for a steel hub on a steel shaft with 20 µm interference:
+
+```text
+Interface contact pressure             52.5 MPa
+Hub tangential stress                  87.5 MPa
+Shaft tangential stress               -52.5 MPa
+Hub von Mises stress                  122.5 MPa
+Press-in force                        22.27 kN
+Torque capacity                         334 N·m
+Hub safety factor                     2.898
+
+Method: Interference fit by Lamé thick-cylinder theory
+Formula: p = u / (r ((1/Eh)((ro^2+r^2)/(ro^2-r^2)+nh) + (1/Es)((r^2+ri^2)/(r^2-ri^2)-ns)))
+References:
+  - Shigley's Mechanical Engineering Design (Tenth edition, 2015)
+  - Machinery's Handbook (Thirty-first edition)
+```
+
 A call to `unit_convert` with a torque-to-energy request fails safely:
 
 ```text
@@ -169,9 +210,9 @@ Use a unit of the same quantity.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, and the tools.
 
-- 98 tests across 10 files.
+- 135 tests across 12 files.
 - All tests pass on Node 22 and Node 24.
-- The CI workflow runs typecheck, tests, build, demo, and a package check.
+- The CI workflow runs typecheck, tests, build, the CLI contract, the demo, and a package check.
 
 Run `npm test` to reproduce the results.
 
@@ -184,6 +225,10 @@ Run `npm test` to reproduce the results.
 - The critical speed is a first-mode approximation.
 - The spring design covers static round-wire springs only.
   It does not estimate fatigue life for cyclic loads.
+- The fatigue criteria assume a polished test specimen.
+  Apply surface, size, and loading factors to a real part.
+- The press-fit theory assumes uniform contact along the hub.
+  It ignores stress concentrations at the hub edges.
 - The built-in SQLite module of Node.js is still experimental.
 
 Check the cited sources for exact values.
@@ -197,12 +242,18 @@ Each release stays useful on its own.
 
 - Helical compression spring design.
   The `spring_design` tool reports the spring rate, the shear stress, and the safety factor.
+- Constant-amplitude fatigue analysis.
+  The `fatigue_analysis` tool reports factors for four fatigue criteria.
+- Press-fit and interference-fit design.
+  The `press_fit` tool reports pressure, stresses, and joint capacity.
+- Viscosity and thermal-conductivity units.
+  The `unit_convert` tool converts dynamic viscosity, kinematic viscosity, and thermal conductivity.
 
 ### Remaining
 
-- Add fatigue analysis for cyclic loads.
-- Add press-fit and interference-fit calculators.
-- Add more unit categories, including viscosity and thermal conductivity.
+- Add fatigue analysis for welded or notched joints.
+- Add a shrink-fit temperature for assembly.
+- Add more unit categories, including specific heat capacity.
 - Add HTTP transport.
 - Add a catalog of ISO and DIN standard sections.
 

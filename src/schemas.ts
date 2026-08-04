@@ -131,6 +131,36 @@ export const materialSchema = z.object({
   limit: z.number().int().min(1).max(50).optional().describe("Maximum number of rows to return. Defaults to 10."),
 });
 
+export const fatigueSchema = z.object({
+  meanStress: z.number().describe("Mean stress in pascals. Negative values are compressive."),
+  amplitudeStress: z.number().min(0).describe("Alternating stress in pascals. Zero means a steady load."),
+  ultimateStrength: z.number().positive().describe("Ultimate tensile strength in pascals."),
+  yieldStrength: z.number().positive().optional().describe("Yield strength in pascals. Enables the Soderberg and ASME-elliptic criteria."),
+  enduranceLimit: z.number().positive().optional().describe("Endurance limit in pascals. Estimated when not supplied."),
+  criterion: z
+    .enum(["soderberg", "goodman", "gerber", "asme_elliptic", "all"])
+    .optional()
+    .describe("Fatigue criterion to evaluate. Defaults to all criteria."),
+  outputUnits,
+});
+
+export const pressFitSchema = z.object({
+  hubOuterDiameter: z.number().positive().describe("Hub outer diameter in metres."),
+  interfaceDiameter: z.number().positive().describe("Interface diameter in metres."),
+  shaftInnerDiameter: z.number().min(0).optional().describe("Shaft inner diameter in metres for a hollow shaft. Defaults to a solid shaft."),
+  hubLength: z.number().positive().describe("Hub engagement length in metres."),
+  diametralInterference: z.number().positive().describe("Diametral interference in metres."),
+  hubElasticModulus: z.number().positive().describe("Hub Young's modulus in pascals."),
+  shaftElasticModulus: z.number().positive().describe("Shaft Young's modulus in pascals."),
+  hubPoissonRatio: z.number().min(0).max(0.5).optional().describe("Hub Poisson's ratio. Defaults to 0.3."),
+  shaftPoissonRatio: z.number().min(0).max(0.5).optional().describe("Shaft Poisson's ratio. Defaults to 0.3."),
+  frictionCoefficient: z.number().min(0).optional().describe("Interface friction coefficient. Defaults to 0.15 for dry steel."),
+  hubYieldStrength: z.number().positive().optional().describe("Hub yield strength in pascals. Enables the hub safety factor."),
+  shaftYieldStrength: z.number().positive().optional().describe("Shaft yield strength in pascals. Enables the shaft safety factor."),
+  appliedAxialForce: z.number().min(0).optional().describe("Applied axial force in newtons. Enables the axial joint safety factor."),
+  outputUnits,
+});
+
 export type BeamInput = z.infer<typeof beamSchema>;
 export type BoltInput = z.infer<typeof boltSchema>;
 export type ShaftInput = z.infer<typeof shaftSchema>;
@@ -140,3 +170,5 @@ export type SectionPropsInput = z.infer<typeof sectionPropsSchema>;
 export type StressInput = z.infer<typeof stressSchema>;
 export type UnitConvertInput = z.infer<typeof unitConvertSchema>;
 export type MaterialInput = z.infer<typeof materialSchema>;
+export type FatigueInput = z.infer<typeof fatigueSchema>;
+export type PressFitInput = z.infer<typeof pressFitSchema>;

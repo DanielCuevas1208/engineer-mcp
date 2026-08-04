@@ -76,6 +76,8 @@ type ToolHandlers = {
   von_mises: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
+  fatigue_analysis: Handler;
+  press_fit: Handler;
 };
 
 const toolHandlers = handlers as ToolHandlers;
@@ -90,6 +92,9 @@ const tools: NamedHandler[] = [
   ["von_mises", toolHandlers.von_mises],
   ["unit_convert", toolHandlers.unit_convert],
   ["unit_convert (torque to energy)", toolHandlers.unit_convert],
+  ["unit_convert (thermal conductivity)", toolHandlers.unit_convert],
+  ["fatigue_analysis", toolHandlers.fatigue_analysis],
+  ["press_fit", toolHandlers.press_fit],
   ["material_lookup", toolHandlers.material_lookup],
 ];
 
@@ -154,6 +159,39 @@ const inputs: Array<Record<string, unknown>> = [
     value: 10,
     from: "N·m",
     to: "J",
+  },
+  {
+    value: 205,
+    from: "W/(m·K)",
+    to: "BTU/(ft·h·degF)",
+  },
+  {
+    meanStress: 100e6,
+    amplitudeStress: 100e6,
+    ultimateStrength: 620e6,
+    yieldStrength: 340e6,
+    outputUnits: { enduranceLimit: "MPa", meanStress: "MPa", amplitudeStress: "MPa" },
+  },
+  {
+    hubOuterDiameter: 0.06,
+    interfaceDiameter: 0.03,
+    hubLength: 0.03,
+    diametralInterference: 20e-6,
+    hubElasticModulus: 210e9,
+    shaftElasticModulus: 210e9,
+    hubYieldStrength: 355e6,
+    shaftYieldStrength: 355e6,
+    appliedAxialForce: 10000,
+    outputUnits: {
+      contactPressure: "MPa",
+      hubTangentialStress: "MPa",
+      shaftTangentialStress: "MPa",
+      radialStress: "MPa",
+      hubVonMisesStress: "MPa",
+      shaftVonMisesStress: "MPa",
+      pressForce: "kN",
+      torqueCapacity: "N·m",
+    },
   },
   {
     query: "steel",

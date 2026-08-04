@@ -3,6 +3,8 @@ import {
   analyzeBeam,
   analyzeBearing,
   analyzeBolt,
+  analyzeFatigue,
+  analyzePressFit,
   analyzeShaft,
   analyzeSpring,
   computeSection,
@@ -405,6 +407,49 @@ function unitConvertHandler(ctx: AppContext): Handler {
   };
 }
 
+function fatigueHandler(ctx: AppContext): Handler {
+  return (input) => {
+    try {
+      const computation = analyzeFatigue({
+        meanStress: input.meanStress as number,
+        amplitudeStress: input.amplitudeStress as number,
+        ultimateStrength: input.ultimateStrength as number,
+        yieldStrength: input.yieldStrength as number | undefined,
+        enduranceLimit: input.enduranceLimit as number | undefined,
+        criterion: input.criterion as "soderberg" | "goodman" | "gerber" | "asme_elliptic" | "all" | undefined,
+      });
+      return buildResult(ctx, "fatigue_analysis", computation, input.outputUnits as Record<string, string> | undefined);
+    } catch (error) {
+      return failure("fatigue_analysis", error instanceof Error ? error.message : String(error), input);
+    }
+  };
+}
+
+function pressFitHandler(ctx: AppContext): Handler {
+  return (input) => {
+    try {
+      const computation = analyzePressFit({
+        hubOuterDiameter: input.hubOuterDiameter as number,
+        interfaceDiameter: input.interfaceDiameter as number,
+        shaftInnerDiameter: input.shaftInnerDiameter as number | undefined,
+        hubLength: input.hubLength as number,
+        diametralInterference: input.diametralInterference as number,
+        hubElasticModulus: input.hubElasticModulus as number,
+        shaftElasticModulus: input.shaftElasticModulus as number,
+        hubPoissonRatio: input.hubPoissonRatio as number | undefined,
+        shaftPoissonRatio: input.shaftPoissonRatio as number | undefined,
+        frictionCoefficient: input.frictionCoefficient as number | undefined,
+        hubYieldStrength: input.hubYieldStrength as number | undefined,
+        shaftYieldStrength: input.shaftYieldStrength as number | undefined,
+        appliedAxialForce: input.appliedAxialForce as number | undefined,
+      });
+      return buildResult(ctx, "press_fit", computation, input.outputUnits as Record<string, string> | undefined);
+    } catch (error) {
+      return failure("press_fit", error instanceof Error ? error.message : String(error), input);
+    }
+  };
+}
+
 function materialHandler(ctx: AppContext): Handler {
   return (input) => {
     const query = input.query as string;
@@ -448,5 +493,7 @@ export function createHandlers(ctx: AppContext): Record<string, Handler> {
     von_mises: stressHandler(ctx),
     unit_convert: unitConvertHandler(ctx),
     material_lookup: materialHandler(ctx),
+    fatigue_analysis: fatigueHandler(ctx),
+    press_fit: pressFitHandler(ctx),
   };
 }

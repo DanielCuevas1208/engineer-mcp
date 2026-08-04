@@ -1,6 +1,15 @@
 export { analyzeBeam, BEAM_METHOD, type BeamInput, type BeamLoad, type BeamSupport } from "./beam.js";
 export { analyzeBearing, BEARING_METHOD, equivalentLoad, type BearingInput, type BearingType } from "./bearing.js";
 export { analyzeBolt, BOLT_METHOD, tensileStressArea, type BoltGradeData, type BoltInput } from "./bolt.js";
+export {
+  analyzeFatigue,
+  criterionSafetyFactor,
+  estimateEnduranceLimit,
+  FATIGUE_METHOD,
+  type FatigueCriterion,
+  type FatigueInput,
+} from "./fatigue.js";
+export { analyzePressFit, planeStressVonMises, PRESS_FIT_METHOD, type PressFitInput } from "./fit.js";
 export { computeSection, SECTION_METHOD, type SectionDef, type SectionProperties } from "./sections.js";
 export { analyzeShaft, SHAFT_METHOD, type ShaftInput } from "./shaft.js";
 export {

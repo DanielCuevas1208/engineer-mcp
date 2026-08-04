@@ -41,12 +41,15 @@ Engineer MCP grows in independent releases. Each release stays useful on its own
 ### Complete
 
 - Helical compression spring design. The `spring_design` tool computes the spring rate, the shear stress, and the safety factor.
+- Constant-amplitude fatigue analysis. The `fatigue_analysis` tool reports factors for the Soderberg, Goodman, Gerber, and ASME-elliptic criteria.
+- Press-fit and interference-fit design. The `press_fit` tool reports pressure, stresses, and joint capacity from Lamé theory.
+- Viscosity and thermal-conductivity units. The `unit_convert` tool covers dynamic viscosity, kinematic viscosity, and thermal conductivity.
 
 ### Remaining
 
-- Add fatigue analysis for cyclic loads.
-- Add press-fit and interference-fit calculators.
-- Add more unit categories, including viscosity and thermal conductivity.
+- Add fatigue analysis for welded or notched joints.
+- Add a shrink-fit temperature for assembly.
+- Add more unit categories, including specific heat capacity.
 - Add HTTP transport in addition to stdio.
 - Add a catalog of ISO and DIN standard sections.
 

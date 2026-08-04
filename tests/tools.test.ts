@@ -15,6 +15,8 @@ type Handlers = {
   von_mises: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
+  fatigue_analysis: Handler;
+  press_fit: Handler;
 };
 
 let ctx: AppContext;
@@ -31,7 +33,7 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("tool registry", () => {
-  it("registers all nine tools", () => {
+  it("registers all eleven tools", () => {
     expect(listTools().sort()).toEqual(
       [
         "beam_bending",
@@ -43,6 +45,8 @@ describe("tool registry", () => {
         "von_mises",
         "unit_convert",
         "material_lookup",
+        "fatigue_analysis",
+        "press_fit",
       ].sort(),
     );
   });
@@ -315,6 +319,71 @@ describe("material_lookup tool", () => {
   it("returns no match as a failure", () => {
     setup();
     const response = handlers.material_lookup({ query: "adamantium" });
+    expect(response.ok).toBe(false);
+  });
+});
+
+describe("fatigue_analysis tool", () => {
+  it("returns the governing fatigue factor with provenance", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      meanStress: 100e6,
+      amplitudeStress: 100e6,
+      ultimateStrength: 620e6,
+      yieldStrength: 340e6,
+      outputUnits: { enduranceLimit: "MPa" },
+    });
+    const result = expectOk(response);
+    expect(result.tool).toBe("fatigue_analysis");
+    expect(result.method.id).toBe("fatigue-analysis");
+    expect(result.references.length).toBeGreaterThan(0);
+    const endurance = result.quantities.find((q) => q.key === "enduranceLimit");
+    expect(endurance?.unit).toBe("MPa");
+    expect(result.safetyFactor?.value).toBeCloseTo(1.6215, 3);
+  });
+
+  it("rejects a zero stress cycle", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      meanStress: 0,
+      amplitudeStress: 0,
+      ultimateStrength: 620e6,
+    });
+    expect(response.ok).toBe(false);
+  });
+});
+
+describe("press_fit tool", () => {
+  it("returns the contact pressure and converted units", () => {
+    setup();
+    const response = handlers.press_fit({
+      hubOuterDiameter: 0.06,
+      interfaceDiameter: 0.03,
+      hubLength: 0.03,
+      diametralInterference: 20e-6,
+      hubElasticModulus: 210e9,
+      shaftElasticModulus: 210e9,
+      hubYieldStrength: 355e6,
+      outputUnits: { contactPressure: "MPa", hubVonMisesStress: "MPa" },
+    });
+    const result = expectOk(response);
+    expect(result.tool).toBe("press_fit");
+    expect(result.method.id).toBe("press-fit");
+    expect(result.quantities.find((q) => q.key === "contactPressure")?.value).toBeCloseTo(52.5, 3);
+    expect(result.quantities.find((q) => q.key === "contactPressure")?.unit).toBe("MPa");
+    expect(result.safetyFactor).toBeDefined();
+  });
+
+  it("rejects a zero interference", () => {
+    setup();
+    const response = handlers.press_fit({
+      hubOuterDiameter: 0.06,
+      interfaceDiameter: 0.03,
+      hubLength: 0.03,
+      diametralInterference: 0,
+      hubElasticModulus: 210e9,
+      shaftElasticModulus: 210e9,
+    });
     expect(response.ok).toBe(false);
   });
 });

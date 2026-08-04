@@ -135,6 +135,59 @@ Inputs:
 - `speedRpm`: enables life in hours.
 - `requiredLifeHours`: enables the life margin.
 
+## fatigue_analysis
+
+Compute fatigue safety factors for a constant-amplitude stress cycle.
+
+The tool evaluates the Soderberg, modified Goodman, Gerber, and ASME-elliptic criteria. It reports the minimum factor as the governing factor.
+
+Inputs:
+
+- `meanStress`: mean stress in pascals. Negative values are compressive.
+- `amplitudeStress`: alternating stress in pascals. Zero means a steady load.
+- `ultimateStrength`: ultimate tensile strength in pascals.
+- `yieldStrength`: yield strength in pascals. Enables the Soderberg and ASME-elliptic criteria.
+- `enduranceLimit`: endurance limit in pascals. The tool estimates it when missing.
+- `criterion`: one of `soderberg`, `goodman`, `gerber`, `asme_elliptic`, or `all`. The default is `all`.
+
+The tool warns when the mean stress is compressive. It warns when the endurance limit is an estimate. It warns when the governing factor is below one.
+
+## press_fit
+
+Compute the contact pressure, stresses, and capacity of an interference fit.
+
+The tool uses the Lamé solution for two cylinders in interference. The hub carries tensile hoop stress. The shaft carries compressive hoop stress.
+
+Inputs:
+
+- `hubOuterDiameter`: hub outer diameter in metres.
+- `interfaceDiameter`: interface diameter in metres.
+- `shaftInnerDiameter`: shaft inner diameter in metres. The default is a solid shaft.
+- `hubLength`: hub engagement length in metres.
+- `diametralInterference`: diametral interference in metres.
+- `hubElasticModulus` and `shaftElasticModulus`: Young's moduli in pascals.
+- `hubPoissonRatio` and `shaftPoissonRatio`: Poisson's ratios. The default is `0.3`.
+- `frictionCoefficient`: interface friction coefficient. The default is `0.15` for dry steel.
+- `hubYieldStrength`: enables the hub safety factor.
+- `shaftYieldStrength`: enables the shaft safety factor.
+- `appliedAxialForce`: enables the axial joint safety factor.
+
+Example:
+
+```json
+{
+  "hubOuterDiameter": 0.06,
+  "interfaceDiameter": 0.03,
+  "hubLength": 0.03,
+  "diametralInterference": 0.00002,
+  "hubElasticModulus": 210000000000,
+  "shaftElasticModulus": 210000000000,
+  "hubYieldStrength": 355000000
+}
+```
+
+The tool warns on a thin hub. It warns when the applied axial force exceeds the press-in force.
+
 ## von_mises
 
 Compute the von Mises equivalent stress and yield safety factor of a stress state.
@@ -155,6 +208,14 @@ Inputs:
 - `value`: the numeric value.
 - `from`: source unit symbol.
 - `to`: target unit symbol.
+
+The converter covers these quantities:
+
+- length, mass, time, and angle.
+- temperature, force, pressure, and torque.
+- energy, power, velocity, and acceleration.
+- area, volume, density, and stiffness.
+- frequency, dynamic viscosity, kinematic viscosity, and thermal conductivity.
 
 The converter rejects mismatched dimensions and mismatched quantity categories. For example, it rejects a torque-to-energy conversion.
 

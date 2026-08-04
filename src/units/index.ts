@@ -1,3 +1,28 @@
 export { convertUnit, type UnitOutcome } from "./convert.js";
-export { dimensionLabel, dimensionsEqual, DIMENSION_AXES, type Dimension } from "./dimensions.js";
+export {
+  dimensionLabel,
+  dimensionsEqual,
+  DIMENSION_AXES,
+  DIM_ACCELERATION,
+  DIM_ANGLE,
+  DIM_AREA,
+  DIM_DENSITY,
+  DIM_DYNAMIC_VISCOSITY,
+  DIM_ENERGY,
+  DIM_FORCE,
+  DIM_FREQUENCY,
+  DIM_KINEMATIC_VISCOSITY,
+  DIM_LENGTH,
+  DIM_MASS,
+  DIM_POWER,
+  DIM_PRESSURE,
+  DIM_STIFFNESS,
+  DIM_TEMPERATURE,
+  DIM_THERMAL_CONDUCTIVITY,
+  DIM_TIME,
+  DIM_TORQUE,
+  DIM_VELOCITY,
+  DIM_VOLUME,
+  type Dimension,
+} from "./dimensions.js";
 export { findSiUnit, findUnit, listUnits, UNITS, type UnitDef } from "./registry.js";
