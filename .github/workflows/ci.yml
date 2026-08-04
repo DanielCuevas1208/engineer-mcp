@@ -47,9 +47,15 @@ jobs:
           node dist/index.js --list | grep -q "section_catalog"
           node dist/index.js --list | grep -q "interference_fit"
           node dist/index.js --list | grep -q "fatigue_analysis"
+          node dist/index.js --transport http --list | grep -q "beam_bending"
+          OUTPUT="$(node dist/index.js --transport unknown 2>&1 || true)"
+          echo "$OUTPUT" | grep -q "Unknown transport"
 
       - name: Verify the demo runs
         run: npm run demo
+
+      - name: Verify the HTTP transport
+        run: npm run smoke:http
 
       - name: Verify the package contents
         run: npm pack --dry-run

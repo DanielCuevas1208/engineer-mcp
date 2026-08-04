@@ -28,6 +28,8 @@ The release covers these domains:
 - Standard steel section catalog to EN 10365.
 - Dimension-safe unit conversion, including viscosity and thermal conductivity.
 - Material property lookup.
+- Stdio and HTTP transports.
+  The HTTP mode serves the same tools over the Streamable HTTP protocol.
 
 ## How results stay trustworthy
 
@@ -64,6 +66,7 @@ Warnings surface when a method uses an approximation.
 See [docs/mcp-tools.md](docs/mcp-tools.md) for the full reference.
 See [docs/section-catalog.md](docs/section-catalog.md) for the covered range, the value provenance, and the data audit.
 See [docs/units.md](docs/units.md) for the unit model and the full category list.
+See [docs/transport.md](docs/transport.md) for the HTTP transport reference.
 
 ## Architecture
 
@@ -74,7 +77,7 @@ The database seeds from JSON files on first start.
 
 ```mermaid
 flowchart LR
-  Agent[AI coding agent] -->|MCP over stdio| Server[MCP server]
+  Agent[AI coding agent] -->|MCP over stdio or HTTP| Server[MCP server]
   Server --> Tools[Tools layer]
   Tools --> Engines[Calculation engines]
   Tools --> Units[Unit layer]
@@ -90,6 +93,8 @@ Key directories:
 | `src/units/` | Dimension-safe unit conversion. |
 | `src/db/` | SQLite schema and seeding. |
 | `src/handlers.ts` | Tool orchestration and result envelopes. |
+| `src/http.ts` | Streamable HTTP transport and session registry. |
+| `src/index.ts` | CLI entry point and transport selection. |
 | `data/` | Material, fastener, section, and reference data. |
 
 ## Quick start
@@ -116,6 +121,22 @@ Add it to your MCP client configuration.
 See [examples/mcp-config.example.json](examples/mcp-config.example.json) for a template.
 Set `ENGINEER_MCP_DB` or pass `--db <path>` to choose the database file.
 The default database file is `engineer-mcp.sqlite` in the working directory.
+
+## Run over HTTP
+
+Run the server with the HTTP transport.
+
+```sh
+node dist/index.js --transport http
+```
+
+The server listens on `http://127.0.0.1:3000/mcp`.
+Set `--host` and `--port` to change the bind address.
+Set `ENGINEER_MCP_TRANSPORT`, `ENGINEER_MCP_HOST`, and `ENGINEER_MCP_PORT` to configure the same values.
+See [docs/transport.md](docs/transport.md) for client configuration and curl examples.
+
+Use a port of `0` to let the operating system choose a free port.
+The server prints the real port to standard error.
 
 ## Sample output
 
@@ -240,6 +261,27 @@ References:
   - EN 10365 - Hot rolled steel channels, I and H sections - Dimensions and masses
 ```
 
+The same tools run over HTTP.
+Start the server with `--transport http`, then start a session with curl:
+
+```sh
+curl -s -D - http://127.0.0.1:3000/mcp \
+  -H "content-type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"curl","version":"1.0"}}}'
+```
+
+The response carries the session id in the `Mcp-Session-Id` header.
+Send that header on every later request:
+
+```sh
+curl -s http://127.0.0.1:3000/mcp \
+  -H "content-type: application/json" \
+  -H "mcp-session-id: <session id>" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
+```
+
+See [docs/transport.md](docs/transport.md) for the full HTTP reference.
+
 ## Development
 
 | Command | Purpose |
@@ -248,17 +290,21 @@ References:
 | `npm test` | Run the deterministic test suite. |
 | `npm run build` | Emit `dist/` from `src/`. |
 | `npm run demo` | Run the end-to-end demo. |
+| `npm run smoke:http` | Run the HTTP transport smoke check. |
 | `npm run dev` | Start the server from source. |
 
 ## Test status
 
 The test suite is deterministic and offline.
-It covers the engines, the unit layer, the database, the tools, and the catalog data.
+It covers the engines, the unit layer, the database, the tools, the catalog data, and the HTTP transport.
 
-- 172 tests across 14 files.
+- 180 tests across 15 files.
 - All tests pass on Node 22 and Node 24.
-- The CI workflow runs typecheck, tests, build, demo, and a package check.
+- The HTTP tests run a real server on an ephemeral port.
+  They complete the full handshake over a real TCP connection.
+- The CI workflow runs typecheck, tests, build, demo, a package check, and the HTTP smoke check.
 - The CI workflow verifies the CLI contract over standard output.
+- The CI workflow verifies both transport modes.
 
 Run `npm test` to reproduce the results.
 
@@ -281,6 +327,11 @@ Run `npm test` to reproduce the results.
   It does not include every size in the standard.
 - The viscosity and thermal conductivity units cover common engineering units.
   They do not cover every named unit in older texts.
+- The HTTP transport binds to the local host by default.
+  It has no authentication or encryption.
+  Use a reverse proxy for a public deployment.
+- The HTTP transport keeps session state in memory.
+  A restart clears every active session.
 - The built-in SQLite module of Node.js is still experimental.
 
 Check the cited sources for exact values.
@@ -304,10 +355,16 @@ Each release stays useful on its own.
 - Viscosity and thermal conductivity units.
   The `unit_convert` tool converts dynamic viscosity, kinematic viscosity, and thermal conductivity.
   The registry covers centipoise, centistokes, and the imperial conductivity units.
+- HTTP transport.
+  The server runs over stdio or Streamable HTTP.
+  The `--transport http` option starts an HTTP endpoint with stateful sessions.
 
 ### Remaining
 
-- Add HTTP transport.
+- Add authentication and origin allow-lists to the HTTP transport.
+- Make the HTTP response mode configurable.
+  The server returns JSON responses today.
+  An SSE-only client needs an explicit streaming mode.
 
 See [docs/integration.md](docs/integration.md) for the EngineerKit plan.
 

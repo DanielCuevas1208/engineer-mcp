@@ -1,6 +1,6 @@
 {
   "name": "@engineerkit/engineer-mcp",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "MCP server for verified mechanical-engineering calculations, references, and material data.",
   "type": "module",
   "license": "MIT",
@@ -62,6 +62,7 @@
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "demo": "tsx examples/demo.ts",
+    "smoke:http": "node examples/http-smoke.mjs",
     "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
