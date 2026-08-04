@@ -43,10 +43,10 @@ Engineer MCP grows in independent releases. Each release stays useful on its own
 - Helical compression spring design. The `spring_design` tool computes the spring rate, the shear stress, and the safety factor.
 - Standard section catalog. The `section_catalog` tool searches published IPE, HEA, HEB, and UPN sections. The `beam_bending` and `section_properties` tools accept a standard designation.
 - Press and shrink fit analysis. The `interference_fit` tool computes the interface pressure, the hoop stresses, and the friction capacity.
+- Fatigue analysis. The `fatigue_analysis` tool estimates the endurance limit for steel and computes the fatigue safety factor for a mean-stress criterion.
 
 ### Remaining
 
-- Add fatigue analysis for cyclic loads.
 - Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport in addition to stdio.
 

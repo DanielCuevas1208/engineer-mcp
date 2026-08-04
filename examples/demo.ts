@@ -81,6 +81,7 @@ type ToolHandlers = {
   shaft_analysis: Handler;
   bearing_life: Handler;
   von_mises: Handler;
+  fatigue_analysis: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
   section_catalog: Handler;
@@ -100,6 +101,7 @@ async function main(): Promise<void> {
     ["shaft_analysis", toolHandlers.shaft_analysis],
     ["bearing_life", toolHandlers.bearing_life],
     ["von_mises", toolHandlers.von_mises],
+    ["fatigue_analysis", toolHandlers.fatigue_analysis],
     ["unit_convert", toolHandlers.unit_convert],
     ["unit_convert (torque to energy)", toolHandlers.unit_convert],
     ["material_lookup", toolHandlers.material_lookup],
@@ -159,6 +161,15 @@ async function main(): Promise<void> {
       tauXY: 25e6,
       yieldStrength: 355e6,
       outputUnits: { vonMisesStress: "MPa", maxShearStress: "MPa" },
+    },
+    {
+      ultimateStrength: 690e6,
+      yieldStrength: 580e6,
+      meanStress: 80e6,
+      alternatingStress: 120e6,
+      surfaceFinish: "ground",
+      reliability: 90,
+      outputUnits: { enduranceLimit: "MPa" },
     },
     {
       value: 1000,

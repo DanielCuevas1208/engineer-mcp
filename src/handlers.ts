@@ -3,13 +3,16 @@ import {
   analyzeBeam,
   analyzeBearing,
   analyzeBolt,
+  analyzeFatigue,
   analyzePressFit,
   analyzeShaft,
   analyzeSpring,
   computeSection,
   vonMises,
+  type FatigueCriterion,
   type SectionDef,
   type SpringEndType,
+  type SurfaceFinish,
 } from "./engine/index.js";
 import type { Computation, MethodRecord, Quantity, ReferenceRecord, ToolFailure, ToolResponse, ToolResult } from "./types.js";
 import type { UnitOutcome } from "./units/index.js";
@@ -402,6 +405,31 @@ function shaftHandler(ctx: AppContext): Handler {
   };
 }
 
+function fatigueHandler(ctx: AppContext): Handler {
+  return (input) => {
+    try {
+      const computation = analyzeFatigue({
+        ultimateStrength: input.ultimateStrength as number,
+        yieldStrength: input.yieldStrength as number | undefined,
+        meanStress: input.meanStress as number,
+        alternatingStress: input.alternatingStress as number,
+        criterion: input.criterion as FatigueCriterion | undefined,
+        enduranceLimit: input.enduranceLimit as number | undefined,
+        surfaceFinish: input.surfaceFinish as SurfaceFinish | undefined,
+        sizeFactor: input.sizeFactor as number | undefined,
+        loadFactor: input.loadFactor as number | undefined,
+        temperatureFactor: input.temperatureFactor as number | undefined,
+        reliabilityFactor: input.reliabilityFactor as number | undefined,
+        reliability: input.reliability as number | undefined,
+        miscellaneousFactor: input.miscellaneousFactor as number | undefined,
+      });
+      return buildResult(ctx, "fatigue_analysis", computation, input.outputUnits as Record<string, string> | undefined);
+    } catch (error) {
+      return failure("fatigue_analysis", error instanceof Error ? error.message : String(error), input);
+    }
+  };
+}
+
 function springHandler(ctx: AppContext): Handler {
   return (input) => {
     try {
@@ -614,6 +642,7 @@ export function createHandlers(ctx: AppContext): Record<string, Handler> {
     spring_design: springHandler(ctx),
     bearing_life: bearingHandler(ctx),
     von_mises: stressHandler(ctx),
+    fatigue_analysis: fatigueHandler(ctx),
     unit_convert: unitConvertHandler(ctx),
     material_lookup: materialHandler(ctx),
     section_catalog: sectionCatalogHandler(ctx),

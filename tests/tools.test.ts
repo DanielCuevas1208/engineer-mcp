@@ -14,6 +14,7 @@ type Handlers = {
   shaft_analysis: Handler;
   bearing_life: Handler;
   von_mises: Handler;
+  fatigue_analysis: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
   section_catalog: Handler;
@@ -33,7 +34,7 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("tool registry", () => {
-  it("registers all eleven tools", () => {
+  it("registers all twelve tools", () => {
     expect(listTools().sort()).toEqual(
       [
         "beam_bending",
@@ -44,6 +45,7 @@ describe("tool registry", () => {
         "shaft_analysis",
         "bearing_life",
         "von_mises",
+        "fatigue_analysis",
         "unit_convert",
         "material_lookup",
         "section_catalog",
@@ -327,6 +329,71 @@ describe("von_mises tool", () => {
   it("rejects cartesian mode without sigmaX and sigmaY", () => {
     setup();
     const response = handlers.von_mises({ mode: "cartesian", sigmaX: 100e6 });
+    expect(response.ok).toBe(false);
+  });
+});
+
+describe("fatigue_analysis tool", () => {
+  it("returns an envelope with an endurance limit and a safety factor", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      ultimateStrength: 690e6,
+      yieldStrength: 580e6,
+      meanStress: 80e6,
+      alternatingStress: 120e6,
+      surfaceFinish: "ground",
+      reliability: 90,
+      outputUnits: { enduranceLimit: "MPa" },
+    });
+    const result = expectOk(response);
+
+    expect(result.tool).toBe("fatigue_analysis");
+    expect(result.method.id).toBe("fatigue-analysis");
+    expect(result.references.map((r) => r.id)).toContain("shigley-2015");
+    expect(result.safetyFactor).toBeDefined();
+    expect(result.safetyFactor?.value).toBeGreaterThan(0);
+
+    const se = result.quantities.find((q) => q.key === "enduranceLimit");
+    expect(se?.unit).toBe("MPa");
+    expect(se?.value).toBeGreaterThan(100);
+  });
+
+  it("uses an explicit endurance limit and converts its unit", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      ultimateStrength: 800e6,
+      yieldStrength: 450e6,
+      enduranceLimit: 200e6,
+      meanStress: 100e6,
+      alternatingStress: 100e6,
+      outputUnits: { enduranceLimit: "MPa" },
+    });
+    const result = expectOk(response);
+    expect(result.safetyFactor?.value).toBeCloseTo(1.6, 5);
+    expect(result.quantities.find((q) => q.key === "enduranceLimit")?.unit).toBe("MPa");
+  });
+
+  it("rejects a criterion that lacks a yield strength", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      ultimateStrength: 800e6,
+      meanStress: 100e6,
+      alternatingStress: 100e6,
+      criterion: "soderberg",
+    });
+    expect(response.ok).toBe(false);
+    if (!response.ok) {
+      expect(response.error).toContain("yieldStrength");
+    }
+  });
+
+  it("rejects a negative alternating stress", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      ultimateStrength: 800e6,
+      meanStress: 100e6,
+      alternatingStress: -5,
+    });
     expect(response.ok).toBe(false);
   });
 });

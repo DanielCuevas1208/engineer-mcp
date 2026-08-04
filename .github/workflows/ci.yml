@@ -46,6 +46,7 @@ jobs:
           node dist/index.js --list | grep -q "beam_bending"
           node dist/index.js --list | grep -q "section_catalog"
           node dist/index.js --list | grep -q "interference_fit"
+          node dist/index.js --list | grep -q "fatigue_analysis"
 
       - name: Verify the demo runs
         run: npm run demo

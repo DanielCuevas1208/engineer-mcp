@@ -22,6 +22,7 @@ The release covers these domains:
 - Shaft torsion and first critical speed.
 - Bearing rating life to ISO 281.
 - von Mises equivalent stress.
+- Fatigue analysis for cyclic loads.
 - Cross-section properties.
 - Press and shrink fit analysis by Lamé theory.
 - Standard steel section catalog to EN 10365.
@@ -55,6 +56,7 @@ Warnings surface when a method uses an approximation.
 | `shaft_analysis` | Torsion stress, twist, and critical speed. |
 | `bearing_life` | ISO 281 rating life in revolutions and hours. |
 | `von_mises` | Equivalent stress and yield safety factor. |
+| `fatigue_analysis` | Endurance limit and fatigue safety factor for cyclic loads. |
 | `unit_convert` | Conversion between compatible units. |
 | `material_lookup` | Curated mechanical properties of materials. |
 | `section_catalog` | Published IPE, HEA, HEB, and UPN steel sections. |
@@ -171,6 +173,19 @@ References:
   - Theory of Elasticity (Lamé solution for thick-walled cylinders)
 ```
 
+A call to `fatigue_analysis` for a ground steel part at 90% reliability with a 120 MPa alternating stress on an 80 MPa mean stress:
+
+```text
+Endurance limit                        280.5 MPa
+Static yield safety factor                2.9
+Fatigue safety factor                   1.839
+
+Method: Fatigue analysis by endurance limit and mean-stress criterion
+Formula: Se' = 0.5 Sut for steel, Se = ka kb kc kd ke kf Se', 1/n = sigma_a/Se + sigma_m/Sut
+References:
+  - Shigley's Mechanical Engineering Design (Tenth edition, 2015)
+```
+
 A call to `unit_convert` with a torque-to-energy request fails safely:
 
 ```text
@@ -221,7 +236,7 @@ References:
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, the tools, and the catalog data.
 
-- 135 tests across 13 files.
+- 159 tests across 14 files.
 - All tests pass on Node 22 and Node 24.
 - The CI workflow runs typecheck, tests, build, demo, and a package check.
 - The CI workflow verifies the CLI contract over standard output.
@@ -237,6 +252,10 @@ Run `npm test` to reproduce the results.
 - The critical speed is a first-mode approximation.
 - The spring design covers static round-wire springs only.
   It does not estimate fatigue life for cyclic loads.
+  Use the `fatigue_analysis` tool for a separate cyclic-load check.
+- The fatigue analysis estimates the endurance limit for steel only.
+  The tool applies to infinite-life design and does not model finite-life crack growth.
+  Surface and reliability factors follow the standard table values.
 - The press-fit theory assumes elastic material behavior and uniform friction.
   It does not model residual stress after yield.
 - The section catalog covers common IPE, HEA, HEB, and UPN sizes.
@@ -259,10 +278,11 @@ Each release stays useful on its own.
   The `beam_bending` and `section_properties` tools accept a catalog designation.
 - Press and shrink fit analysis.
   The `interference_fit` tool reports the interface pressure, the hoop stresses, and the friction capacity.
+- Fatigue analysis.
+  The `fatigue_analysis` tool estimates the endurance limit for steel and reports the fatigue safety factor for a selected mean-stress criterion.
 
 ### Remaining
 
-- Add fatigue analysis for cyclic loads.
 - Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport.
 

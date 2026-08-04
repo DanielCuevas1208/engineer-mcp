@@ -180,6 +180,48 @@ Inputs:
 - Cartesian mode uses `sigmaX`, `sigmaY`, `sigmaZ`, `tauXY`, `tauXZ`, `tauYZ`.
 - `yieldStrength`: enables the safety factor.
 
+## fatigue_analysis
+
+Compute the endurance limit and the fatigue safety factor for cyclic loading.
+
+The tool follows the modified Marin method for steel. It estimates the endurance limit from the ultimate strength and the surface, size, load, temperature, reliability, and miscellaneous correction factors. Pass `enduranceLimit` to skip the estimate and use a measured or known value.
+
+The safety factor follows one of four mean-stress criteria:
+
+- `modified_goodman`: uses the ultimate strength.
+- `soderberg`: uses the yield strength.
+- `gerber`: uses the ultimate strength.
+- `asme_elliptic`: uses the yield strength.
+
+Inputs:
+
+- `ultimateStrength`: ultimate tensile strength in pascals.
+- `yieldStrength`: tensile yield strength in pascals. Required for the `soderberg` and `asme_elliptic` criteria.
+- `meanStress`: mean stress in pascals.
+- `alternatingStress`: alternating stress amplitude in pascals.
+- `criterion`: one of the four criteria. The default is `modified_goodman`.
+- `enduranceLimit`: fully corrected endurance limit in pascals. Optional.
+- `surfaceFinish`: `ground`, `machined`, `cold_drawn`, `hot_rolled`, or `as_forged`. The default is `machined`.
+- `sizeFactor`, `loadFactor`, `temperatureFactor`, `miscellaneousFactor`: Marin correction factors. Each defaults to `1`.
+- `reliabilityFactor`: reliability factor. The default is `1`.
+- `reliability`: reliability in percent from 50 to 99.99. Sets the reliability factor from the standard table.
+- `outputUnits`: optional unit overrides.
+
+The tool warns when the static yield check governs the design. It warns when the fatigue safety factor falls below unity.
+
+Example:
+
+```json
+{
+  "ultimateStrength": 690000000,
+  "yieldStrength": 580000000,
+  "meanStress": 80000000,
+  "alternatingStress": 120000000,
+  "surfaceFinish": "ground",
+  "reliability": 90
+}
+```
+
 ## unit_convert
 
 Convert a value between two units.
