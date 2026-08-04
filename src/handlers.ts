@@ -3,6 +3,7 @@ import {
   analyzeBeam,
   analyzeBearing,
   analyzeBolt,
+  analyzePressFit,
   analyzeShaft,
   analyzeSpring,
   computeSection,
@@ -313,6 +314,31 @@ function springHandler(ctx: AppContext): Handler {
   };
 }
 
+function fitHandler(ctx: AppContext): Handler {
+  return (input) => {
+    try {
+      const computation = analyzePressFit({
+        interfaceRadius: input.interfaceRadius as number,
+        hubOuterRadius: input.hubOuterRadius as number,
+        shaftInnerRadius: input.shaftInnerRadius as number | undefined,
+        interference: input.interference as number,
+        length: input.length as number,
+        frictionCoefficient: input.frictionCoefficient as number | undefined,
+        shaftElasticModulus: input.shaftElasticModulus as number,
+        shaftPoissonRatio: input.shaftPoissonRatio as number | undefined,
+        shaftYieldStrength: input.shaftYieldStrength as number | undefined,
+        hubElasticModulus: input.hubElasticModulus as number,
+        hubPoissonRatio: input.hubPoissonRatio as number | undefined,
+        hubYieldStrength: input.hubYieldStrength as number | undefined,
+        requiredTorque: input.requiredTorque as number | undefined,
+      });
+      return buildResult(ctx, "interference_fit", computation, input.outputUnits as Record<string, string> | undefined);
+    } catch (error) {
+      return failure("interference_fit", error instanceof Error ? error.message : String(error), input);
+    }
+  };
+}
+
 function bearingHandler(ctx: AppContext): Handler {
   return (input) => {
     try {
@@ -442,6 +468,7 @@ export function createHandlers(ctx: AppContext): Record<string, Handler> {
     beam_bending: beamHandler(ctx),
     section_properties: sectionPropsHandler(ctx),
     bolt_strength: boltHandler(ctx),
+    interference_fit: fitHandler(ctx),
     shaft_analysis: shaftHandler(ctx),
     spring_design: springHandler(ctx),
     bearing_life: bearingHandler(ctx),

@@ -54,5 +54,12 @@
     "edition": "Any standard university text",
     "section": "Critical speed of a uniform simply supported shaft",
     "note": "Gives the first lateral critical speed for a uniform shaft."
+  },
+  "lame-cylinders": {
+    "title": "Theory of Elasticity",
+    "source": "Timoshenko and Goodier, Lamé solution for thick-walled cylinders",
+    "edition": "Any standard university text",
+    "section": "Thick-walled cylinders under internal and external pressure",
+    "note": "Provides the interface pressure and the stress state of a press or shrink fit."
   }
 }

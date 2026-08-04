@@ -2,7 +2,6 @@
 import "./warnings.js";
 import { parseArgs } from "node:util";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { createContext } from "./context.js";
 import { buildServer, listTools } from "./server.js";
 import { SERVER_NAME, VERSION } from "./version.js";
 
@@ -24,7 +23,11 @@ function info(message: string): void {
   process.stderr.write(`${message}\n`);
 }
 
-function main(): void {
+function out(message: string): void {
+  process.stdout.write(`${message}\n`);
+}
+
+async function main(): Promise<void> {
   const { values } = parseArgs({
     options: {
       db: { type: "string" },
@@ -35,30 +38,32 @@ function main(): void {
   });
 
   if (values.help) {
-    info(HELP);
+    out(HELP);
     return;
   }
   if (values.version) {
-    info(`${SERVER_NAME} v${VERSION}`);
+    out(`${SERVER_NAME} v${VERSION}`);
     return;
   }
   if (values.list) {
-    info("Available tools:");
+    out("Available tools:");
     for (const tool of listTools()) {
-      info(`  - ${tool}`);
+      out(`  - ${tool}`);
     }
     return;
   }
 
   const dbPath = values.db ?? process.env.ENGINEER_MCP_DB ?? "engineer-mcp.sqlite";
-  const ctx = createContext(dbPath);
-  const server = buildServer(ctx);
-  const transport = new StdioServerTransport();
-
-  server.connect(transport).catch((error: unknown) => {
+  try {
+    const { createContext } = await import("./context.js");
+    const ctx = createContext(dbPath);
+    const server = buildServer(ctx);
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+  } catch (error: unknown) {
     info(`Failed to start server: ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
-  });
+  }
 }
 
 main();

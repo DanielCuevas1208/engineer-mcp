@@ -15,6 +15,7 @@ type Handlers = {
   von_mises: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
+  interference_fit: Handler;
 };
 
 let ctx: AppContext;
@@ -31,7 +32,7 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("tool registry", () => {
-  it("registers all nine tools", () => {
+  it("registers all ten tools", () => {
     expect(listTools().sort()).toEqual(
       [
         "beam_bending",
@@ -43,6 +44,7 @@ describe("tool registry", () => {
         "von_mises",
         "unit_convert",
         "material_lookup",
+        "interference_fit",
       ].sort(),
     );
   });
@@ -135,6 +137,49 @@ describe("bolt_strength tool", () => {
       axialLoad: 30000,
     });
     expect(response.ok).toBe(false);
+  });
+});
+
+describe("interference_fit tool", () => {
+  const fitInput = {
+    interfaceRadius: 0.025,
+    hubOuterRadius: 0.05,
+    interference: 5e-5,
+    length: 0.05,
+    shaftElasticModulus: 207e9,
+    shaftYieldStrength: 300e6,
+    hubElasticModulus: 207e9,
+    hubYieldStrength: 300e6,
+    requiredTorque: 1000,
+    outputUnits: { interfacePressure: "MPa", torqueCapacity: "kN·m" },
+  };
+
+  it("returns an envelope with provenance and converted units", () => {
+    setup();
+    const response = handlers.interference_fit(fitInput);
+    const result = expectOk(response);
+
+    expect(result.tool).toBe("interference_fit");
+    expect(result.method.id).toBe("press-fit");
+    expect(result.references.length).toBeGreaterThan(0);
+    expect(result.references.map((r) => r.id)).toContain("lame-cylinders");
+    expect(result.safetyFactor).toBeDefined();
+
+    const pressure = result.quantities.find((q) => q.key === "interfacePressure");
+    expect(pressure?.unit).toBe("MPa");
+    expect(pressure?.value).toBeGreaterThan(70);
+    expect(pressure?.value).toBeLessThan(80);
+    const torque = result.quantities.find((q) => q.key === "torqueCapacity");
+    expect(torque?.unit).toBe("kN·m");
+  });
+
+  it("rejects an invalid hub geometry", () => {
+    setup();
+    const response = handlers.interference_fit({ ...fitInput, hubOuterRadius: 0.01 });
+    expect(response.ok).toBe(false);
+    if (!response.ok) {
+      expect(response.error).toContain("hubOuterRadius");
+    }
   });
 });
 

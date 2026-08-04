@@ -6,6 +6,7 @@ import {
   beamSchema,
   bearingSchema,
   boltSchema,
+  fitSchema,
   materialSchema,
   sectionPropsSchema,
   shaftSchema,
@@ -34,6 +35,11 @@ const TOOL_SCHEMAS: Record<string, ToolDef> = {
   bolt_strength: {
     description: "Tensile stress area, proof strength, recommended preload, and safety factor for metric bolts.",
     schema: boltSchema,
+  },
+  interference_fit: {
+    description:
+      "Interface pressure, hoop stresses, and friction torque capacity of a press or shrink fit by Lamé thick-cylinder theory.",
+    schema: fitSchema,
   },
   spring_design: {
     description:
