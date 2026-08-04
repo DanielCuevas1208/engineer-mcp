@@ -26,7 +26,7 @@ The release covers these domains:
 - Cross-section properties.
 - Press and shrink fit analysis by Lamé theory.
 - Standard steel section catalog to EN 10365.
-- Dimension-safe unit conversion.
+- Dimension-safe unit conversion, including viscosity and thermal conductivity.
 - Material property lookup.
 
 ## How results stay trustworthy
@@ -63,6 +63,7 @@ Warnings surface when a method uses an approximation.
 
 See [docs/mcp-tools.md](docs/mcp-tools.md) for the full reference.
 See [docs/section-catalog.md](docs/section-catalog.md) for the covered range, the value provenance, and the data audit.
+See [docs/units.md](docs/units.md) for the unit model and the full category list.
 
 ## Architecture
 
@@ -193,6 +194,24 @@ Error: Category mismatch: N·m is torque, J is energy.
 Use a unit of the same quantity.
 ```
 
+A call to `unit_convert` for a 100 cP lubricant converts to the SI unit:
+
+```text
+Converted value                       0.1 Pa·s
+  Value of 100 cP expressed in Pa·s.
+  Value of 100 cP in the SI base unit Pa·s.
+Factor: 0.001 (dynamic viscosity)
+```
+
+A call to `unit_convert` for copper with 401 W/(m·K) converts to the imperial unit:
+
+```text
+Converted value                       231.7 BTU/(ft·h·°F)
+  Value of 401 W/(m·K) expressed in BTU/(ft·h·°F).
+  Value of 401 W/(m·K) in the SI base unit W/(m·K).
+Factor: 1 (thermal conductivity)
+```
+
 A call to `section_catalog` for the HEB series returns the published sections:
 
 ```text
@@ -236,7 +255,7 @@ References:
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, the tools, and the catalog data.
 
-- 159 tests across 14 files.
+- 172 tests across 14 files.
 - All tests pass on Node 22 and Node 24.
 - The CI workflow runs typecheck, tests, build, demo, and a package check.
 - The CI workflow verifies the CLI contract over standard output.
@@ -260,6 +279,8 @@ Run `npm test` to reproduce the results.
   It does not model residual stress after yield.
 - The section catalog covers common IPE, HEA, HEB, and UPN sizes.
   It does not include every size in the standard.
+- The viscosity and thermal conductivity units cover common engineering units.
+  They do not cover every named unit in older texts.
 - The built-in SQLite module of Node.js is still experimental.
 
 Check the cited sources for exact values.
@@ -280,10 +301,12 @@ Each release stays useful on its own.
   The `interference_fit` tool reports the interface pressure, the hoop stresses, and the friction capacity.
 - Fatigue analysis.
   The `fatigue_analysis` tool estimates the endurance limit for steel and reports the fatigue safety factor for a selected mean-stress criterion.
+- Viscosity and thermal conductivity units.
+  The `unit_convert` tool converts dynamic viscosity, kinematic viscosity, and thermal conductivity.
+  The registry covers centipoise, centistokes, and the imperial conductivity units.
 
 ### Remaining
 
-- Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport.
 
 See [docs/integration.md](docs/integration.md) for the EngineerKit plan.

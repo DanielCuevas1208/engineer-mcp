@@ -234,6 +234,21 @@ Inputs:
 
 The converter rejects mismatched dimensions and mismatched quantity categories. For example, it rejects a torque-to-energy conversion.
 
+The registry covers length, mass, time, angle, temperature, force, pressure, torque, energy, power, velocity, acceleration, area, volume, second moment of area, density, linear mass, stiffness, frequency, dynamic viscosity, kinematic viscosity, and thermal conductivity.
+
+Viscosity examples:
+
+- `100 cP` to `Pa·s` gives `0.1`.
+- `40 cSt` to `m2/s` gives `0.00004`.
+- `1 P` to `Pa·s` gives `0.1`.
+
+Thermal conductivity examples:
+
+- `401 W/(m·K)` to `BTU/(ft·h·°F)` gives about `231.7`.
+- `1 kcal/(m·h·°C)` to `W/(m·K)` gives about `1.162`.
+
+See [units.md](units.md) for the dimension model and the full category list.
+
 ## interference_fit
 
 Compute the interface pressure, hoop stresses, and friction capacity of a press or shrink fit.

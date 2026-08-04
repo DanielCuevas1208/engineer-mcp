@@ -21,6 +21,9 @@ export const DIM_DENSITY: Dimension = [-3, 1, 0, 0, 0];
 export const DIM_LINEAR_DENSITY: Dimension = [-1, 1, 0, 0, 0];
 export const DIM_STIFFNESS: Dimension = [0, 1, -2, 0, 0];
 export const DIM_FREQUENCY: Dimension = [0, 0, -1, 0, 0];
+export const DIM_DYNAMIC_VISCOSITY: Dimension = [-1, 1, -1, 0, 0];
+export const DIM_KINEMATIC_VISCOSITY: Dimension = [2, 0, -1, 0, 0];
+export const DIM_THERMAL_CONDUCTIVITY: Dimension = [1, 1, -3, -1, 0];
 
 export function dimensionsEqual(a: Dimension, b: Dimension): boolean {
   for (let i = 0; i < a.length; i += 1) {

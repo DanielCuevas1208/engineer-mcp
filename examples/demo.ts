@@ -104,6 +104,9 @@ async function main(): Promise<void> {
     ["fatigue_analysis", toolHandlers.fatigue_analysis],
     ["unit_convert", toolHandlers.unit_convert],
     ["unit_convert (torque to energy)", toolHandlers.unit_convert],
+    ["unit_convert (dynamic viscosity)", toolHandlers.unit_convert],
+    ["unit_convert (kinematic viscosity)", toolHandlers.unit_convert],
+    ["unit_convert (thermal conductivity)", toolHandlers.unit_convert],
     ["material_lookup", toolHandlers.material_lookup],
     ["section_catalog", toolHandlers.section_catalog],
     ["beam_bending (IPE 300)", toolHandlers.beam_bending],
@@ -180,6 +183,21 @@ async function main(): Promise<void> {
       value: 10,
       from: "N·m",
       to: "J",
+    },
+    {
+      value: 100,
+      from: "cP",
+      to: "Pa·s",
+    },
+    {
+      value: 40,
+      from: "cSt",
+      to: "m2/s",
+    },
+    {
+      value: 401,
+      from: "W/(m·K)",
+      to: "BTU/(ft·h·°F)",
     },
     {
       query: "steel",
