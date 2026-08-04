@@ -189,6 +189,56 @@ Inputs:
 
 The converter rejects mismatched dimensions and mismatched quantity categories. For example, it rejects a torque-to-energy conversion.
 
+## interference_fit
+
+Compute the interface pressure, hoop stresses, and friction capacity of a press or shrink fit.
+
+The tool uses the Lamé solution for thick-walled cylinders.
+The diametral interference drives a uniform contact pressure at the interface.
+The fit can be a press fit or a shrink fit. The math is the same.
+
+Inputs:
+
+- `interfaceRadius`: interface radius in metres.
+- `hubOuterRadius`: outer radius of the hub in metres.
+- `shaftInnerRadius`: inner radius of the shaft in metres. The default is zero for a solid shaft.
+- `interference`: diametral interference in metres.
+- `length`: axial length of the joint in metres.
+- `frictionCoefficient`: friction of the interface. The default is `0.15`.
+- `shaftElasticModulus` and `shaftPoissonRatio`: shaft material. Poisson ratio defaults to `0.3`.
+- `shaftYieldStrength`: shaft yield strength in pascals. It enables the shaft safety factor.
+- `hubElasticModulus` and `hubPoissonRatio`: hub material. Poisson ratio defaults to `0.3`.
+- `hubYieldStrength`: hub yield strength in pascals. It enables the hub safety factor.
+- `requiredTorque`: required torque in newton metres. It enables the torque safety factor.
+
+Outputs:
+
+- `interfacePressure`: contact pressure at the interface.
+- `hubTangentialStress`: hoop stress at the hub bore.
+- `shaftTangentialStress`: hoop stress in the shaft. A hollow shaft peaks at its bore.
+- `axialForceCapacity` and `torqueCapacity`: friction limits of the joint.
+- `shaftSafetyFactor`, `hubSafetyFactor`, and `torqueSafetyFactor`: available margins.
+- The envelope `safetyFactor` is the governing margin. It is the lowest of the three.
+
+The tool warns when a member exceeds its yield strength.
+It warns when the torque capacity is below the required torque.
+
+Example:
+
+```json
+{
+  "interfaceRadius": 0.025,
+  "hubOuterRadius": 0.05,
+  "interference": 0.00005,
+  "length": 0.05,
+  "shaftElasticModulus": 207000000000,
+  "shaftYieldStrength": 300000000,
+  "hubElasticModulus": 207000000000,
+  "hubYieldStrength": 300000000,
+  "requiredTorque": 1000
+}
+```
+
 ## material_lookup
 
 Look up mechanical properties of common engineering materials.

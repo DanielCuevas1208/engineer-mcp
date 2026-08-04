@@ -51,6 +51,7 @@
     "sqlite",
     "provenance",
     "steel-sections",
+    "press-fit",
     "engineerkit"
   ],
   "scripts": {

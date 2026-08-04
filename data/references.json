@@ -61,5 +61,12 @@
     "edition": "EN 10365:2017",
     "section": "Dimensions, masses, and section properties of rolled sections",
     "note": "Nominal dimensions and section properties for IPE, HEA, HEB, and UPN series."
+  },
+  "lame-cylinders": {
+    "title": "Theory of Elasticity",
+    "source": "Timoshenko and Goodier, Lamé solution for thick-walled cylinders",
+    "edition": "Any standard university text",
+    "section": "Thick-walled cylinders under internal and external pressure",
+    "note": "Provides the interface pressure and the stress state of a press or shrink fit."
   }
 }

@@ -2,7 +2,6 @@
 import "./warnings.js";
 import { parseArgs } from "node:util";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { createContext } from "./context.js";
 import { buildServer, listTools } from "./server.js";
 import { SERVER_NAME, VERSION } from "./version.js";
 
@@ -55,14 +54,20 @@ function main(): void {
   }
 
   const dbPath = values.db ?? process.env.ENGINEER_MCP_DB ?? "engineer-mcp.sqlite";
-  const ctx = createContext(dbPath);
-  const server = buildServer(ctx);
-  const transport = new StdioServerTransport();
+  void startServer(dbPath);
+}
 
-  server.connect(transport).catch((error: unknown) => {
+async function startServer(dbPath: string): Promise<void> {
+  try {
+    const { createContext } = await import("./context.js");
+    const ctx = createContext(dbPath);
+    const server = buildServer(ctx);
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+  } catch (error: unknown) {
     writeErr(`Failed to start server: ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
-  });
+  }
 }
 
 main();
