@@ -6,7 +6,7 @@
 [![Node](https://img.shields.io/badge/Node-%3E%3D22.13-brightgreen.svg)](package.json)
 
 Engineer MCP is a Model Context Protocol server for mechanical-engineering calculations.
-It gives coding agents verified answers for beams, bolts, springs, shafts, bearings, stress, sections, and units.
+It gives coding agents verified answers for beams, bolts, springs, shafts, bearings, stress, sections, fits, and units.
 Every result shows the formula, the method, and the source.
 
 ## What it provides
@@ -24,6 +24,7 @@ The release covers these domains:
 - Bearing rating life to ISO 281.
 - von Mises equivalent stress.
 - Cross-section properties.
+- Press and shrink fit analysis by Lamé theory.
 - Dimension-safe unit conversion.
 - Material property lookup.
 
@@ -38,7 +39,7 @@ The unit layer knows the dimension of every unit.
 It rejects a conversion between incompatible quantities.
 For example, it rejects a torque-to-energy conversion.
 
-Safety factors appear only when you provide a yield strength.
+Safety factors appear only when you provide the data they need.
 The tool never hides an assumption.
 Warnings surface when a method uses an approximation.
 
@@ -49,6 +50,7 @@ Warnings surface when a method uses an approximation.
 | `beam_bending` | Bending stress, deflection, and safety factor. |
 | `section_properties` | Area, inertia, and section modulus of a shape. |
 | `bolt_strength` | Stress area, preload, and capacity of a bolt. |
+| `interference_fit` | Interface pressure, hoop stresses, and friction capacity of a press or shrink fit. |
 | `spring_design` | Spring rate, shear stress, and safety factor of a compression spring. |
 | `shaft_analysis` | Torsion stress, twist, and critical speed. |
 | `bearing_life` | ISO 281 rating life in revolutions and hours. |
@@ -147,6 +149,26 @@ References:
   - Machinery's Handbook (Thirty-first edition)
 ```
 
+A call to `interference_fit` for a steel hub on a solid steel shaft with 50 µm of diametral interference:
+
+```text
+Interface pressure                    77.62 MPa
+Hub tangential stress                 129.4 MPa
+Shaft tangential stress               77.62 MPa
+Axial force capacity                  73.16 kN
+Torque capacity                       1.829 kN·m
+Shaft safety factor                   3.865
+Hub safety factor                     1.656
+Torque safety factor                  1.829
+
+Method: Interference fit by Lamé thick-cylinder theory
+Formula: p = delta / (d K); K = (1/Eh)((Ro^2+r^2)/(Ro^2-r^2)+nu_h) + (1/Ei)((r^2+ri^2)/(r^2-ri^2)-nu_i); F = 2 pi r L p mu; T = F r
+References:
+  - Shigley's Mechanical Engineering Design (Tenth edition, 2015)
+  - Machinery's Handbook (Thirty-first edition)
+  - Theory of Elasticity (Lamé solution for thick-walled cylinders)
+```
+
 A call to `unit_convert` with a torque-to-energy request fails safely:
 
 ```text
@@ -169,9 +191,10 @@ Use a unit of the same quantity.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, and the tools.
 
-- 98 tests across 10 files.
+- 109 tests across 11 files.
 - All tests pass on Node 22 and Node 24.
 - The CI workflow runs typecheck, tests, build, demo, and a package check.
+- The CI workflow verifies that the CLI tool list pipes to standard output.
 
 Run `npm test` to reproduce the results.
 
@@ -184,6 +207,8 @@ Run `npm test` to reproduce the results.
 - The critical speed is a first-mode approximation.
 - The spring design covers static round-wire springs only.
   It does not estimate fatigue life for cyclic loads.
+- The press-fit theory assumes elastic material behavior and uniform friction.
+  It does not model residual stress after yield.
 - The built-in SQLite module of Node.js is still experimental.
 
 Check the cited sources for exact values.
@@ -197,11 +222,12 @@ Each release stays useful on its own.
 
 - Helical compression spring design.
   The `spring_design` tool reports the spring rate, the shear stress, and the safety factor.
+- Press and shrink fit analysis.
+  The `interference_fit` tool reports the interface pressure, the hoop stresses, and the friction capacity.
 
 ### Remaining
 
 - Add fatigue analysis for cyclic loads.
-- Add press-fit and interference-fit calculators.
 - Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport.
 - Add a catalog of ISO and DIN standard sections.

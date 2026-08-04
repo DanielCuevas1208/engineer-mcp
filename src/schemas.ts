@@ -120,6 +120,23 @@ export const stressSchema = z.object({
   yieldStrength: z.number().positive().optional().describe("Tensile yield strength in pascals. Enables the safety factor."),
 });
 
+export const fitSchema = z.object({
+  interfaceRadius: z.number().positive().describe("Interface radius of the fit in metres."),
+  hubOuterRadius: z.number().positive().describe("Outer radius of the hub in metres."),
+  shaftInnerRadius: z.number().min(0).optional().describe("Inner radius of the shaft in metres. Zero for a solid shaft."),
+  interference: z.number().positive().describe("Diametral interference in metres."),
+  length: z.number().positive().describe("Axial length of the fitted joint in metres."),
+  frictionCoefficient: z.number().min(0).max(1).optional().describe("Friction coefficient of the interface. Defaults to 0.15."),
+  shaftElasticModulus: z.number().positive().describe("Young's modulus of the shaft material in pascals."),
+  shaftPoissonRatio: z.number().min(0).max(0.5).optional().describe("Poisson's ratio of the shaft material. Defaults to 0.3."),
+  shaftYieldStrength: z.number().positive().optional().describe("Yield strength of the shaft material in pascals. Enables the safety factor."),
+  hubElasticModulus: z.number().positive().describe("Young's modulus of the hub material in pascals."),
+  hubPoissonRatio: z.number().min(0).max(0.5).optional().describe("Poisson's ratio of the hub material. Defaults to 0.3."),
+  hubYieldStrength: z.number().positive().optional().describe("Yield strength of the hub material in pascals. Enables the safety factor."),
+  requiredTorque: z.number().positive().optional().describe("Required torque in newton metres. Enables the torque safety factor."),
+  outputUnits,
+});
+
 export const unitConvertSchema = z.object({
   value: z.number().describe("Numeric value to convert."),
   from: z.string().describe("Source unit symbol. Examples: MPa, mm, lbf, degC."),
