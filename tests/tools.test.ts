@@ -13,6 +13,7 @@ type Handlers = {
   shaft_analysis: Handler;
   bearing_life: Handler;
   von_mises: Handler;
+  fatigue_analysis: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
   interference_fit: Handler;
@@ -32,7 +33,7 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("tool registry", () => {
-  it("registers all ten tools", () => {
+  it("registers all eleven tools", () => {
     expect(listTools().sort()).toEqual(
       [
         "beam_bending",
@@ -42,6 +43,7 @@ describe("tool registry", () => {
         "shaft_analysis",
         "bearing_life",
         "von_mises",
+        "fatigue_analysis",
         "unit_convert",
         "material_lookup",
         "interference_fit",
@@ -325,6 +327,43 @@ describe("von_mises tool", () => {
   it("rejects cartesian mode without sigmaX and sigmaY", () => {
     setup();
     const response = handlers.von_mises({ mode: "cartesian", sigmaX: 100e6 });
+    expect(response.ok).toBe(false);
+  });
+});
+
+describe("fatigue_analysis tool", () => {
+  it("computes the governing safety factor and converts units", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      meanStress: 100e6,
+      alternatingStress: 60e6,
+      ultimateStrength: 1000e6,
+      yieldStrength: 700e6,
+      enduranceLimit: 500e6,
+      outputUnits: { maximumStress: "MPa", minimumStress: "MPa", meanStress: "MPa", alternatingStress: "MPa", enduranceLimit: "MPa" },
+    });
+    const result = expectOk(response);
+
+    expect(result.tool).toBe("fatigue_analysis");
+    expect(result.method.id).toBe("fatigue-analysis");
+    expect(result.references.length).toBeGreaterThan(0);
+    expect(result.safetyFactor).toBeDefined();
+
+    const stress = result.quantities.find((q) => q.key === "maximumStress");
+    expect(stress?.unit).toBe("MPa");
+    expect(stress?.value).toBeCloseTo(160, 6);
+    const mean = result.quantities.find((q) => q.key === "meanStress");
+    expect(mean?.unit).toBe("MPa");
+    expect(result.quantities.find((q) => q.key === "yieldSafetyFactor")).toBeDefined();
+  });
+
+  it("rejects a non-positive alternating stress", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      meanStress: 0,
+      alternatingStress: -1e6,
+      ultimateStrength: 800e6,
+    });
     expect(response.ok).toBe(false);
   });
 });

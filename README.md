@@ -23,6 +23,7 @@ The release covers these domains:
 - Shaft torsion and first critical speed.
 - Bearing rating life to ISO 281.
 - von Mises equivalent stress.
+- Constant-amplitude fatigue assessment.
 - Cross-section properties.
 - Press and shrink fit analysis by Lamé theory.
 - Dimension-safe unit conversion.
@@ -55,6 +56,7 @@ Warnings surface when a method uses an approximation.
 | `shaft_analysis` | Torsion stress, twist, and critical speed. |
 | `bearing_life` | ISO 281 rating life in revolutions and hours. |
 | `von_mises` | Equivalent stress and yield safety factor. |
+| `fatigue_analysis` | Fatigue safety factor by Goodman, Soderberg, or Gerber. |
 | `unit_convert` | Conversion between compatible units. |
 | `material_lookup` | Curated mechanical properties of materials. |
 
@@ -176,6 +178,24 @@ Error: Category mismatch: N·m is torque, J is energy.
 Use a unit of the same quantity.
 ```
 
+A call to `fatigue_analysis` for a 42CrMo4 shaft with a 60 MPa cyclic stress about a 100 MPa mean:
+
+```text
+Stress ratio                           0.25
+Maximum cycle stress                    160 MPa
+Minimum cycle stress                     40 MPa
+Mean stress                             100 MPa
+Alternating stress                       60 MPa
+Endurance limit                         500 MPa
+Fatigue safety factor                 4.545
+Yield safety factor                   4.375
+
+Method: Constant-amplitude fatigue analysis
+Formula: Goodman: 1/n = sa/Se + sm/Sut. Soderberg: 1/n = sa/Se + sm/Sy. Gerber: n sa/Se + (n sm/Sut)^2 = 1
+References:
+  - Shigley's Mechanical Engineering Design (Tenth edition, 2015)
+```
+
 ## Development
 
 | Command | Purpose |
@@ -191,7 +211,7 @@ Use a unit of the same quantity.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, and the tools.
 
-- 109 tests across 11 files.
+- 130 tests across 12 files.
 - All tests pass on Node 22 and Node 24.
 - The CI workflow runs typecheck, tests, build, demo, and a package check.
 - The CI workflow verifies that the CLI tool list pipes to standard output.
@@ -207,6 +227,8 @@ Run `npm test` to reproduce the results.
 - The critical speed is a first-mode approximation.
 - The spring design covers static round-wire springs only.
   It does not estimate fatigue life for cyclic loads.
+- The fatigue analysis covers constant-amplitude cycles only.
+  It does not model variable-amplitude spectra or cumulative damage.
 - The press-fit theory assumes elastic material behavior and uniform friction.
   It does not model residual stress after yield.
 - The built-in SQLite module of Node.js is still experimental.
@@ -220,6 +242,9 @@ Each release stays useful on its own.
 
 ### Complete
 
+- Constant-amplitude fatigue assessment.
+  The `fatigue_analysis` tool reports the stress ratio, the endurance limit, and the governing safety factor.
+  It supports the modified Goodman, Soderberg, and Gerber criteria.
 - Helical compression spring design.
   The `spring_design` tool reports the spring rate, the shear stress, and the safety factor.
 - Press and shrink fit analysis.
@@ -227,7 +252,7 @@ Each release stays useful on its own.
 
 ### Remaining
 
-- Add fatigue analysis for cyclic loads.
+- Add fatigue analysis for variable-amplitude loads.
 - Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport.
 - Add a catalog of ISO and DIN standard sections.
