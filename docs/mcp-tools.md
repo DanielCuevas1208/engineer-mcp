@@ -208,6 +208,54 @@ Example:
 }
 ```
 
+## fatigue_analysis
+
+Compute the fatigue safety factor of a constant-amplitude cyclic stress.
+
+The tool supports three failure criteria:
+The modified Goodman line, the Soderberg line, and the Gerber parabola.
+The Goodman criterion is the default.
+
+Inputs:
+
+- `meanStress`: mean stress in pascals. Negative means compression.
+- `alternatingStress`: alternating stress amplitude in pascals.
+- `ultimateStrength`: ultimate tensile strength in pascals.
+- `yieldStrength`: tensile yield strength in pascals. It enables the yield safety factor.
+- `enduranceLimit`: fully corrected endurance limit in pascals.
+  The default is an uncorrected estimate from the ultimate strength.
+- `materialType`: `steel`, `aluminium`, or `aluminum`. It drives the estimate.
+  The default is `steel`.
+- `criterion`: `goodman`, `soderberg`, or `gerber`. The default is `goodman`.
+
+Outputs:
+
+- `stressRatio`: ratio of the minimum to the maximum stress of the cycle.
+- `maximumStress` and `minimumStress`: peak and trough of the cycle.
+- `enduranceLimit`: the endurance limit used by the criterion.
+- `fatigueSafetyFactor`: safety factor of the selected criterion.
+- `yieldSafetyFactor`: yield strength divided by the peak cycle stress.
+  It appears only when you provide `yieldStrength`.
+- The envelope `safetyFactor` is the governing margin.
+  It is the lower of the fatigue and yield margins.
+
+A compressive mean stress is treated as zero, which is conservative.
+The tool warns when it estimates the endurance limit.
+It warns when the alternating stress reaches the endurance limit.
+It warns when the governing safety factor is below one.
+
+Example:
+
+```json
+{
+  "meanStress": 100000000,
+  "alternatingStress": 60000000,
+  "ultimateStrength": 1000000000,
+  "yieldStrength": 700000000,
+  "enduranceLimit": 500000000
+}
+```
+
 ## material_lookup
 
 Look up mechanical properties of common engineering materials.

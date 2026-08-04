@@ -148,6 +148,30 @@ export const materialSchema = z.object({
   limit: z.number().int().min(1).max(50).optional().describe("Maximum number of rows to return. Defaults to 10."),
 });
 
+export const fatigueSchema = z.object({
+  meanStress: z.number().describe("Mean stress of the cycle in pascals. Negative means compression."),
+  alternatingStress: z
+    .number()
+    .min(0)
+    .describe("Alternating stress amplitude of the cycle in pascals."),
+  ultimateStrength: z.number().positive().describe("Ultimate tensile strength in pascals."),
+  yieldStrength: z.number().positive().optional().describe("Tensile yield strength in pascals. Enables the yield safety factor."),
+  enduranceLimit: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Fully corrected endurance limit in pascals. Defaults to an uncorrected estimate from the ultimate strength."),
+  materialType: z
+    .enum(["steel", "aluminium", "aluminum"])
+    .optional()
+    .describe("Material for the endurance limit estimate. Defaults to steel. Aluminium is capped at 130 MPa."),
+  criterion: z
+    .enum(["goodman", "soderberg", "gerber"])
+    .optional()
+    .describe("Fatigue failure criterion. Defaults to modified Goodman. Soderberg requires yieldStrength."),
+  outputUnits,
+});
+
 export type BeamInput = z.infer<typeof beamSchema>;
 export type BoltInput = z.infer<typeof boltSchema>;
 export type ShaftInput = z.infer<typeof shaftSchema>;
@@ -157,3 +181,4 @@ export type SectionPropsInput = z.infer<typeof sectionPropsSchema>;
 export type StressInput = z.infer<typeof stressSchema>;
 export type UnitConvertInput = z.infer<typeof unitConvertSchema>;
 export type MaterialInput = z.infer<typeof materialSchema>;
+export type FatigueInput = z.infer<typeof fatigueSchema>;
