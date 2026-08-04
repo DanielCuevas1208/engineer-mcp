@@ -49,10 +49,10 @@ Engineer MCP grows in independent releases. Each release stays useful on its own
 - Fatigue analysis. The `fatigue_analysis` tool estimates the endurance limit for steel and computes the fatigue safety factor for a mean-stress criterion.
 - Viscosity and thermal conductivity units. The unit registry covers dynamic viscosity, kinematic viscosity, and thermal conductivity. The `unit_convert` tool converts between the common engineering units of each.
 - HTTP transport. The server runs over stdio or Streamable HTTP. The `--transport http` option starts an HTTP endpoint with stateful sessions. See [transport.md](transport.md).
+- HTTP transport security. The server supports bearer authentication and browser origin allow-lists.
 
 ### Remaining
 
-- Add authentication and origin allow-lists to the HTTP transport.
 - Make the HTTP response mode configurable. The server returns JSON responses today. An SSE-only client needs an explicit streaming mode.
 
 Keep each release small and deterministic. Run the full test suite before release.

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createContext, type AppContext } from "../src/context.js";
-import { createHttpServer, type HttpServerHandle } from "../src/http.js";
+import { createHttpServer, type HttpServerHandle, type HttpServerOptions } from "../src/http.js";
 import { VERSION } from "../src/version.js";
 
 const PROTOCOL_VERSION = "2025-11-25";
@@ -8,20 +8,26 @@ const PROTOCOL_VERSION = "2025-11-25";
 type RpcResponse = {
   status: number;
   sessionId?: string;
+  allowOrigin?: string;
   body: {
     jsonrpc?: string;
     id?: number;
     result?: Record<string, unknown> | { [key: string]: unknown };
-    error?: { code?: number; message?: string };
+    error?: { code?: number; message?: string } | string;
   };
+};
+
+type RequestOptions = {
+  authorization?: string;
+  origin?: string;
 };
 
 let ctx: AppContext;
 let handle: HttpServerHandle | undefined;
 
-async function startServer(): Promise<HttpServerHandle> {
+async function startServer(options: Partial<HttpServerOptions> = {}): Promise<HttpServerHandle> {
   ctx = createContext(":memory:");
-  handle = await createHttpServer(ctx, { host: "127.0.0.1", port: 0 });
+  handle = await createHttpServer(ctx, { host: "127.0.0.1", port: 0, ...options });
   return handle;
 }
 
@@ -37,6 +43,7 @@ async function rpc(
   method: string,
   params: unknown,
   sessionId?: string,
+  options: RequestOptions = {},
 ): Promise<RpcResponse> {
   const headers: Record<string, string> = {
     "content-type": "application/json",
@@ -45,6 +52,12 @@ async function rpc(
   };
   if (sessionId) {
     headers["mcp-session-id"] = sessionId;
+  }
+  if (options.authorization) {
+    headers.authorization = options.authorization;
+  }
+  if (options.origin) {
+    headers.origin = options.origin;
   }
   const res = await fetch(url, {
     method: "POST",
@@ -55,6 +68,7 @@ async function rpc(
   return {
     status: res.status,
     sessionId: res.headers.get("mcp-session-id") ?? undefined,
+    allowOrigin: res.headers.get("access-control-allow-origin") ?? undefined,
     body,
   };
 }
@@ -67,6 +81,20 @@ async function initialize(url: string): Promise<RpcResponse> {
   });
 }
 
+async function initializeWithOptions(url: string, options: RequestOptions): Promise<RpcResponse> {
+  return rpc(
+    url,
+    "initialize",
+    {
+      protocolVersion: PROTOCOL_VERSION,
+      capabilities: {},
+      clientInfo: { name: "engineer-mcp-tests", version: "1.0.0" },
+    },
+    undefined,
+    options,
+  );
+}
+
 describe("HTTP transport", () => {
   it("serves a health endpoint", async () => {
     const server = await startServer();
@@ -76,6 +104,53 @@ describe("HTTP transport", () => {
     expect(body.ok).toBe(true);
     expect(body.name).toBe("engineer-mcp");
     expect(body.version).toBe(VERSION);
+  });
+
+  it("requires a bearer token when authentication is configured", async () => {
+    const server = await startServer({ authToken: "test-token" });
+    const url = `http://127.0.0.1:${server.port}/health`;
+
+    const rejected = await fetch(url);
+    expect(rejected.status).toBe(401);
+    expect(rejected.headers.get("www-authenticate")).toBe("Bearer");
+
+    const accepted = await fetch(url, { headers: { authorization: "Bearer test-token" } });
+    expect(accepted.status).toBe(200);
+  });
+
+  it("rejects unlisted browser origins", async () => {
+    const server = await startServer({ allowedOrigins: ["https://client.example"] });
+    const url = `http://127.0.0.1:${server.port}/mcp`;
+
+    const response = await initializeWithOptions(url, { origin: "https://untrusted.example" });
+    expect(response.status).toBe(403);
+    expect(response.body.error).toBe("Origin not allowed");
+  });
+
+  it("answers an approved CORS preflight and exposes the session header", async () => {
+    const server = await startServer({ authToken: "test-token", allowedOrigins: ["https://client.example"] });
+    const url = `http://127.0.0.1:${server.port}/mcp`;
+    const response = await fetch(url, {
+      method: "OPTIONS",
+      headers: {
+        origin: "https://client.example",
+        "access-control-request-method": "POST",
+        "access-control-request-headers": "authorization, content-type, mcp-session-id",
+      },
+    });
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-origin")).toBe("https://client.example");
+    expect(response.headers.get("access-control-expose-headers")).toBe("Mcp-Session-Id");
+    expect(response.headers.get("access-control-allow-methods")).toContain("POST");
+
+    const initialized = await initializeWithOptions(url, {
+      authorization: "Bearer test-token",
+      origin: "https://client.example",
+    });
+    expect(initialized.status).toBe(200);
+    expect(initialized.sessionId).toBeDefined();
+    expect(initialized.allowOrigin).toBe("https://client.example");
   });
 
   it("completes the initialize handshake and returns a session id", async () => {

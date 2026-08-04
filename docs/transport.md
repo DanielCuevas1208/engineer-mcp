@@ -27,6 +27,7 @@ Set these options to change the bind address.
 | --- | --- | --- |
 | `--host` | `127.0.0.1` | Bind address. |
 | `--port` | `3000` | Listen port. |
+| `--allowed-origin <origin>` | None | Allow one browser origin. |
 
 Use a port of `0` to let the operating system choose a free port.
 
@@ -45,9 +46,27 @@ You can set the same values with environment variables.
 | `ENGINEER_MCP_HOST` | HTTP bind address. |
 | `ENGINEER_MCP_PORT` | HTTP listen port. |
 | `ENGINEER_MCP_DB` | SQLite database path. |
+| `ENGINEER_MCP_AUTH_TOKEN` | Bearer token for HTTP requests. |
+| `ENGINEER_MCP_ALLOWED_ORIGINS` | Comma-separated browser origins. |
 
 The server exits on `SIGINT` or `SIGTERM`.
 It closes all active sessions during shutdown.
+
+## Security
+
+Set `ENGINEER_MCP_AUTH_TOKEN` to require a bearer token.
+Send `Authorization: Bearer <token>` with every non-preflight request.
+
+Set `ENGINEER_MCP_ALLOWED_ORIGINS` to allow browser origins.
+Separate multiple origins with commas.
+
+You can repeat `--allowed-origin <origin>` instead.
+The server accepts requests without an Origin header.
+It rejects browser requests outside the allow-list.
+Approved browser requests receive CORS headers.
+The response exposes `Mcp-Session-Id` for browser clients.
+
+The health endpoint uses the same authentication and origin rules.
 
 ## Configure an MCP client
 
@@ -86,7 +105,7 @@ curl http://127.0.0.1:3000/health
 The server returns a JSON status.
 
 ```json
-{ "ok": true, "name": "engineer-mcp", "version": "0.7.0" }
+{ "ok": true, "name": "engineer-mcp", "version": "0.8.0" }
 ```
 
 Start a session with an initialize request.
@@ -110,9 +129,7 @@ curl -s http://127.0.0.1:3000/mcp \
 ## Limitations
 
 - The server binds to `127.0.0.1` by default.
-  It does not include authentication or encryption.
-  Use a reverse proxy for a public deployment.
+  The transport does not provide TLS.
+  Use a reverse proxy for public deployment.
 - The server stores session state in memory.
   A restart clears every active session.
-- The transport does not validate origins or hosts.
-  Do not expose it to an untrusted network without protection.

@@ -9,6 +9,8 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 const PROTOCOL_VERSION = "2025-11-25";
+const AUTH_TOKEN = "engineer-mcp-smoke-token";
+const ALLOWED_ORIGIN = "https://smoke.example";
 const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SERVER_ENTRY = path.join(PROJECT_ROOT, "dist", "index.js");
 
@@ -16,7 +18,12 @@ async function waitForHealth(url, timeoutMs) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, {
+        headers: {
+          authorization: `Bearer ${AUTH_TOKEN}`,
+          origin: ALLOWED_ORIGIN,
+        },
+      });
       if (res.status === 200) {
         return true;
       }
@@ -33,6 +40,8 @@ async function rpc(url, method, params, sessionId) {
     "content-type": "application/json",
     accept: "application/json, text/event-stream",
     "mcp-protocol-version": PROTOCOL_VERSION,
+    authorization: `Bearer ${AUTH_TOKEN}`,
+    origin: ALLOWED_ORIGIN,
   };
   if (sessionId) {
     headers["mcp-session-id"] = sessionId;
@@ -58,6 +67,11 @@ async function run() {
 
   const child = spawn(process.execPath, [SERVER_ENTRY, "--transport", "http", "--host", "127.0.0.1", "--port", String(port)], {
     stdio: ["ignore", "pipe", "pipe"],
+    env: {
+      ...process.env,
+      ENGINEER_MCP_AUTH_TOKEN: AUTH_TOKEN,
+      ENGINEER_MCP_ALLOWED_ORIGINS: ALLOWED_ORIGIN,
+    },
   });
 
   let stderr = "";
@@ -78,6 +92,29 @@ async function run() {
     });
     if (init.status !== 200 || !init.sessionId) {
       throw new Error(`Initialize failed with status ${init.status}.`);
+    }
+
+    const blocked = await fetch(mcpUrl, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "mcp-protocol-version": PROTOCOL_VERSION,
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        origin: "https://untrusted.example",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 2,
+        method: "initialize",
+        params: {
+          protocolVersion: PROTOCOL_VERSION,
+          capabilities: {},
+          clientInfo: { name: "engineer-mcp-http-smoke", version: "1.0.0" },
+        },
+      }),
+    });
+    if (blocked.status !== 403) {
+      throw new Error(`Origin check failed with status ${blocked.status}.`);
     }
 
     const list = await rpc(mcpUrl, "tools/list", {}, init.sessionId);
@@ -109,6 +146,7 @@ async function run() {
 
     console.log(`HTTP smoke check passed on port ${port}.`);
     console.log("  initialize: ok");
+    console.log("  origin allow-list: ok");
     console.log(`  tools/list: ${tools.length} tools`);
     console.log("  tools/call beam_bending: ok");
   } finally {

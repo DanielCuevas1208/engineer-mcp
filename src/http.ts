@@ -3,10 +3,11 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import type { AppContext } from "./context.js";
+import { createHttpSecurity, type HttpSecurityOptions } from "./http-security.js";
 import { buildServer } from "./server.js";
 import { SERVER_NAME, VERSION } from "./version.js";
 
-export type HttpServerOptions = {
+export type HttpServerOptions = HttpSecurityOptions & {
   host: string;
   port: number;
 };
@@ -40,9 +41,10 @@ function writeJson(res: ServerResponse, status: number, body: unknown): void {
 
 export function createHttpServer(ctx: AppContext, options: HttpServerOptions): Promise<HttpServerHandle> {
   const sessions = new Map<string, Session>();
+  const security = createHttpSecurity(options);
 
   const httpServer = createServer((req, res) => {
-    void handleRequest(ctx, sessions, req, res).catch(() => {
+    void handleRequest(ctx, sessions, security, req, res).catch(() => {
       writeJson(res, 500, { error: "Internal server error" });
     });
   });
@@ -76,9 +78,33 @@ export function createHttpServer(ctx: AppContext, options: HttpServerOptions): P
 async function handleRequest(
   ctx: AppContext,
   sessions: Map<string, Session>,
+  security: ReturnType<typeof createHttpSecurity>,
   req: IncomingMessage,
   res: ServerResponse,
 ): Promise<void> {
+  const decision = security.check({
+    authorization: readHeader(req, "authorization"),
+    method: req.method,
+    origin: readHeader(req, "origin"),
+  });
+  const corsHeaders = security.corsHeaders(decision.ok ? decision.origin : undefined);
+  for (const [name, value] of Object.entries(corsHeaders)) {
+    res.setHeader(name, value);
+  }
+  if (!decision.ok) {
+    if (decision.status === 401) {
+      res.setHeader("WWW-Authenticate", "Bearer");
+    }
+    writeJson(res, decision.status, { error: decision.error });
+    return;
+  }
+
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
   if (req.method === "GET" && req.url && new URL(req.url, "http://127.0.0.1").pathname === HEALTH_PATH) {
     writeJson(res, 200, { ok: true, name: SERVER_NAME, version: VERSION });
     return;
@@ -97,6 +123,11 @@ async function handleRequest(
     session = await createSession(ctx, sessions);
   }
   await session.transport.handleRequest(req, res);
+}
+
+function readHeader(req: IncomingMessage, name: string): string | undefined {
+  const value = req.headers[name];
+  return Array.isArray(value) ? value[0] : value;
 }
 
 async function createSession(ctx: AppContext, sessions: Map<string, Session>): Promise<Session> {

@@ -18,6 +18,7 @@ Options:
   --transport <mode>   Transport mode: stdio (default) or http.
   --host <host>        HTTP bind host. Defaults to 127.0.0.1.
   --port <port>        HTTP listen port. Defaults to 3000. Use 0 for a free port.
+  --allowed-origin <origin> Allow browser origin. Repeat for multiple origins.
   --list               List available tools and exit.
   -v, --version        Print the version and exit.
   -h, --help           Show this help and exit.
@@ -45,6 +46,10 @@ function parsePort(value: string | undefined): number {
   return parsed;
 }
 
+function parseAllowedOrigins(value: string | undefined): string[] {
+  return value ? value.split(",").map((origin) => origin.trim()).filter(Boolean) : [];
+}
+
 async function runStdio(dbPath: string): Promise<void> {
   const { createContext } = await import("./context.js");
   const ctx = createContext(dbPath);
@@ -53,10 +58,16 @@ async function runStdio(dbPath: string): Promise<void> {
   await server.connect(transport);
 }
 
-async function runHttp(dbPath: string, host: string, port: number): Promise<void> {
+async function runHttp(
+  dbPath: string,
+  host: string,
+  port: number,
+  authToken: string | undefined,
+  allowedOrigins: readonly string[],
+): Promise<void> {
   const { createContext } = await import("./context.js");
   const ctx = createContext(dbPath);
-  const handle = await createHttpServer(ctx, { host, port });
+  const handle = await createHttpServer(ctx, { host, port, authToken, allowedOrigins });
   info(`${SERVER_NAME} v${VERSION} listening on http://${handle.host}:${handle.port}/mcp`);
   const shutdown = () => {
     void handle.close().then(() => process.exit(0));
@@ -72,6 +83,7 @@ async function main(): Promise<void> {
       transport: { type: "string" },
       host: { type: "string" },
       port: { type: "string" },
+      "allowed-origin": { type: "string", multiple: true },
       list: { type: "boolean" },
       version: { type: "boolean", short: "v" },
       help: { type: "boolean", short: "h" },
@@ -100,7 +112,8 @@ async function main(): Promise<void> {
     if (transportMode === "http") {
       const host = values.host ?? process.env.ENGINEER_MCP_HOST ?? DEFAULT_HOST;
       const port = parsePort(values.port ?? process.env.ENGINEER_MCP_PORT);
-      await runHttp(dbPath, host, port);
+      const allowedOrigins = values["allowed-origin"] ?? parseAllowedOrigins(process.env.ENGINEER_MCP_ALLOWED_ORIGINS);
+      await runHttp(dbPath, host, port, process.env.ENGINEER_MCP_AUTH_TOKEN, allowedOrigins);
       return;
     }
     if (transportMode === "stdio") {

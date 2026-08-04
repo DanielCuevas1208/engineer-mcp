@@ -27,6 +27,7 @@ The release covers these domains:
 - Press and shrink fit analysis by Lamé theory.
 - Standard steel section catalog to EN 10365.
   The catalog returns the separate source for published section properties.
+- Bearer authentication and browser origin allow-lists for HTTP clients.
 - Dimension-safe unit conversion, including viscosity and thermal conductivity.
 - Material property lookup.
 - Stdio and HTTP transports.
@@ -78,7 +79,9 @@ The database seeds from JSON files on first start.
 
 ```mermaid
 flowchart LR
-  Agent[AI coding agent] -->|MCP over stdio or HTTP| Server[MCP server]
+  Agent[AI coding agent] -->|stdio| Server[MCP server]
+  Agent -->|HTTP| Security[HTTP security policy]
+  Security --> Server
   Server --> Tools[Tools layer]
   Tools --> Engines[Calculation engines]
   Tools --> Units[Unit layer]
@@ -95,6 +98,7 @@ Key directories:
 | `src/db/` | SQLite schema and seeding. |
 | `src/handlers.ts` | Tool orchestration and result envelopes. |
 | `src/http.ts` | Streamable HTTP transport and session registry. |
+| `src/http-security.ts` | Bearer authentication and browser-origin policy. |
 | `src/index.ts` | CLI entry point and transport selection. |
 | `data/` | Material, fastener, section, and reference data. |
 
@@ -109,6 +113,9 @@ Key directories:
 The demo prints results for every tool.
 It runs against an in-memory database.
 It needs no API keys and no network access.
+
+Configure HTTP authentication with `ENGINEER_MCP_AUTH_TOKEN`.
+Configure browser access with `ENGINEER_MCP_ALLOWED_ORIGINS`.
 
 ## Run as an MCP server
 
@@ -301,7 +308,7 @@ See [docs/transport.md](docs/transport.md) for the full HTTP reference.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, the tools, the catalog data, and the HTTP transport.
 
-- 182 tests across 15 files.
+- 185 tests across 15 files.
 - All tests pass on Node 22 and Node 24.
 - The HTTP tests run a real server on an ephemeral port.
   They complete the full handshake over a real TCP connection.
@@ -331,8 +338,12 @@ Run `npm test` to reproduce the results.
 - The viscosity and thermal conductivity units cover common engineering units.
   They do not cover every named unit in older texts.
 - The HTTP transport binds to the local host by default.
-  It has no authentication or encryption.
-  Use a reverse proxy for a public deployment.
+  Authentication is optional.
+  Set `ENGINEER_MCP_AUTH_TOKEN` before a protected deployment.
+- Browser clients need an explicit origin allow-list.
+  Set `ENGINEER_MCP_ALLOWED_ORIGINS` with comma-separated origins.
+  The transport does not provide TLS.
+  Use a reverse proxy for public deployment.
 - The HTTP transport keeps session state in memory.
   A restart clears every active session.
 - The built-in SQLite module of Node.js is still experimental.
@@ -363,10 +374,12 @@ Each release stays useful on its own.
 - HTTP transport.
   The server runs over stdio or Streamable HTTP.
   The `--transport http` option starts an HTTP endpoint with stateful sessions.
+- HTTP transport security.
+  The server supports bearer authentication.
+  It rejects browser origins outside the configured allow-list.
 
 ### Remaining
 
-- Add authentication and origin allow-lists to the HTTP transport.
 - Make the HTTP response mode configurable.
   The server returns JSON responses today.
   An SSE-only client needs an explicit streaming mode.
