@@ -56,6 +56,7 @@ export const beamSchema = z.object({
 
 export const sectionPropsSchema = z.object({
   section: sectionSchema.describe("Cross-section shape and dimensions in metres."),
+  outputUnits,
 });
 
 export const boltSchema = z.object({

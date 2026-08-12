@@ -245,8 +245,8 @@ A call to `section_catalog` for the HEB series returns the published sections:
 
 ```text
 Rows:
-  - HEB 100 | h 100 mm | I 450 cm4 | W 89.9 cm3 | 20.4 kg/m
-  - HEB 120 | h 120 mm | I 864 cm4 | W 144 cm3 | 26.7 kg/m
+  - HEB 100 | h 100 mm | I 450 cm4 | W 89.9 cm3 | 20.4 kg/m | dims en-10365 | props arcelormittal-sections
+  - HEB 120 | h 120 mm | I 864 cm4 | W 144 cm3 | 26.7 kg/m | dims en-10365 | props arcelormittal-sections
   - HEB 140 | h 140 mm | I 1509 cm4 | W 216 cm3 | 33.7 kg/m
   - HEB 160 | h 160 mm | I 2492 cm4 | W 311 cm3 | 42.6 kg/m
 
@@ -308,8 +308,8 @@ See [docs/transport.md](docs/transport.md) for the full HTTP reference.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, the tools, the catalog data, and the HTTP transport.
 
-- 185 tests across 15 files.
-- All tests pass on Node 22 and Node 24.
+- 187 tests across 15 files.
+- The CI matrix tests Node 22 and Node 24.
 - The HTTP tests run a real server on an ephemeral port.
   They complete the full handshake over a real TCP connection.
 - The CI workflow runs typecheck, tests, build, demo, a package check, and the HTTP smoke check.
@@ -359,8 +359,9 @@ Each release stays useful on its own.
 
 - Helical compression spring design.
   The `spring_design` tool reports the spring rate, the shear stress, and the safety factor.
-- Standard steel section catalog.
+- Standard steel section catalog and data audit.
   The `section_catalog` tool searches the published IPE, HEA, HEB, and UPN series.
+  Each row carries source IDs for dimensions and section properties.
   The `beam_bending` and `section_properties` tools accept a catalog designation.
   The result cites EN 10365 for dimensions and masses.
   It cites ArcelorMittal for section properties.

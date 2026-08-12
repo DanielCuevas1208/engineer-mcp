@@ -150,8 +150,8 @@ export function seedIfEmpty(db: DatabaseSync): void {
         s.massPerMetreKgM,
         s.secondMomentCm4,
         s.sectionModulusCm3,
-        "en-10365",
-        "arcelormittal-sections",
+        s.dimensionsReferenceId,
+        s.propertiesReferenceId,
       );
     }
   }

@@ -114,12 +114,12 @@ export function createContext(dbPath = ":memory:"): AppContext {
     },
     findSection(designation) {
       const row = db
-        .prepare("SELECT * FROM standard_sections WHERE designation = ?")
-        .get(designation) as Record<string, unknown> | undefined;
+        .prepare("SELECT * FROM standard_sections WHERE UPPER(TRIM(designation)) = ?")
+        .get(designation.trim().toUpperCase()) as Record<string, unknown> | undefined;
       return row ? mapSection(row) : undefined;
     },
     searchSections(query, limit = 10) {
-      const like = `%${query.toLowerCase()}%`;
+      const like = `%${query.trim().toLowerCase()}%`;
       const rows = db
         .prepare(
           "SELECT * FROM standard_sections WHERE LOWER(designation) LIKE ? OR LOWER(series) LIKE ? OR LOWER(standard) LIKE ? ORDER BY series, height_mm LIMIT ?",

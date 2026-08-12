@@ -38,6 +38,8 @@ export type SectionSeed = {
   designation: string;
   series: string;
   standard: string;
+  dimensionsReferenceId: string;
+  propertiesReferenceId: string;
   heightMm: number;
   flangeWidthMm: number;
   webThicknessMm: number;

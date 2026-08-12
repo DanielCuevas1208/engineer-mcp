@@ -1,6 +1,6 @@
 {
   "name": "@engineerkit/engineer-mcp",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "MCP server for verified mechanical-engineering calculations, references, and material data.",
   "type": "module",
   "license": "MIT",

@@ -32,6 +32,16 @@ describe("section catalog data audit", () => {
     expect(references["arcelormittal-sections"]?.url).toContain("ArcelorMittal_FR_EN_RU_web.pdf");
   });
 
+  it("gives every row a traceable source for each property group", () => {
+    const references = loadReferences();
+    for (const section of loadSections()) {
+      expect(references[section.dimensionsReferenceId]).toBeDefined();
+      expect(references[section.propertiesReferenceId]).toBeDefined();
+      expect(section.dimensionsReferenceId).toBe("en-10365");
+      expect(section.propertiesReferenceId).toBe("arcelormittal-sections");
+    }
+  });
+
   it("keeps every designation unique", () => {
     const designations = loadSections().map((section) => section.designation);
     expect(new Set(designations).size).toBe(designations.length);

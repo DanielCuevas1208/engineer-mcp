@@ -614,12 +614,17 @@ function sectionCatalogHandler(ctx: AppContext): Handler {
       method: SECTION_CATALOG_METHOD,
       inputs: { query, limit },
       quantities: [],
-      references: resolveReferences(ctx, SECTION_CATALOG_METHOD.referenceIds),
+      references: resolveReferences(
+        ctx,
+        rows.flatMap((row) => [row.dimensionsReferenceId, row.propertiesReferenceId]),
+      ),
       warnings: [],
       rows: rows.map((row) => ({
         designation: row.designation,
         series: row.series,
         standard: row.standard,
+        dimensionsReferenceId: row.dimensionsReferenceId,
+        propertiesReferenceId: row.propertiesReferenceId,
         heightMm: row.heightMm,
         flangeWidthMm: row.flangeWidthMm,
         webThicknessMm: row.webThicknessMm,

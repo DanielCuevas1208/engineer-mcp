@@ -31,6 +31,12 @@ See `data/references.json` for the full citations and source URLs.
 - [EN 10365:2017](https://www.evs.ee/et/evs-en-10365-2017) defines nominal dimensions and masses.
 - [ArcelorMittal European section tables](https://sections.arcelormittal.com/repository2/Sections/5_1_5_ArcelorMittal_FR_EN_RU_web.pdf) provide the properties.
 
+Each data row stores two source IDs.
+`dimensionsReferenceId` identifies the dimensions and mass source.
+`propertiesReferenceId` identifies the area and section-property source.
+The `section_catalog` tool returns both IDs on every row.
+The top-level `references` array returns the matching source records.
+
 Each property column has a defined source:
 
 | Column | Meaning | Source |

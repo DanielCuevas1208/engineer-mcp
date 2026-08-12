@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createContext, type AppContext, type StandardSectionRow } from "../src/context.js";
 import { createHandlers, type Handler } from "../src/handlers.js";
+import { sectionPropsSchema } from "../src/schemas.js";
 import type { ToolResult } from "../src/types.js";
 
 type Handlers = {
@@ -66,7 +67,7 @@ describe("standard section catalog", () => {
 
   it("loads the catalog and finds a section by exact designation", () => {
     setup();
-    const section = ctx.findSection("IPE 300");
+    const section = ctx.findSection(" Ipe 300 ");
     expect(section).toBeDefined();
     expect(section?.series).toBe("IPE");
     expect(section?.heightMm).toBe(300);
@@ -120,7 +121,17 @@ describe("section_catalog tool", () => {
       designation: "HEB 200",
       series: "HEB",
       heightMm: 200,
+      dimensionsReferenceId: "en-10365",
+      propertiesReferenceId: "arcelormittal-sections",
     });
+  });
+
+  it("accepts output units for the MCP section schema", () => {
+    const parsed = sectionPropsSchema.parse({
+      section: { shape: "standard", designation: "IPE 300" },
+      outputUnits: { secondMomentOfArea: "cm4" },
+    });
+    expect(parsed.outputUnits).toEqual({ secondMomentOfArea: "cm4" });
   });
 
   it("returns no match as a failure", () => {
