@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import type { HttpResponseMode } from './http.js';
 import "./warnings.js";
 import { parseArgs } from "node:util";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -18,6 +19,7 @@ Options:
   --transport <mode>   Transport mode: stdio (default) or http.
   --host <host>        HTTP bind host. Defaults to 127.0.0.1.
   --port <port>        HTTP listen port. Defaults to 3000. Use 0 for a free port.
+  --response-mode <m>  HTTP response mode: json (default) or sse.
   --allowed-origin <origin> Allow browser origin. Repeat for multiple origins.
   --list               List available tools and exit.
   -v, --version        Print the version and exit.
@@ -46,6 +48,14 @@ function parsePort(value: string | undefined): number {
   return parsed;
 }
 
+function parseResponseMode(value: string | undefined): HttpResponseMode {
+  const mode = value ?? process.env.ENGINEER_MCP_HTTP_RESPONSE_MODE ?? 'json';
+  if (mode !== 'json' && mode !== 'sse') {
+    throw new Error('Invalid HTTP response mode: ' + mode + '. Use json or sse.');
+  }
+  return mode;
+}
+
 function parseAllowedOrigins(value: string | undefined): string[] {
   return value ? value.split(",").map((origin) => origin.trim()).filter(Boolean) : [];
 }
@@ -62,12 +72,13 @@ async function runHttp(
   dbPath: string,
   host: string,
   port: number,
+  responseMode: HttpResponseMode,
   authToken: string | undefined,
   allowedOrigins: readonly string[],
 ): Promise<void> {
   const { createContext } = await import("./context.js");
   const ctx = createContext(dbPath);
-  const handle = await createHttpServer(ctx, { host, port, authToken, allowedOrigins });
+  const handle = await createHttpServer(ctx, { host, port, responseMode, authToken, allowedOrigins });
   info(`${SERVER_NAME} v${VERSION} listening on http://${handle.host}:${handle.port}/mcp`);
   const shutdown = () => {
     void handle.close().then(() => process.exit(0));
@@ -79,6 +90,7 @@ async function runHttp(
 async function main(): Promise<void> {
   const { values } = parseArgs({
     options: {
+      'response-mode': { type: 'string' },
       db: { type: "string" },
       transport: { type: "string" },
       host: { type: "string" },
@@ -112,8 +124,9 @@ async function main(): Promise<void> {
     if (transportMode === "http") {
       const host = values.host ?? process.env.ENGINEER_MCP_HOST ?? DEFAULT_HOST;
       const port = parsePort(values.port ?? process.env.ENGINEER_MCP_PORT);
+      const responseMode = parseResponseMode(values['response-mode']);
       const allowedOrigins = values["allowed-origin"] ?? parseAllowedOrigins(process.env.ENGINEER_MCP_ALLOWED_ORIGINS);
-      await runHttp(dbPath, host, port, process.env.ENGINEER_MCP_AUTH_TOKEN, allowedOrigins);
+      await runHttp(dbPath, host, port, responseMode, process.env.ENGINEER_MCP_AUTH_TOKEN, allowedOrigins);
       return;
     }
     if (transportMode === "stdio") {

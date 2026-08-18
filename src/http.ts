@@ -10,7 +10,10 @@ import { SERVER_NAME, VERSION } from "./version.js";
 export type HttpServerOptions = HttpSecurityOptions & {
   host: string;
   port: number;
+  responseMode?: HttpResponseMode;
 };
+
+export type HttpResponseMode = 'json' | 'sse';
 
 export type HttpServerHandle = {
   host: string;
@@ -42,9 +45,10 @@ function writeJson(res: ServerResponse, status: number, body: unknown): void {
 export function createHttpServer(ctx: AppContext, options: HttpServerOptions): Promise<HttpServerHandle> {
   const sessions = new Map<string, Session>();
   const security = createHttpSecurity(options);
+  const responseMode = options.responseMode ?? 'json';
 
   const httpServer = createServer((req, res) => {
-    void handleRequest(ctx, sessions, security, req, res).catch(() => {
+    void handleRequest(ctx, sessions, security, responseMode, req, res).catch(() => {
       writeJson(res, 500, { error: "Internal server error" });
     });
   });
@@ -79,6 +83,7 @@ async function handleRequest(
   ctx: AppContext,
   sessions: Map<string, Session>,
   security: ReturnType<typeof createHttpSecurity>,
+  responseMode: HttpResponseMode,
   req: IncomingMessage,
   res: ServerResponse,
 ): Promise<void> {
@@ -120,7 +125,7 @@ async function handleRequest(
     }
   }
   if (!session) {
-    session = await createSession(ctx, sessions);
+    session = await createSession(ctx, sessions, responseMode);
   }
   await session.transport.handleRequest(req, res);
 }
@@ -130,11 +135,11 @@ function readHeader(req: IncomingMessage, name: string): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-async function createSession(ctx: AppContext, sessions: Map<string, Session>): Promise<Session> {
+async function createSession(ctx: AppContext, sessions: Map<string, Session>, responseMode: HttpResponseMode): Promise<Session> {
   const server = buildServer(ctx);
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: () => randomUUID(),
-    enableJsonResponse: true,
+    enableJsonResponse: responseMode === 'json',
     onsessioninitialized(id) {
       sessions.set(id, { server, transport });
     },

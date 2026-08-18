@@ -140,7 +140,10 @@ node dist/index.js --transport http
 
 The server listens on `http://127.0.0.1:3000/mcp`.
 Set `--host` and `--port` to change the bind address.
+Set `--response-mode sse` when the client requires Server-Sent Events.
+The default response mode is JSON.
 Set `ENGINEER_MCP_TRANSPORT`, `ENGINEER_MCP_HOST`, and `ENGINEER_MCP_PORT` to configure the same values.
+Set `ENGINEER_MCP_HTTP_RESPONSE_MODE` to `json` or `sse`.
 See [docs/transport.md](docs/transport.md) for client configuration and curl examples.
 
 Use a port of `0` to let the operating system choose a free port.
@@ -271,6 +274,13 @@ References:
   - European sections - dimensions and section properties
 ```
 
+In SSE mode, an initialize response uses this event format:
+
+```text
+event: message
+data: { "jsonrpc": "2.0", "id": 1, "result": ... }
+```
+
 The same tools run over HTTP.
 Start the server with `--transport http`, then start a session with curl:
 
@@ -308,10 +318,11 @@ See [docs/transport.md](docs/transport.md) for the full HTTP reference.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, the tools, the catalog data, and the HTTP transport.
 
-- 188 tests across 15 files.
+- 189 tests across 15 files.
 - The CI matrix tests Node 22 and Node 24.
 - The HTTP tests run a real server on an ephemeral port.
   They complete the full handshake over a real TCP connection.
+  They cover JSON and Server-Sent Events responses.
 - The CI workflow runs typecheck, tests, build, demo, a package check, and the HTTP smoke check.
 - The CI workflow verifies the CLI contract over standard output.
 - The CI workflow verifies both transport modes.
@@ -346,6 +357,8 @@ Run `npm test` to reproduce the results.
   Use a reverse proxy for public deployment.
 - The HTTP transport keeps session state in memory.
   A restart clears every active session.
+- SSE responses are not stored for reconnect.
+  The server does not configure an event store.
 - The built-in SQLite module of Node.js is still experimental.
 
 Check the cited sources for exact values.
@@ -378,12 +391,13 @@ Each release stays useful on its own.
 - HTTP transport security.
   The server supports bearer authentication.
   It rejects browser origins outside the configured allow-list.
+- Configurable HTTP response mode.
+  JSON remains the default response mode.
+  SSE serves `text/event-stream` responses for clients that require streaming.
 
 ### Remaining
 
-- Make the HTTP response mode configurable.
-  The server returns JSON responses today.
-  An SSE-only client needs an explicit streaming mode.
+No additional item is scheduled in this release.
 
 See [docs/integration.md](docs/integration.md) for the EngineerKit plan.
 

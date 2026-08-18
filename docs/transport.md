@@ -27,6 +27,7 @@ Set these options to change the bind address.
 | --- | --- | --- |
 | `--host` | `127.0.0.1` | Bind address. |
 | `--port` | `3000` | Listen port. |
+| `--response-mode` | `json` | Return JSON or Server-Sent Events. |
 | `--allowed-origin <origin>` | None | Allow one browser origin. |
 
 Use a port of `0` to let the operating system choose a free port.
@@ -45,12 +46,39 @@ You can set the same values with environment variables.
 | `ENGINEER_MCP_TRANSPORT` | Transport mode: `stdio` or `http`. |
 | `ENGINEER_MCP_HOST` | HTTP bind address. |
 | `ENGINEER_MCP_PORT` | HTTP listen port. |
+| `ENGINEER_MCP_HTTP_RESPONSE_MODE` | HTTP response mode: `json` or `sse`. |
 | `ENGINEER_MCP_DB` | SQLite database path. |
 | `ENGINEER_MCP_AUTH_TOKEN` | Bearer token for HTTP requests. |
 | `ENGINEER_MCP_ALLOWED_ORIGINS` | Comma-separated browser origins. |
 
 The server exits on `SIGINT` or `SIGTERM`.
 It closes all active sessions during shutdown.
+
+## Response modes
+
+The server supports JSON and Server-Sent Events responses.
+JSON is the default mode.
+It returns one JSON-RPC response for each HTTP request.
+
+Use SSE when your MCP client requires `text/event-stream`.
+
+```sh
+node dist/index.js --transport http --response-mode sse
+```
+
+The SSE response contains one `message` event.
+Its `data` field contains the JSON-RPC response.
+
+```text
+event: message
+data: {"jsonrpc":"2.0","id":1,"result":{...}}
+```
+
+The environment variable provides the same setting.
+
+```sh
+ENGINEER_MCP_HTTP_RESPONSE_MODE=sse node dist/index.js --transport http
+```
 
 ## Security
 
@@ -105,13 +133,14 @@ curl http://127.0.0.1:3000/health
 The server returns a JSON status.
 
 ```json
-{ "ok": true, "name": "engineer-mcp", "version": "0.8.0" }
+{ "ok": true, "name": "engineer-mcp", "version": "0.9.0" }
 ```
 
 Start a session with an initialize request.
 
 ```sh
 curl -s -D - http://127.0.0.1:3000/mcp \
+  -H "accept: application/json, text/event-stream" \
   -H "content-type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"curl","version":"1.0"}}}'
 ```
@@ -133,3 +162,5 @@ curl -s http://127.0.0.1:3000/mcp \
   Use a reverse proxy for public deployment.
 - The server stores session state in memory.
   A restart clears every active session.
+- SSE responses are not stored for reconnect.
+  The server does not configure an event store.

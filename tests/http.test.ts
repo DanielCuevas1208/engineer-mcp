@@ -9,6 +9,7 @@ type RpcResponse = {
   status: number;
   sessionId?: string;
   allowOrigin?: string;
+  contentType?: string;
   body: {
     jsonrpc?: string;
     id?: number;
@@ -16,6 +17,14 @@ type RpcResponse = {
     error?: { code?: number; message?: string } | string;
   };
 };
+
+function parseSseBody(raw: string): RpcResponse['body'] {
+  const dataLine = raw.split(/\r?\n/).find((line) => line.startsWith('data: '));
+  if (!dataLine) {
+    throw new Error('SSE response has no data event: ' + raw);
+  }
+  return JSON.parse(dataLine.slice('data: '.length)) as RpcResponse['body'];
+}
 
 type RequestOptions = {
   authorization?: string;
@@ -64,8 +73,13 @@ async function rpc(
     headers,
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
   });
-  const body = (await res.json()) as RpcResponse["body"];
+  const contentType = res.headers.get('content-type') ?? undefined;
+  const raw = await res.text();
+  const body = contentType?.includes('text/event-stream')
+    ? parseSseBody(raw)
+    : (JSON.parse(raw) as RpcResponse['body']);
   return {
+    contentType,
     status: res.status,
     sessionId: res.headers.get("mcp-session-id") ?? undefined,
     allowOrigin: res.headers.get("access-control-allow-origin") ?? undefined,
@@ -158,6 +172,7 @@ describe("HTTP transport", () => {
     const response = await initialize(`http://127.0.0.1:${server.port}/mcp`);
 
     expect(response.status).toBe(200);
+    expect(response.contentType).toContain("application/json");
     expect(response.sessionId).toBeDefined();
     expect(response.body.result?.serverInfo).toMatchObject({ name: "engineer-mcp", version: VERSION });
   });
@@ -257,5 +272,14 @@ describe("HTTP transport", () => {
 
     const after = await rpc(url, "tools/list", {}, init.sessionId);
     expect(after.status).toBe(404);
+  });
+
+  it('returns Server-Sent Events when the response mode is configured', async () => {
+    const server = await startServer({ responseMode: 'sse' });
+    const response = await initialize('http://127.0.0.1:' + server.port + '/mcp');
+
+    expect(response.status).toBe(200);
+    expect(response.contentType).toContain('text/event-stream');
+    expect(response.body.result?.serverInfo).toMatchObject({ name: 'engineer-mcp', version: VERSION });
   });
 });
