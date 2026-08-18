@@ -34,8 +34,12 @@ function show(name: string, handler: Handler, input: Record<string, unknown>): v
     console.log("Rows:");
     for (const row of response.rows) {
       if (row.designation) {
+        const provenance =
+          row.dimensionsReferenceId && row.propertiesReferenceId
+            ? ` | dims ${row.dimensionsReferenceId} | props ${row.propertiesReferenceId}`
+            : "";
         console.log(
-          `  - ${String(row.designation)} | h ${row.heightMm} mm | I ${row.secondMomentCm4} cm4 | W ${row.sectionModulusCm3} cm3 | ${row.massPerMetreKgM} kg/m`,
+          `  - ${String(row.designation)} | h ${row.heightMm} mm | I ${row.secondMomentCm4} cm4 | W ${row.sectionModulusCm3} cm3 | ${row.massPerMetreKgM} kg/m${provenance}`,
         );
       } else {
         console.log(`  - ${String(row.name)} | yield ${row.yieldStrengthMPa} MPa | E ${row.elasticModulusGPa} GPa | density ${row.densityKgM3} kg/m3`);
@@ -96,6 +100,7 @@ async function main(): Promise<void> {
   const tools: NamedHandler[] = [
     ["beam_bending", toolHandlers.beam_bending],
     ["section_properties", toolHandlers.section_properties],
+    ["section_properties (IPE 300)", toolHandlers.section_properties],
     ["bolt_strength", toolHandlers.bolt_strength],
     ["spring_design", toolHandlers.spring_design],
     ["shaft_analysis", toolHandlers.shaft_analysis],
@@ -125,6 +130,10 @@ async function main(): Promise<void> {
     },
     {
       section: { shape: "i_beam", height: 0.3, flangeWidth: 0.15, flangeThickness: 0.012, webThickness: 0.008 },
+    },
+    {
+      section: { shape: "standard", designation: "IPE 300" },
+      outputUnits: { secondMomentOfArea: "cm4", massPerMetre: "kg/m" },
     },
     {
       nominalDiameterMm: 12,

@@ -74,6 +74,8 @@ The small deviation comes from the rounded values in the tables.
 
 The test file `tests/section-data-audit.test.ts` runs these rules.
 It also checks the covered range, the source split, and the uniqueness of the designations.
+It spot-checks one anchor section per series against the published tables.
+The anchors are IPE 300, HEA 200, HEB 100, and UPN 200.
 Run `npm test` to reproduce the audit.
 
 ## Data files

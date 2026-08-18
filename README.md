@@ -308,7 +308,7 @@ See [docs/transport.md](docs/transport.md) for the full HTTP reference.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, the tools, the catalog data, and the HTTP transport.
 
-- 187 tests across 15 files.
+- 188 tests across 15 files.
 - The CI matrix tests Node 22 and Node 24.
 - The HTTP tests run a real server on an ephemeral port.
   They complete the full handshake over a real TCP connection.

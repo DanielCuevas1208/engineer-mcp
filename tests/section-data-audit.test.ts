@@ -14,6 +14,86 @@ const EXPECTED_DESIGNATIONS: Record<string, string[]> = {
   UPN: [80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300].map((size) => `UPN ${size}`),
 };
 
+type GoldenAnchor = {
+  designation: string;
+  dimensionsSource: string;
+  propertiesSource: string;
+  expected: Pick<
+    SectionSeed,
+    | "heightMm"
+    | "flangeWidthMm"
+    | "webThicknessMm"
+    | "flangeThicknessMm"
+    | "massPerMetreKgM"
+    | "areaCm2"
+    | "secondMomentCm4"
+    | "sectionModulusCm3"
+  >;
+};
+
+const GOLDEN_ANCHORS: GoldenAnchor[] = [
+  {
+    designation: "IPE 300",
+    dimensionsSource: "en-10365",
+    propertiesSource: "arcelormittal-sections",
+    expected: {
+      heightMm: 300,
+      flangeWidthMm: 150,
+      webThicknessMm: 7.1,
+      flangeThicknessMm: 10.7,
+      massPerMetreKgM: 42.2,
+      areaCm2: 53.8,
+      secondMomentCm4: 8356,
+      sectionModulusCm3: 557,
+    },
+  },
+  {
+    designation: "HEA 200",
+    dimensionsSource: "en-10365",
+    propertiesSource: "arcelormittal-sections",
+    expected: {
+      heightMm: 190,
+      flangeWidthMm: 200,
+      webThicknessMm: 6.5,
+      flangeThicknessMm: 10.0,
+      massPerMetreKgM: 42.3,
+      areaCm2: 53.8,
+      secondMomentCm4: 3692,
+      sectionModulusCm3: 389,
+    },
+  },
+  {
+    designation: "HEB 100",
+    dimensionsSource: "en-10365",
+    propertiesSource: "arcelormittal-sections",
+    expected: {
+      heightMm: 100,
+      flangeWidthMm: 100,
+      webThicknessMm: 6.0,
+      flangeThicknessMm: 10.0,
+      massPerMetreKgM: 20.4,
+      areaCm2: 26.0,
+      secondMomentCm4: 450,
+      sectionModulusCm3: 89.9,
+    },
+  },
+  {
+    designation: "UPN 200",
+    dimensionsSource: "en-10365",
+    propertiesSource: "arcelormittal-sections",
+    expected: {
+      heightMm: 200,
+      flangeWidthMm: 75,
+      webThicknessMm: 8.5,
+      flangeThicknessMm: 11.5,
+      massPerMetreKgM: 25.3,
+      areaCm2: 32.2,
+      secondMomentCm4: 1910,
+      sectionModulusCm3: 191,
+    },
+  },
+];
+
 function sectionsBySeries(sections: SectionSeed[]): Map<string, SectionSeed[]> {
   const bySeries = new Map<string, SectionSeed[]>();
   for (const section of sections) {
@@ -85,6 +165,17 @@ describe("section catalog data audit", () => {
       expect(Math.abs(section.sectionModulusCm3 - expectedModulusCm3)).toBeLessThan(
         expectedModulusCm3 * MODULUS_TOLERANCE,
       );
+    }
+  });
+
+  it("matches published anchor values for each series", () => {
+    const byDesignation = new Map(loadSections().map((section) => [section.designation, section]));
+    for (const anchor of GOLDEN_ANCHORS) {
+      const section = byDesignation.get(anchor.designation);
+      expect(section).toBeDefined();
+      expect(section?.dimensionsReferenceId).toBe(anchor.dimensionsSource);
+      expect(section?.propertiesReferenceId).toBe(anchor.propertiesSource);
+      expect(section).toMatchObject(anchor.expected);
     }
   });
 
