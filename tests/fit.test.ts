@@ -70,6 +70,16 @@ describe("press fit engine", () => {
     expect(hollowStress).toBeGreaterThan(solidPressure);
   });
 
+  it("warns when a member exceeds its yield strength", () => {
+    const result = analyzePressFit({
+      ...BASE,
+      shaftYieldStrength: 20e6,
+      hubYieldStrength: 300e6,
+    });
+    expect(result.warnings.length).toBeGreaterThan(0);
+    expect(result.warnings.join(" ")).toContain("shaft yield strength");
+  });
+
   it("warns when the torque capacity falls below the required torque", () => {
     const result = analyzePressFit({
       ...BASE,

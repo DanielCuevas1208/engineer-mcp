@@ -3,15 +3,20 @@ import {
   DIM_ANGLE,
   DIM_AREA,
   DIM_DENSITY,
+  DIM_DYNAMIC_VISCOSITY,
   DIM_ENERGY,
   DIM_FORCE,
   DIM_FREQUENCY,
+  DIM_KINEMATIC_VISCOSITY,
   DIM_LENGTH,
+  DIM_LINEAR_DENSITY,
   DIM_MASS,
   DIM_POWER,
   DIM_PRESSURE,
+  DIM_SECOND_MOMENT,
   DIM_STIFFNESS,
   DIM_TEMPERATURE,
+  DIM_THERMAL_CONDUCTIVITY,
   DIM_TIME,
   DIM_TORQUE,
   DIM_VELOCITY,
@@ -128,9 +133,18 @@ export const UNITS: UnitDef[] = [
   unit({ canonical: "ft3", name: "cubic foot", category: "volume", dim: DIM_VOLUME, factor: 0.028316846592 }),
   unit({ canonical: "gal", name: "US gallon", category: "volume", dim: DIM_VOLUME, factor: 0.003785411784 }),
 
+  unit({ canonical: "m4", name: "metre to the fourth power", category: "second moment of area", dim: DIM_SECOND_MOMENT, factor: 1 }),
+  unit({ canonical: "cm4", name: "centimetre to the fourth power", category: "second moment of area", dim: DIM_SECOND_MOMENT, factor: 1e-8 }),
+  unit({ canonical: "mm4", name: "millimetre to the fourth power", category: "second moment of area", dim: DIM_SECOND_MOMENT, factor: 1e-12 }),
+  unit({ canonical: "in4", name: "inch to the fourth power", category: "second moment of area", dim: DIM_SECOND_MOMENT, factor: 0.0254 ** 4 }),
+
   unit({ canonical: "kg/m3", name: "kilogram per cubic metre", category: "density", dim: DIM_DENSITY, factor: 1 }),
   unit({ canonical: "g/cm3", name: "gram per cubic centimetre", category: "density", dim: DIM_DENSITY, factor: 1e3 }),
   unit({ canonical: "lb/ft3", name: "pound per cubic foot", category: "density", dim: DIM_DENSITY, factor: 16.01846337 }),
+
+  unit({ canonical: "kg/m", name: "kilogram per metre", category: "linear mass", dim: DIM_LINEAR_DENSITY, factor: 1 }),
+  unit({ canonical: "g/m", name: "gram per metre", category: "linear mass", dim: DIM_LINEAR_DENSITY, factor: 1e-3 }),
+  unit({ canonical: "lb/ft", name: "pound per foot", category: "linear mass", dim: DIM_LINEAR_DENSITY, factor: 1.4881639435696 }),
 
   unit({ canonical: "N/m", name: "newton per metre", category: "stiffness", dim: DIM_STIFFNESS, factor: 1 }),
   unit({ canonical: "N/mm", name: "newton per millimetre", category: "stiffness", dim: DIM_STIFFNESS, factor: 1e3 }),
@@ -140,6 +154,25 @@ export const UNITS: UnitDef[] = [
   unit({ canonical: "Hz", name: "hertz", category: "frequency", dim: DIM_FREQUENCY, factor: 1 }),
   unit({ canonical: "rpm", name: "revolution per minute", category: "frequency", dim: DIM_FREQUENCY, factor: 1 / 60 }),
   unit({ canonical: "kHz", name: "kilohertz", category: "frequency", dim: DIM_FREQUENCY, factor: 1e3 }),
+
+  unit({ canonical: "Pa·s", aliases: ["Pa.s", "Pa s"], name: "pascal second", category: "dynamic viscosity", dim: DIM_DYNAMIC_VISCOSITY, factor: 1 }),
+  unit({ canonical: "mPa·s", aliases: ["mPa.s", "mPa s"], name: "millipascal second", category: "dynamic viscosity", dim: DIM_DYNAMIC_VISCOSITY, factor: 1e-3 }),
+  unit({ canonical: "P", aliases: ["poise"], name: "poise", category: "dynamic viscosity", dim: DIM_DYNAMIC_VISCOSITY, factor: 0.1 }),
+  unit({ canonical: "cP", aliases: ["cp", "centipoise"], name: "centipoise", category: "dynamic viscosity", dim: DIM_DYNAMIC_VISCOSITY, factor: 1e-3 }),
+  unit({ canonical: "kgf·s/m2", aliases: ["kgf.s/m2", "kgf s/m2"], name: "kilogram-force second per square metre", category: "dynamic viscosity", dim: DIM_DYNAMIC_VISCOSITY, factor: 9.80665 }),
+  unit({ canonical: "lb/(ft·s)", aliases: ["lb/(ft.s)", "lb/ft/s"], name: "pound per foot second", category: "dynamic viscosity", dim: DIM_DYNAMIC_VISCOSITY, factor: 1.4881639435696 }),
+  unit({ canonical: "lbf·s/ft2", aliases: ["lbf.s/ft2"], name: "pound-force second per square foot", category: "dynamic viscosity", dim: DIM_DYNAMIC_VISCOSITY, factor: 47.88025898 }),
+
+  unit({ canonical: "m2/s", name: "square metre per second", category: "kinematic viscosity", dim: DIM_KINEMATIC_VISCOSITY, factor: 1 }),
+  unit({ canonical: "St", aliases: ["stokes"], name: "stokes", category: "kinematic viscosity", dim: DIM_KINEMATIC_VISCOSITY, factor: 1e-4 }),
+  unit({ canonical: "cSt", aliases: ["cst", "centistokes"], name: "centistokes", category: "kinematic viscosity", dim: DIM_KINEMATIC_VISCOSITY, factor: 1e-6 }),
+  unit({ canonical: "ft2/s", name: "square foot per second", category: "kinematic viscosity", dim: DIM_KINEMATIC_VISCOSITY, factor: 0.09290304 }),
+
+  unit({ canonical: "W/(m·K)", aliases: ["W/(m.K)", "W/m/K"], name: "watt per metre kelvin", category: "thermal conductivity", dim: DIM_THERMAL_CONDUCTIVITY, factor: 1 }),
+  unit({ canonical: "W/(m·°C)", aliases: ["W/(m.C)", "W/m/C"], name: "watt per metre degree Celsius", category: "thermal conductivity", dim: DIM_THERMAL_CONDUCTIVITY, factor: 1 }),
+  unit({ canonical: "kcal/(m·h·°C)", aliases: ["kcal/(m.h.C)"], name: "kilocalorie per metre hour degree Celsius", category: "thermal conductivity", dim: DIM_THERMAL_CONDUCTIVITY, factor: 4184 / 3600 }),
+  unit({ canonical: "BTU/(ft·h·°F)", aliases: ["BTU/(ft.h.F)"], name: "British thermal unit per foot hour degree Fahrenheit", category: "thermal conductivity", dim: DIM_THERMAL_CONDUCTIVITY, factor: 1055.05585262 / 609.6 }),
+  unit({ canonical: "cal/(cm·s·°C)", aliases: ["cal/(cm.s.C)"], name: "calorie per centimetre second degree Celsius", category: "thermal conductivity", dim: DIM_THERMAL_CONDUCTIVITY, factor: 418.4 }),
 ];
 
 export function normalizeSymbol(symbol: string): string {

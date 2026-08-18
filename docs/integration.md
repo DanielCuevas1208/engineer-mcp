@@ -28,7 +28,7 @@ Adopt these conventions to stay compatible.
 
 ## Data boundary
 
-The material and fastener tables live in `data/`. The database seeds from these files on first start. Use the same JSON files as the single source of truth. Do not edit the generated SQLite file directly.
+The material, fastener, and section tables live in `data/`. The database seeds from these files on first start. Use the same JSON files as the single source of truth. Do not edit the generated SQLite file directly.
 
 ## Versioning
 
@@ -41,13 +41,20 @@ Engineer MCP grows in independent releases. Each release stays useful on its own
 ### Complete
 
 - Helical compression spring design. The `spring_design` tool computes the spring rate, the shear stress, and the safety factor.
+- Standard section catalog and data audit.
+  The `section_catalog` tool searches published IPE, HEA, HEB, and UPN sections.
+  Each row carries source IDs for dimensions and section properties.
+  The result cites EN 10365 for dimensions and masses.
+  It cites ArcelorMittal for section properties.
 - Press and shrink fit analysis. The `interference_fit` tool computes the interface pressure, the hoop stresses, and the friction capacity.
+- Fatigue analysis. The `fatigue_analysis` tool estimates the endurance limit for steel and computes the fatigue safety factor for a mean-stress criterion.
+- Viscosity and thermal conductivity units. The unit registry covers dynamic viscosity, kinematic viscosity, and thermal conductivity. The `unit_convert` tool converts between the common engineering units of each.
+- HTTP transport. The server runs over stdio or Streamable HTTP. The `--transport http` option starts an HTTP endpoint with stateful sessions. See [transport.md](transport.md).
+- HTTP transport security. The server supports bearer authentication and browser origin allow-lists.
+- Configurable HTTP response mode. JSON remains the default. SSE serves `text/event-stream` responses.
 
 ### Remaining
 
-- Add fatigue analysis for cyclic loads.
-- Add more unit categories, including viscosity and thermal conductivity.
-- Add HTTP transport in addition to stdio.
-- Add a catalog of ISO and DIN standard sections.
+No additional item is scheduled in this release.
 
 Keep each release small and deterministic. Run the full test suite before release.

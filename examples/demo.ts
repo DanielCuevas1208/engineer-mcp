@@ -33,7 +33,17 @@ function show(name: string, handler: Handler, input: Record<string, unknown>): v
   if (response.rows && response.rows.length > 0) {
     console.log("Rows:");
     for (const row of response.rows) {
-      console.log(`  - ${String(row.name)} | yield ${row.yieldStrengthMPa} MPa | E ${row.elasticModulusGPa} GPa | density ${row.densityKgM3} kg/m3`);
+      if (row.designation) {
+        const provenance =
+          row.dimensionsReferenceId && row.propertiesReferenceId
+            ? ` | dims ${row.dimensionsReferenceId} | props ${row.propertiesReferenceId}`
+            : "";
+        console.log(
+          `  - ${String(row.designation)} | h ${row.heightMm} mm | I ${row.secondMomentCm4} cm4 | W ${row.sectionModulusCm3} cm3 | ${row.massPerMetreKgM} kg/m${provenance}`,
+        );
+      } else {
+        console.log(`  - ${String(row.name)} | yield ${row.yieldStrengthMPa} MPa | E ${row.elasticModulusGPa} GPa | density ${row.densityKgM3} kg/m3`);
+      }
     }
   }
 
@@ -70,13 +80,15 @@ type ToolHandlers = {
   beam_bending: Handler;
   section_properties: Handler;
   bolt_strength: Handler;
+  interference_fit: Handler;
   spring_design: Handler;
   shaft_analysis: Handler;
   bearing_life: Handler;
   von_mises: Handler;
+  fatigue_analysis: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
-  interference_fit: Handler;
+  section_catalog: Handler;
 };
 
 async function main(): Promise<void> {
@@ -88,14 +100,21 @@ async function main(): Promise<void> {
   const tools: NamedHandler[] = [
     ["beam_bending", toolHandlers.beam_bending],
     ["section_properties", toolHandlers.section_properties],
+    ["section_properties (IPE 300)", toolHandlers.section_properties],
     ["bolt_strength", toolHandlers.bolt_strength],
     ["spring_design", toolHandlers.spring_design],
     ["shaft_analysis", toolHandlers.shaft_analysis],
     ["bearing_life", toolHandlers.bearing_life],
     ["von_mises", toolHandlers.von_mises],
+    ["fatigue_analysis", toolHandlers.fatigue_analysis],
     ["unit_convert", toolHandlers.unit_convert],
     ["unit_convert (torque to energy)", toolHandlers.unit_convert],
+    ["unit_convert (dynamic viscosity)", toolHandlers.unit_convert],
+    ["unit_convert (kinematic viscosity)", toolHandlers.unit_convert],
+    ["unit_convert (thermal conductivity)", toolHandlers.unit_convert],
     ["material_lookup", toolHandlers.material_lookup],
+    ["section_catalog", toolHandlers.section_catalog],
+    ["beam_bending (IPE 300)", toolHandlers.beam_bending],
     ["interference_fit", toolHandlers.interference_fit],
   ];
 
@@ -111,6 +130,10 @@ async function main(): Promise<void> {
     },
     {
       section: { shape: "i_beam", height: 0.3, flangeWidth: 0.15, flangeThickness: 0.012, webThickness: 0.008 },
+    },
+    {
+      section: { shape: "standard", designation: "IPE 300" },
+      outputUnits: { secondMomentOfArea: "cm4", massPerMetre: "kg/m" },
     },
     {
       nominalDiameterMm: 12,
@@ -152,6 +175,15 @@ async function main(): Promise<void> {
       outputUnits: { vonMisesStress: "MPa", maxShearStress: "MPa" },
     },
     {
+      ultimateStrength: 690e6,
+      yieldStrength: 580e6,
+      meanStress: 80e6,
+      alternatingStress: 120e6,
+      surfaceFinish: "ground",
+      reliability: 90,
+      outputUnits: { enduranceLimit: "MPa" },
+    },
+    {
       value: 1000,
       from: "psi",
       to: "MPa",
@@ -162,7 +194,35 @@ async function main(): Promise<void> {
       to: "J",
     },
     {
+      value: 100,
+      from: "cP",
+      to: "Pa·s",
+    },
+    {
+      value: 40,
+      from: "cSt",
+      to: "m2/s",
+    },
+    {
+      value: 401,
+      from: "W/(m·K)",
+      to: "BTU/(ft·h·°F)",
+    },
+    {
       query: "steel",
+    },
+    {
+      query: "IPE",
+      limit: 4,
+    },
+    {
+      support: "simply_supported",
+      load: "point",
+      loadMagnitude: 20000,
+      length: 3,
+      material: "Structural steel S355",
+      section: { shape: "standard", designation: "IPE 300" },
+      outputUnits: { maxBendingStress: "MPa", maxDeflection: "mm", maxBendingMoment: "kN·m" },
     },
     {
       interfaceRadius: 0.025,

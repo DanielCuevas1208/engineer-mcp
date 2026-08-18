@@ -30,6 +30,22 @@ export type GradeRow = {
   ultimateStressMPa: number;
 };
 
+export type StandardSectionRow = {
+  designation: string;
+  series: string;
+  standard: string;
+  dimensionsReferenceId: string;
+  propertiesReferenceId: string;
+  heightMm: number;
+  flangeWidthMm: number;
+  webThicknessMm: number;
+  flangeThicknessMm: number;
+  areaCm2: number;
+  massPerMetreKgM: number;
+  secondMomentCm4: number;
+  sectionModulusCm3: number;
+};
+
 export type AppContext = {
   db: DatabaseSync;
   references: Map<string, ReferenceRecord>;
@@ -39,6 +55,9 @@ export type AppContext = {
   listMaterials(): MaterialRow[];
   findFastener(nominalDiameterMm: number): FastenerRow | undefined;
   findGrade(propertyClass: string): GradeRow | undefined;
+  findSection(designation: string): StandardSectionRow | undefined;
+  searchSections(query: string, limit?: number): StandardSectionRow[];
+  listSectionSeries(): string[];
 };
 
 export function createContext(dbPath = ":memory:"): AppContext {
@@ -93,6 +112,27 @@ export function createContext(dbPath = ":memory:"): AppContext {
         .get(propertyClass) as Record<string, unknown> | undefined;
       return row ? mapGrade(row) : undefined;
     },
+    findSection(designation) {
+      const row = db
+        .prepare("SELECT * FROM standard_sections WHERE UPPER(TRIM(designation)) = ?")
+        .get(designation.trim().toUpperCase()) as Record<string, unknown> | undefined;
+      return row ? mapSection(row) : undefined;
+    },
+    searchSections(query, limit = 10) {
+      const like = `%${query.trim().toLowerCase()}%`;
+      const rows = db
+        .prepare(
+          "SELECT * FROM standard_sections WHERE LOWER(designation) LIKE ? OR LOWER(series) LIKE ? OR LOWER(standard) LIKE ? ORDER BY series, height_mm LIMIT ?",
+        )
+        .all(like, like, like, limit) as unknown as Array<Record<string, unknown>>;
+      return rows.map(mapSection);
+    },
+    listSectionSeries() {
+      const rows = db
+        .prepare("SELECT DISTINCT series FROM standard_sections ORDER BY series")
+        .all() as unknown as Array<Record<string, unknown>>;
+      return rows.map((row) => row.series as string);
+    },
   };
 }
 
@@ -126,5 +166,23 @@ function mapGrade(row: Record<string, unknown>): GradeRow {
     proofStressMPa: row.proof_stress_mpa as number,
     yieldStressMPa: row.yield_stress_mpa as number,
     ultimateStressMPa: row.ultimate_stress_mpa as number,
+  };
+}
+
+function mapSection(row: Record<string, unknown>): StandardSectionRow {
+  return {
+    designation: row.designation as string,
+    series: row.series as string,
+    standard: row.standard as string,
+    dimensionsReferenceId: row.reference_id as string,
+    propertiesReferenceId: row.properties_reference_id as string,
+    heightMm: row.height_mm as number,
+    flangeWidthMm: row.flange_width_mm as number,
+    webThicknessMm: row.web_thickness_mm as number,
+    flangeThicknessMm: row.flange_thickness_mm as number,
+    areaCm2: row.area_cm2 as number,
+    massPerMetreKgM: row.mass_per_metre_kg_m as number,
+    secondMomentCm4: row.second_moment_cm4 as number,
+    sectionModulusCm3: row.section_modulus_cm3 as number,
   };
 }

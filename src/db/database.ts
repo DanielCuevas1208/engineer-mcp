@@ -1,5 +1,5 @@
 import { DatabaseSync } from "node:sqlite";
-import { BOLT_GRADES, loadFasteners, loadMaterials, loadReferences } from "../assets.js";
+import { BOLT_GRADES, loadFasteners, loadMaterials, loadReferences, loadSections } from "../assets.js";
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS sources (
@@ -40,14 +40,45 @@ CREATE TABLE IF NOT EXISTS fasteners (
   minor_diameter_mm REAL NOT NULL,
   reference_id TEXT
 );
+
+CREATE TABLE IF NOT EXISTS standard_sections (
+  designation TEXT PRIMARY KEY,
+  series TEXT NOT NULL,
+  standard TEXT NOT NULL,
+  height_mm REAL NOT NULL,
+  flange_width_mm REAL NOT NULL,
+  web_thickness_mm REAL NOT NULL,
+  flange_thickness_mm REAL NOT NULL,
+  area_cm2 REAL NOT NULL,
+  mass_per_metre_kg_m REAL NOT NULL,
+  second_moment_cm4 REAL NOT NULL,
+  section_modulus_cm3 REAL NOT NULL,
+  reference_id TEXT,
+  properties_reference_id TEXT
+);
 `;
 
 export function createDatabase(path: string): DatabaseSync {
   const db = new DatabaseSync(path);
   db.exec("PRAGMA journal_mode = WAL;");
   db.exec(SCHEMA);
+  ensureSectionProvenanceColumns(db);
   seedIfEmpty(db);
+  backfillSectionPropertiesReference(db);
   return db;
+}
+
+function ensureSectionProvenanceColumns(db: DatabaseSync): void {
+  const columns = db.prepare("PRAGMA table_info(standard_sections)").all() as Array<{ name: string }>;
+  if (!columns.some((column) => column.name === "properties_reference_id")) {
+    db.exec("ALTER TABLE standard_sections ADD COLUMN properties_reference_id TEXT");
+  }
+}
+
+function backfillSectionPropertiesReference(db: DatabaseSync): void {
+  db.prepare(
+    "UPDATE standard_sections SET properties_reference_id = ? WHERE properties_reference_id IS NULL",
+  ).run("arcelormittal-sections");
 }
 
 function tableIsEmpty(db: DatabaseSync, table: string): boolean {
@@ -56,13 +87,19 @@ function tableIsEmpty(db: DatabaseSync, table: string): boolean {
 }
 
 export function seedIfEmpty(db: DatabaseSync): void {
-  if (tableIsEmpty(db, "sources")) {
-    const insert = db.prepare(
-      "INSERT INTO sources (id, title, source, edition, section, url, note) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    );
-    for (const [id, record] of Object.entries(loadReferences())) {
-      insert.run(id, record.title, record.source, record.edition ?? null, record.section ?? null, record.url ?? null, record.note ?? null);
-    }
+  const insertReference = db.prepare(
+    `INSERT INTO sources (id, title, source, edition, section, url, note)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       title = excluded.title,
+       source = excluded.source,
+       edition = excluded.edition,
+       section = excluded.section,
+       url = excluded.url,
+       note = excluded.note`,
+  );
+  for (const [id, record] of Object.entries(loadReferences())) {
+    insertReference.run(id, record.title, record.source, record.edition ?? null, record.section ?? null, record.url ?? null, record.note ?? null);
   }
 
   if (tableIsEmpty(db, "materials")) {
@@ -91,6 +128,31 @@ export function seedIfEmpty(db: DatabaseSync): void {
     );
     for (const f of loadFasteners()) {
       insert.run(f.nominalDiameterMm, f.pitchMm, f.pitchDiameterMm, f.minorDiameterMm, "iso-724");
+    }
+  }
+
+  if (tableIsEmpty(db, "standard_sections")) {
+    const insert = db.prepare(
+      `INSERT INTO standard_sections
+        (designation, series, standard, height_mm, flange_width_mm, web_thickness_mm, flange_thickness_mm, area_cm2, mass_per_metre_kg_m, second_moment_cm4, section_modulus_cm3, reference_id, properties_reference_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    );
+    for (const s of loadSections()) {
+      insert.run(
+        s.designation,
+        s.series,
+        s.standard,
+        s.heightMm,
+        s.flangeWidthMm,
+        s.webThicknessMm,
+        s.flangeThicknessMm,
+        s.areaCm2,
+        s.massPerMetreKgM,
+        s.secondMomentCm4,
+        s.sectionModulusCm3,
+        s.dimensionsReferenceId,
+        s.propertiesReferenceId,
+      );
     }
   }
 }

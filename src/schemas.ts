@@ -28,6 +28,10 @@ export const sectionSchema = z.discriminatedUnion("shape", [
     height: z.number().positive().describe("Outer height in metres."),
     thickness: z.number().positive().describe("Wall thickness in metres."),
   }),
+  z.object({
+    shape: z.literal("standard"),
+    designation: z.string().min(1).describe("Standard section designation from the catalog, for example IPE 300 or HEB 200."),
+  }),
 ]);
 
 const outputUnits = z.record(z.string()).optional().describe(
@@ -52,6 +56,7 @@ export const beamSchema = z.object({
 
 export const sectionPropsSchema = z.object({
   section: sectionSchema.describe("Cross-section shape and dimensions in metres."),
+  outputUnits,
 });
 
 export const boltSchema = z.object({
@@ -120,6 +125,49 @@ export const stressSchema = z.object({
   yieldStrength: z.number().positive().optional().describe("Tensile yield strength in pascals. Enables the safety factor."),
 });
 
+export const fatigueSchema = z.object({
+  ultimateStrength: z
+    .number()
+    .positive()
+    .describe("Ultimate tensile strength Sut in pascals. Used to estimate the endurance limit."),
+  yieldStrength: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Tensile yield strength Sy in pascals. Required for the soderberg and asme_elliptic criteria."),
+  meanStress: z.number().min(0).describe("Mean stress sigma_m in pascals."),
+  alternatingStress: z.number().min(0).describe("Alternating stress amplitude sigma_a in pascals."),
+  criterion: z
+    .enum(["modified_goodman", "soderberg", "gerber", "asme_elliptic"])
+    .optional()
+    .describe("Mean-stress fatigue criterion. Defaults to modified_goodman."),
+  enduranceLimit: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Fully corrected endurance limit Se in pascals. Provide it to skip the Marin estimate."),
+  surfaceFinish: z
+    .enum(["ground", "machined", "cold_drawn", "hot_rolled", "as_forged"])
+    .optional()
+    .describe("Surface finish for the Marin surface factor. Defaults to machined."),
+  sizeFactor: z.number().positive().optional().describe("Marin size factor kb. Defaults to 1."),
+  loadFactor: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Marin load factor kc. Bending 1, axial 0.85, torsion 0.59. Defaults to 1."),
+  temperatureFactor: z.number().positive().optional().describe("Marin temperature factor kd. Defaults to 1."),
+  reliabilityFactor: z.number().positive().optional().describe("Marin reliability factor ke. Defaults to 1."),
+  reliability: z
+    .number()
+    .min(50)
+    .max(99.99)
+    .optional()
+    .describe("Reliability in percent. Sets ke from the standard table. Overridden by reliabilityFactor."),
+  miscellaneousFactor: z.number().positive().optional().describe("Marin miscellaneous factor kf. Defaults to 1."),
+  outputUnits,
+});
+
 export const fitSchema = z.object({
   interfaceRadius: z.number().positive().describe("Interface radius of the fit in metres."),
   hubOuterRadius: z.number().positive().describe("Outer radius of the hub in metres."),
@@ -148,6 +196,11 @@ export const materialSchema = z.object({
   limit: z.number().int().min(1).max(50).optional().describe("Maximum number of rows to return. Defaults to 10."),
 });
 
+export const sectionCatalogSchema = z.object({
+  query: z.string().min(1).describe("Designation, series, or standard to search. Matches are case-insensitive."),
+  limit: z.number().int().min(1).max(50).optional().describe("Maximum number of rows to return. Defaults to 10."),
+});
+
 export type BeamInput = z.infer<typeof beamSchema>;
 export type BoltInput = z.infer<typeof boltSchema>;
 export type ShaftInput = z.infer<typeof shaftSchema>;
@@ -155,5 +208,8 @@ export type SpringInput = z.infer<typeof springSchema>;
 export type BearingInput = z.infer<typeof bearingSchema>;
 export type SectionPropsInput = z.infer<typeof sectionPropsSchema>;
 export type StressInput = z.infer<typeof stressSchema>;
+export type FatigueInput = z.infer<typeof fatigueSchema>;
 export type UnitConvertInput = z.infer<typeof unitConvertSchema>;
 export type MaterialInput = z.infer<typeof materialSchema>;
+export type FitInput = z.infer<typeof fitSchema>;
+export type SectionCatalogInput = z.infer<typeof sectionCatalogSchema>;

@@ -31,7 +31,7 @@ Inputs:
 - `material`: material name from the database.
 - `elasticModulus`: Young's modulus in pascals.
 - `yieldStrength`: tensile yield strength in pascals.
-- `section`: cross-section shape and dimensions in metres.
+- `section`: cross-section shape and dimensions in metres. Use `{ "shape": "standard", "designation": "IPE 300" }` to use a catalog section.
 - `secondMomentOfArea` and `sectionModulus`: use these when you have no section.
 - `outputUnits`: optional unit overrides.
 
@@ -63,6 +63,42 @@ Supported shapes:
 - `hollow_circle` with `outerDiameter` and `innerDiameter`.
 - `i_beam` with `height`, `flangeWidth`, `flangeThickness`, and `webThickness`.
 - `box` with `width`, `height`, and `thickness`.
+- `standard` with `designation`. Use a catalog designation such as `IPE 300`.
+
+The `standard` shape returns the published values from the section catalog. It uses the strong axis for the second moment of area and the section modulus.
+
+Example:
+
+```json
+{
+  "section": { "shape": "standard", "designation": "IPE 300" }
+}
+```
+
+## section_catalog
+
+Search the catalog of standard rolled steel sections.
+
+Inputs:
+
+- `query`: a designation, series, or standard to match.
+- `limit`: the maximum number of rows. The default is 10.
+
+The tool returns the published dimensions, mass, second moment of area, and section modulus of each match.
+Each row includes the source ID for its dimensions and its section properties.
+Use the result to find a designation, then pass that designation to `beam_bending` or `section_properties`.
+
+The catalog covers IPE 80 to IPE 500, HEA 100 to HEA 300, HEB 100 to HEB 300, and UPN 80 to UPN 300.
+See [section-catalog.md](section-catalog.md) for the full range, the value provenance, and the data audit.
+
+Example:
+
+```json
+{
+  "query": "HEB",
+  "limit": 5
+}
+```
 
 ## bolt_strength
 
@@ -146,6 +182,48 @@ Inputs:
 - Cartesian mode uses `sigmaX`, `sigmaY`, `sigmaZ`, `tauXY`, `tauXZ`, `tauYZ`.
 - `yieldStrength`: enables the safety factor.
 
+## fatigue_analysis
+
+Compute the endurance limit and the fatigue safety factor for cyclic loading.
+
+The tool follows the modified Marin method for steel. It estimates the endurance limit from the ultimate strength and the surface, size, load, temperature, reliability, and miscellaneous correction factors. Pass `enduranceLimit` to skip the estimate and use a measured or known value.
+
+The safety factor follows one of four mean-stress criteria:
+
+- `modified_goodman`: uses the ultimate strength.
+- `soderberg`: uses the yield strength.
+- `gerber`: uses the ultimate strength.
+- `asme_elliptic`: uses the yield strength.
+
+Inputs:
+
+- `ultimateStrength`: ultimate tensile strength in pascals.
+- `yieldStrength`: tensile yield strength in pascals. Required for the `soderberg` and `asme_elliptic` criteria.
+- `meanStress`: mean stress in pascals.
+- `alternatingStress`: alternating stress amplitude in pascals.
+- `criterion`: one of the four criteria. The default is `modified_goodman`.
+- `enduranceLimit`: fully corrected endurance limit in pascals. Optional.
+- `surfaceFinish`: `ground`, `machined`, `cold_drawn`, `hot_rolled`, or `as_forged`. The default is `machined`.
+- `sizeFactor`, `loadFactor`, `temperatureFactor`, `miscellaneousFactor`: Marin correction factors. Each defaults to `1`.
+- `reliabilityFactor`: reliability factor. The default is `1`.
+- `reliability`: reliability in percent from 50 to 99.99. Sets the reliability factor from the standard table.
+- `outputUnits`: optional unit overrides.
+
+The tool warns when the static yield check governs the design. It warns when the fatigue safety factor falls below unity.
+
+Example:
+
+```json
+{
+  "ultimateStrength": 690000000,
+  "yieldStrength": 580000000,
+  "meanStress": 80000000,
+  "alternatingStress": 120000000,
+  "surfaceFinish": "ground",
+  "reliability": 90
+}
+```
+
 ## unit_convert
 
 Convert a value between two units.
@@ -157,6 +235,21 @@ Inputs:
 - `to`: target unit symbol.
 
 The converter rejects mismatched dimensions and mismatched quantity categories. For example, it rejects a torque-to-energy conversion.
+
+The registry covers length, mass, time, angle, temperature, force, pressure, torque, energy, power, velocity, acceleration, area, volume, second moment of area, density, linear mass, stiffness, frequency, dynamic viscosity, kinematic viscosity, and thermal conductivity.
+
+Viscosity examples:
+
+- `100 cP` to `Pa·s` gives `0.1`.
+- `40 cSt` to `m2/s` gives `0.00004`.
+- `1 P` to `Pa·s` gives `0.1`.
+
+Thermal conductivity examples:
+
+- `401 W/(m·K)` to `BTU/(ft·h·°F)` gives about `231.7`.
+- `1 kcal/(m·h·°C)` to `W/(m·K)` gives about `1.162`.
+
+See [units.md](units.md) for the dimension model and the full category list.
 
 ## interference_fit
 
