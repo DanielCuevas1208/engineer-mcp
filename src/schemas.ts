@@ -172,6 +172,41 @@ export const fatigueSchema = z.object({
   outputUnits,
 });
 
+const fatigueDamageBlockSchema = z.object({
+  meanStress: z.number().finite().describe("Mean stress of the block in pascals. Negative means compression."),
+  alternatingStress: z
+    .number()
+    .finite()
+    .min(0)
+    .describe("Alternating stress amplitude of the block in pascals."),
+  cycles: z.number().finite().int().positive().describe("Number of cycles in the block."),
+});
+
+const snCurvePointSchema = z.object({
+  cycles: z.number().finite().int().positive().describe("Cycles to failure at this S-N point."),
+  alternatingStress: z.number().finite().positive().describe("Fully reversed alternating stress in pascals."),
+});
+
+export const fatigueDamageSchema = z.object({
+  blocks: z
+    .array(fatigueDamageBlockSchema)
+    .min(1)
+    .max(100)
+    .describe("Stress blocks ordered in the spectrum. The order does not change linear Miner damage."),
+  snCurve: z
+    .array(snCurvePointSchema)
+    .min(2)
+    .max(50)
+    .describe("S-N points ordered by increasing cycles and decreasing fully reversed stress."),
+  ultimateStrength: z.number().finite().positive().describe("Ultimate tensile strength in pascals for Goodman correction."),
+  yieldStrength: z.number().finite().positive().optional().describe("Yield strength in pascals. Enables a peak-stress check."),
+  meanStressCorrection: z
+    .enum(["goodman", "none"])
+    .optional()
+    .describe("Mean-stress correction. Defaults to Goodman. Use none when the S-N curve already matches the block stress ratio."),
+  outputUnits,
+});
+
 export type BeamInput = z.infer<typeof beamSchema>;
 export type BoltInput = z.infer<typeof boltSchema>;
 export type ShaftInput = z.infer<typeof shaftSchema>;
@@ -182,3 +217,4 @@ export type StressInput = z.infer<typeof stressSchema>;
 export type UnitConvertInput = z.infer<typeof unitConvertSchema>;
 export type MaterialInput = z.infer<typeof materialSchema>;
 export type FatigueInput = z.infer<typeof fatigueSchema>;
+export type FatigueDamageInput = z.infer<typeof fatigueDamageSchema>;

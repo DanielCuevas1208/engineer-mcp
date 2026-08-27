@@ -24,6 +24,7 @@ The release covers these domains:
 - Bearing rating life to ISO 281.
 - von Mises equivalent stress.
 - Constant-amplitude fatigue assessment.
+- Variable-amplitude fatigue damage assessment.
 - Cross-section properties.
 - Press and shrink fit analysis by Lamé theory.
 - Dimension-safe unit conversion.
@@ -57,6 +58,7 @@ Warnings surface when a method uses an approximation.
 | `bearing_life` | ISO 281 rating life in revolutions and hours. |
 | `von_mises` | Equivalent stress and yield safety factor. |
 | `fatigue_analysis` | Fatigue safety factor by Goodman, Soderberg, or Gerber. |
+| `fatigue_damage` | Miner damage from stress blocks and an ordered S-N curve. |
 | `unit_convert` | Conversion between compatible units. |
 | `material_lookup` | Curated mechanical properties of materials. |
 
@@ -196,6 +198,24 @@ References:
   - Shigley's Mechanical Engineering Design (Tenth edition, 2015)
 ```
 
+A call to `fatigue_damage` for a repeating stress spectrum:
+
+```text
+Spectrum cycles                         110000
+Finite-life blocks                            2
+Cumulative Miner damage                  0.2676
+Repeated-spectrum life                 411022
+Maximum cycle stress                     450 MPa
+Maximum corrected alternating stress     400 MPa
+Governing damage block                         2
+Governing fatigue safety factor          3.737
+
+Method: Variable-amplitude fatigue damage analysis
+Formula: Goodman: sa,c = sa/(1-sm/Sut). S-N: log(N) interpolated against log(sa). Miner: D = sum(ni/Ni)
+References:
+  - Shigley's Mechanical Engineering Design (Tenth edition, 2015)
+```
+
 ## Development
 
 | Command | Purpose |
@@ -211,8 +231,9 @@ References:
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, and the tools.
 
-- 130 tests across 12 files.
-- All tests pass on Node 22 and Node 24.
+- 144 tests across 13 files.
+- The CI matrix checks Node 22 and Node 24.
+- Typecheck and build pass locally.
 - The CI workflow runs typecheck, tests, build, demo, and a package check.
 - The CI workflow verifies that the CLI tool list pipes to standard output.
 
@@ -227,8 +248,9 @@ Run `npm test` to reproduce the results.
 - The critical speed is a first-mode approximation.
 - The spring design covers static round-wire springs only.
   It does not estimate fatigue life for cyclic loads.
-- The fatigue analysis covers constant-amplitude cycles only.
-  It does not model variable-amplitude spectra or cumulative damage.
+- The `fatigue_analysis` tool covers constant-amplitude cycles only.
+- The `fatigue_damage` tool uses supplied S-N points and linear Miner damage.
+  It does not model load sequence, spectrum interaction, or crack growth.
 - The press-fit theory assumes elastic material behavior and uniform friction.
   It does not model residual stress after yield.
 - The built-in SQLite module of Node.js is still experimental.
@@ -242,6 +264,8 @@ Each release stays useful on its own.
 
 ### Complete
 
+- Variable-amplitude fatigue damage assessment.
+  The `fatigue_damage` tool reports block damage, cumulative damage, and repeated-spectrum life.
 - Constant-amplitude fatigue assessment.
   The `fatigue_analysis` tool reports the stress ratio, the endurance limit, and the governing safety factor.
   It supports the modified Goodman, Soderberg, and Gerber criteria.
@@ -252,7 +276,6 @@ Each release stays useful on its own.
 
 ### Remaining
 
-- Add fatigue analysis for variable-amplitude loads.
 - Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport.
 - Add a catalog of ISO and DIN standard sections.

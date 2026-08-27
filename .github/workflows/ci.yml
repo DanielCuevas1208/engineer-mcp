@@ -42,7 +42,7 @@ jobs:
       - name: Verify the CLI list pipes to standard output
         run: |
           node dist/index.js --version
-          for tool in beam_bending section_properties bolt_strength interference_fit spring_design shaft_analysis bearing_life von_mises fatigue_analysis unit_convert material_lookup; do
+          for tool in beam_bending section_properties bolt_strength interference_fit spring_design shaft_analysis bearing_life von_mises fatigue_analysis fatigue_damage unit_convert material_lookup; do
             node dist/index.js --list | grep -q "$tool" || { echo "Missing tool: $tool"; exit 1; }
           done
 

@@ -33,7 +33,11 @@ function show(name: string, handler: Handler, input: Record<string, unknown>): v
   if (response.rows && response.rows.length > 0) {
     console.log("Rows:");
     for (const row of response.rows) {
-      console.log(`  - ${String(row.name)} | yield ${row.yieldStrengthMPa} MPa | E ${row.elasticModulusGPa} GPa | density ${row.densityKgM3} kg/m3`);
+      if (typeof row.block === "number") {
+        console.log("  - Block " + String(row.block) + " | damage " + formatNumber(row.damage as number));
+      } else {
+        console.log(`  - ${String(row.name)} | yield ${row.yieldStrengthMPa} MPa | E ${row.elasticModulusGPa} GPa | density ${row.densityKgM3} kg/m3`);
+      }
     }
   }
 
@@ -75,6 +79,7 @@ type ToolHandlers = {
   bearing_life: Handler;
   von_mises: Handler;
   fatigue_analysis: Handler;
+  fatigue_damage: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
   interference_fit: Handler;
@@ -95,6 +100,7 @@ async function main(): Promise<void> {
     ["bearing_life", toolHandlers.bearing_life],
     ["von_mises", toolHandlers.von_mises],
     ["fatigue_analysis", toolHandlers.fatigue_analysis],
+    ["fatigue_damage", toolHandlers.fatigue_damage],
     ["unit_convert", toolHandlers.unit_convert],
     ["unit_convert (torque to energy)", toolHandlers.unit_convert],
     ["material_lookup", toolHandlers.material_lookup],
@@ -165,6 +171,22 @@ async function main(): Promise<void> {
         meanStress: "MPa",
         alternatingStress: "MPa",
         enduranceLimit: "MPa",
+      },
+    },
+    {
+      blocks: [
+        { meanStress: 100e6, alternatingStress: 350e6, cycles: 10_000 },
+        { meanStress: 50e6, alternatingStress: 300e6, cycles: 100_000 },
+      ],
+      snCurve: [
+        { cycles: 1_000, alternatingStress: 600e6 },
+        { cycles: 100_000, alternatingStress: 400e6 },
+        { cycles: 1_000_000, alternatingStress: 300e6 },
+      ],
+      ultimateStrength: 800e6,
+      outputUnits: {
+        maximumCycleStress: "MPa",
+        maximumCorrectedAlternatingStress: "MPa",
       },
     },
     {

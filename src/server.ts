@@ -6,6 +6,7 @@ import {
   beamSchema,
   bearingSchema,
   boltSchema,
+  fatigueDamageSchema,
   fatigueSchema,
   fitSchema,
   materialSchema,
@@ -63,6 +64,11 @@ const TOOL_SCHEMAS: Record<string, ToolDef> = {
     description:
       "Fatigue safety factor for a constant-amplitude cyclic stress by the Goodman, Soderberg, or Gerber criterion.",
     schema: fatigueSchema,
+  },
+  fatigue_damage: {
+    description:
+      "Variable-amplitude fatigue damage from stress blocks and an ordered S-N curve using linear Miner accumulation.",
+    schema: fatigueDamageSchema,
   },
   unit_convert: {
     description: "Convert a value between compatible units. Rejects mismatched dimensions and quantity categories.",

@@ -3,6 +3,18 @@ import type { Computation, MethodRecord, Quantity } from "../types.js";
 export type FatigueCriterion = "goodman" | "soderberg" | "gerber";
 export type FatigueMaterial = "steel" | "aluminium" | "aluminum";
 
+export function goodmanEquivalentAlternatingStress(
+  meanStress: number,
+  alternatingStress: number,
+  ultimateStrength: number,
+): number {
+  const effectiveMean = Math.max(meanStress, 0);
+  if (effectiveMean >= ultimateStrength) {
+    throw new Error("meanStress must be below ultimateStrength for Goodman correction.");
+  }
+  return alternatingStress / (1 - effectiveMean / ultimateStrength);
+}
+
 export type FatigueInput = {
   meanStress: number;
   alternatingStress: number;

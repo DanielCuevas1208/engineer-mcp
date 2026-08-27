@@ -14,6 +14,7 @@ type Handlers = {
   bearing_life: Handler;
   von_mises: Handler;
   fatigue_analysis: Handler;
+  fatigue_damage: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
   interference_fit: Handler;
@@ -33,7 +34,7 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("tool registry", () => {
-  it("registers all eleven tools", () => {
+  it("registers all twelve tools", () => {
     expect(listTools().sort()).toEqual(
       [
         "beam_bending",
@@ -44,6 +45,7 @@ describe("tool registry", () => {
         "bearing_life",
         "von_mises",
         "fatigue_analysis",
+        "fatigue_damage",
         "unit_convert",
         "material_lookup",
         "interference_fit",
@@ -362,6 +364,46 @@ describe("fatigue_analysis tool", () => {
     const response = handlers.fatigue_analysis({
       meanStress: 0,
       alternatingStress: -1e6,
+      ultimateStrength: 800e6,
+    });
+    expect(response.ok).toBe(false);
+  });
+});
+
+describe("fatigue_damage tool", () => {
+  it("returns aggregate damage, block rows, and converted stress", () => {
+    setup();
+    const response = handlers.fatigue_damage({
+      blocks: [
+        { meanStress: 100e6, alternatingStress: 350e6, cycles: 10_000 },
+        { meanStress: 50e6, alternatingStress: 300e6, cycles: 100_000 },
+      ],
+      snCurve: [
+        { cycles: 1_000, alternatingStress: 600e6 },
+        { cycles: 100_000, alternatingStress: 400e6 },
+        { cycles: 1_000_000, alternatingStress: 300e6 },
+      ],
+      ultimateStrength: 800e6,
+      outputUnits: { maximumCorrectedAlternatingStress: "MPa" },
+    });
+    const result = expectOk(response);
+
+    expect(result.tool).toBe("fatigue_damage");
+    expect(result.method.id).toBe("fatigue-damage");
+    expect(result.rows).toHaveLength(2);
+    expect(result.quantities.find((q) => q.key === "maximumCorrectedAlternatingStress")?.unit).toBe("MPa");
+    expect(result.quantities.find((q) => q.key === "cumulativeDamage")?.value).toBeGreaterThan(0);
+    expect(result.references.length).toBeGreaterThan(0);
+  });
+
+  it("rejects an unordered S-N curve", () => {
+    setup();
+    const response = handlers.fatigue_damage({
+      blocks: [{ meanStress: 0, alternatingStress: 100e6, cycles: 1_000 }],
+      snCurve: [
+        { cycles: 100_000, alternatingStress: 400e6 },
+        { cycles: 1_000, alternatingStress: 600e6 },
+      ],
       ultimateStrength: 800e6,
     });
     expect(response.ok).toBe(false);

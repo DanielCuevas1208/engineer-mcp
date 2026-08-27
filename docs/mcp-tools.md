@@ -17,6 +17,7 @@ The envelope has this shape:
 ```
 
 Set `outputUnits` on any tool to convert its quantities. The tool rejects a unit of the wrong dimension.
+Some tools also return `rows` with tabular detail.
 
 ## beam_bending
 
@@ -253,6 +254,57 @@ Example:
   "ultimateStrength": 1000000000,
   "yieldStrength": 700000000,
   "enduranceLimit": 500000000
+}
+```
+
+## fatigue_damage
+
+Compute cumulative fatigue damage for a variable-amplitude stress spectrum.
+
+Use an S-N curve for fully reversed stress.
+Give points in increasing cycles and decreasing stress.
+Goodman correction handles tensile mean stress.
+It treats compressive mean stress as zero.
+Use `none` when the S-N curve already matches each block stress ratio.
+
+Inputs:
+
+- `blocks`: stress blocks with `meanStress`, `alternatingStress`, and `cycles`.
+- `snCurve`: points with `cycles` and `alternatingStress`.
+- `ultimateStrength`: ultimate tensile strength in pascals.
+- `yieldStrength`: optional yield strength in pascals.
+- `meanStressCorrection`: `goodman` or `none`. The default is `goodman`.
+
+Outputs:
+
+- `totalCycles`: total cycles in the supplied blocks.
+- `finiteDamageBlocks`: blocks with non-zero damage.
+- `cumulativeDamage`: sum of block damage fractions.
+- `cyclesToFailureEstimate`: repeated-spectrum life in cycles.
+- `maximumCycleStress`: largest absolute peak stress in pascals.
+- `maximumCorrectedAlternatingStress`: highest corrected stress in pascals.
+- `governingBlock`: block with the largest damage contribution.
+- `safetyFactor`: reciprocal Miner damage, limited by yield when provided.
+- `rows`: block trace with corrected stress and damage.
+
+The last S-N point defines the infinite-life threshold.
+Stress above the first point uses end-segment extrapolation.
+The result warns when either rule applies.
+
+Example:
+
+```json
+{
+  "blocks": [
+    { "meanStress": 100000000, "alternatingStress": 350000000, "cycles": 10000 },
+    { "meanStress": 50000000, "alternatingStress": 300000000, "cycles": 100000 }
+  ],
+  "snCurve": [
+    { "cycles": 1000, "alternatingStress": 600000000 },
+    { "cycles": 100000, "alternatingStress": 400000000 },
+    { "cycles": 1000000, "alternatingStress": 300000000 }
+  ],
+  "ultimateStrength": 800000000
 }
 ```
 

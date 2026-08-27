@@ -29,6 +29,7 @@ export type Computation = {
   inputs: Record<string, unknown>;
   quantities: Quantity[];
   safetyFactor?: Quantity;
+  rows?: Record<string, unknown>[];
   referenceIds: string[];
   warnings: string[];
 };
