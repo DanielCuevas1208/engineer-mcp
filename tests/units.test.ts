@@ -135,3 +135,46 @@ describe("stiffness units", () => {
     }
   });
 });
+
+describe("viscosity and thermal units", () => {
+  it("converts pascal seconds to centipoise", () => {
+    const outcome = convertUnit(1, "Pa.s", "cP");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(1000, 9);
+      expect(outcome.category).toBe("dynamic_viscosity");
+      expect(outcome.siSymbol).toBe("Pa.s");
+    }
+  });
+
+  it("converts centistokes to square metres per second", () => {
+    const outcome = convertUnit(1, "cSt", "m2/s");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(1e-6, 12);
+      expect(outcome.category).toBe("kinematic_viscosity");
+    }
+  });
+
+  it("converts thermal conductivity per centimetre to SI", () => {
+    const outcome = convertUnit(1, "W/cmK", "W/(mK)");
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.value).toBeCloseTo(100, 9);
+      expect(outcome.category).toBe("thermal_conductivity");
+    }
+  });
+
+  it("keeps dynamic and kinematic viscosity separate", () => {
+    const outcome = convertUnit(1, "Pa.s", "mm2/s");
+    expect(outcome.ok).toBe(false);
+    if (!outcome.ok) {
+      expect(outcome.error).toContain("Dimension mismatch");
+    }
+  });
+
+  it("finds parenthesized thermal conductivity aliases", () => {
+    expect(findUnit("W/(mK)")?.canonical).toBe("W/mK");
+    expect(findUnit("W/m/K")?.canonical).toBe("W/mK");
+  });
+});

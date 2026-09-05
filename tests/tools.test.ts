@@ -427,6 +427,14 @@ describe("unit_convert tool", () => {
       expect(response.error).toContain("Category mismatch");
     }
   });
+
+  it("converts dynamic viscosity with its quantity category", () => {
+    setup();
+    const response = handlers.unit_convert({ value: 1, from: "Pa.s", to: "cP" });
+    const result = expectOk(response);
+    expect(result.meta?.category).toBe("dynamic_viscosity");
+    expect(result.quantities.find((q) => q.key === "convertedValue")?.value).toBeCloseTo(1000, 9);
+  });
 });
 
 describe("material_lookup tool", () => {

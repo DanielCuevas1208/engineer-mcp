@@ -28,6 +28,8 @@ The release covers these domains:
 - Cross-section properties.
 - Press and shrink fit analysis by Lamé theory.
 - Dimension-safe unit conversion.
+- Dynamic and kinematic viscosity conversion.
+- Thermal conductivity conversion.
 - Material property lookup.
 
 ## How results stay trustworthy
@@ -63,6 +65,7 @@ Warnings surface when a method uses an approximation.
 | `material_lookup` | Curated mechanical properties of materials. |
 
 See [docs/mcp-tools.md](docs/mcp-tools.md) for the full reference.
+See [docs/units.md](docs/units.md) for the unit catalog.
 
 ## Architecture
 
@@ -180,6 +183,13 @@ Error: Category mismatch: N·m is torque, J is energy.
 Use a unit of the same quantity.
 ```
 
+A call to unit_convert with viscosity and thermal-conductivity values:
+
+    1 Pa.s              -> 1000 cP
+    1 W/cmK             -> 100 W/mK
+
+The converter reports each quantity category and rejects incompatible dimensions.
+
 A call to `fatigue_analysis` for a 42CrMo4 shaft with a 60 MPa cyclic stress about a 100 MPa mean:
 
 ```text
@@ -231,7 +241,7 @@ References:
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, and the tools.
 
-- 144 tests across 13 files.
+- 150 tests across 13 files.
 - The CI matrix checks Node 22 and Node 24.
 - Typecheck and build pass locally.
 - The CI workflow runs typecheck, tests, build, demo, and a package check.
@@ -253,6 +263,8 @@ Run `npm test` to reproduce the results.
   It does not model load sequence, spectrum interaction, or crack growth.
 - The press-fit theory assumes elastic material behavior and uniform friction.
   It does not model residual stress after yield.
+- Viscosity and thermal-conductivity units are scalar conversions only.
+  They do not model fluid flow or heat transfer.
 - The built-in SQLite module of Node.js is still experimental.
 
 Check the cited sources for exact values.
@@ -264,6 +276,8 @@ Each release stays useful on its own.
 
 ### Complete
 
+- Viscosity and thermal-conductivity unit categories.
+  The unit converter supports dynamic viscosity, kinematic viscosity, and thermal conductivity.
 - Variable-amplitude fatigue damage assessment.
   The `fatigue_damage` tool reports block damage, cumulative damage, and repeated-spectrum life.
 - Constant-amplitude fatigue assessment.
@@ -276,7 +290,6 @@ Each release stays useful on its own.
 
 ### Remaining
 
-- Add more unit categories, including viscosity and thermal conductivity.
 - Add HTTP transport.
 - Add a catalog of ISO and DIN standard sections.
 

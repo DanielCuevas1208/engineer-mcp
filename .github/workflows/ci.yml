@@ -46,5 +46,24 @@ jobs:
             node dist/index.js --list | grep -q "$tool" || { echo "Missing tool: $tool"; exit 1; }
           done
 
+      - name: Verify the extended unit catalog
+        run: |
+          node --input-type=module <<'NODE'
+          import { convertUnit } from "./dist/units/index.js";
+
+          const cases = [
+            [1, "Pa.s", "cP", 1000],
+            [1, "cSt", "m2/s", 1e-6],
+            [1, "W/cmK", "W/mK", 100],
+          ];
+
+          for (const [value, from, to, expected] of cases) {
+            const outcome = convertUnit(value, from, to);
+            if (!outcome.ok || Math.abs(outcome.value - expected) > Math.max(1e-12, Math.abs(expected) * 1e-9)) {
+              throw new Error("Unit check failed: " + from + " to " + to);
+            }
+          }
+          NODE
+
       - name: Verify the package contents
         run: npm pack --dry-run

@@ -103,6 +103,8 @@ async function main(): Promise<void> {
     ["fatigue_damage", toolHandlers.fatigue_damage],
     ["unit_convert", toolHandlers.unit_convert],
     ["unit_convert (torque to energy)", toolHandlers.unit_convert],
+    ["unit_convert (dynamic viscosity)", toolHandlers.unit_convert],
+    ["unit_convert (thermal conductivity)", toolHandlers.unit_convert],
     ["material_lookup", toolHandlers.material_lookup],
     ["interference_fit", toolHandlers.interference_fit],
   ];
@@ -198,6 +200,16 @@ async function main(): Promise<void> {
       value: 10,
       from: "N·m",
       to: "J",
+    },
+    {
+      value: 1,
+      from: "Pa.s",
+      to: "cP",
+    },
+    {
+      value: 1,
+      from: "W/cmK",
+      to: "W/mK",
     },
     {
       query: "steel",

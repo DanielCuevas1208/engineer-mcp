@@ -159,6 +159,9 @@ Inputs:
 
 The converter rejects mismatched dimensions and mismatched quantity categories. For example, it rejects a torque-to-energy conversion.
 
+The registry includes length, force, stress, torque, energy, power, frequency, viscosity, and thermal-conductivity units.
+See [the unit catalog](units.md) for the added symbols and conversion factors.
+
 ## interference_fit
 
 Compute the interface pressure, hoop stresses, and friction capacity of a press or shrink fit.
