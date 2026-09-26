@@ -45,10 +45,10 @@ Engineer MCP grows in independent releases. Each release stays useful on its own
 - Constant-amplitude fatigue assessment. The `fatigue_analysis` tool computes the stress ratio, the endurance limit, and the governing safety factor by the Goodman, Soderberg, or Gerber criterion.
 - Helical compression spring design. The `spring_design` tool computes the spring rate, the shear stress, and the safety factor.
 - Press and shrink fit analysis. The `interference_fit` tool computes the interface pressure, the hoop stresses, and the friction capacity.
+- Streamable HTTP transport. The `--http` mode serves stateful MCP sessions at `/mcp`.
 
 ### Remaining
 
-- Add HTTP transport in addition to stdio.
 - Add a catalog of ISO and DIN standard sections.
 
 Keep each release small and deterministic. Run the full test suite before release.

@@ -39,6 +39,9 @@ jobs:
       - name: Verify the demo runs
         run: npm run demo
 
+      - name: Verify the HTTP transport
+        run: npm run verify:http
+
       - name: Verify the CLI list pipes to standard output
         run: |
           node dist/index.js --version

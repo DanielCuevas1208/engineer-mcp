@@ -9,6 +9,9 @@ Engineer MCP is a Model Context Protocol server for mechanical-engineering calcu
 It gives coding agents verified answers for beams, bolts, springs, shafts, bearings, stress, sections, fits, and units.
 Every result shows the formula, the method, and the source.
 
+Release 0.7 adds a stateful Streamable HTTP transport.
+Use stdio for desktop clients. Use HTTP for local services and network clients.
+
 ## What it provides
 
 Use Engineer MCP inside an AI coding agent.
@@ -77,6 +80,7 @@ The database seeds from JSON files on first start.
 ```mermaid
 flowchart LR
   Agent[AI coding agent] -->|MCP over stdio| Server[MCP server]
+  HttpClient[HTTP MCP client] -->|Streamable HTTP| Server
   Server --> Tools[Tools layer]
   Tools --> Engines[Calculation engines]
   Tools --> Units[Unit layer]
@@ -92,13 +96,14 @@ Key directories:
 | `src/units/` | Dimension-safe unit conversion. |
 | `src/db/` | SQLite schema and seeding. |
 | `src/handlers.ts` | Tool orchestration and result envelopes. |
+| `src/http.ts` | HTTP endpoint and session lifecycle. |
 | `data/` | Material, fastener, and reference data. |
 
 ## Quick start
 
 1. Install Node.js 22.13 or newer.
 2. Clone or copy this repository to your machine.
-3. Run `npm install` to install dependencies.
+3. Run `npm ci` to install the locked dependencies.
 4. Run `npm run build` to compile the server.
 5. Run `npm run demo` to see the demo output.
 
@@ -119,7 +124,31 @@ See [examples/mcp-config.example.json](examples/mcp-config.example.json) for a t
 Set `ENGINEER_MCP_DB` or pass `--db <path>` to choose the database file.
 The default database file is `engineer-mcp.sqlite` in the working directory.
 
+## Run over HTTP
+
+Build the server before you start the HTTP transport.
+
+```sh
+npm run build
+npm run start:http
+```
+
+The server listens at `http://127.0.0.1:3000/mcp`.
+It uses stateful MCP sessions and keeps session state in memory.
+Set `ENGINEER_MCP_HOST` or `ENGINEER_MCP_PORT` to change the bind address.
+Use `--host` and `--port` when you need per-run settings.
+See [docs/http.md](docs/http.md) for request rules and deployment limits.
+
 ## Sample output
+
+A local HTTP client can connect to the MCP endpoint:
+
+```text
+HTTP transport listening at http://127.0.0.1:3000/mcp
+POST /mcp initialize                         200 OK
+POST /mcp tools/call unit_convert            200 OK
+Converted value                              1000 cP
+```
 
 A call to `beam_bending` with a 20 kN point load on a 3 m S355 I-beam:
 
@@ -235,17 +264,19 @@ References:
 | `npm run build` | Emit `dist/` from `src/`. |
 | `npm run demo` | Run the end-to-end demo. |
 | `npm run dev` | Start the server from source. |
+| `npm run start:http` | Start the HTTP transport from `dist/`. |
+| `npm run verify:http` | Run the built HTTP smoke test. |
 
 ## Test status
 
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, and the tools.
 
-- 150 tests across 13 files.
+- 152 tests across 14 files.
 - The CI matrix checks Node 22 and Node 24.
-- Typecheck and build pass locally.
-- The CI workflow runs typecheck, tests, build, demo, and a package check.
-- The CI workflow verifies that the CLI tool list pipes to standard output.
+- Typecheck, build, and the HTTP smoke test pass locally.
+- The CI workflow runs typecheck, tests, build, demo, HTTP smoke, and a package check.
+- The CI workflow verifies the CLI tool list and extended unit catalog.
 
 Run `npm test` to reproduce the results.
 
@@ -266,6 +297,9 @@ Run `npm test` to reproduce the results.
 - Viscosity and thermal-conductivity units are scalar conversions only.
   They do not model fluid flow or heat transfer.
 - The built-in SQLite module of Node.js is still experimental.
+- HTTP sessions stay in memory and do not survive a process restart.
+- HTTP has no built-in authentication or TLS termination. Put it behind a trusted gateway.
+- HTTP accepts request bodies up to 1 MiB.
 
 Check the cited sources for exact values.
 
@@ -288,9 +322,12 @@ Each release stays useful on its own.
 - Press and shrink fit analysis.
   The `interference_fit` tool reports the interface pressure, the hoop stresses, and the friction capacity.
 
+- Streamable HTTP transport.
+  The `--http` mode serves stateful MCP sessions at `/mcp`.
+  The default bind address is loopback.
+
 ### Remaining
 
-- Add HTTP transport.
 - Add a catalog of ISO and DIN standard sections.
 
 See [docs/integration.md](docs/integration.md) for the EngineerKit plan.
