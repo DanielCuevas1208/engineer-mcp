@@ -25,3 +25,5 @@ export {
   type SpringInput,
 } from "./spring.js";
 export { vonMises, VON_MISES_METHOD, type StressInput, type StressMode } from "./stress.js";
+
+export { analyzeFatigueDamage, allowableCycles, type FatigueDamageInput, type FatigueDamageCriterion } from "./fatigue-damage.js";

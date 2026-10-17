@@ -34,7 +34,11 @@
       "types": "./dist/units/index.d.ts",
       "default": "./dist/units/index.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./http": {
+      "types": "./dist/http.d.ts",
+      "default": "./dist/http.js"
+    }
   },
   "files": [
     "dist",

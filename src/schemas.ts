@@ -213,3 +213,12 @@ export type UnitConvertInput = z.infer<typeof unitConvertSchema>;
 export type MaterialInput = z.infer<typeof materialSchema>;
 export type FitInput = z.infer<typeof fitSchema>;
 export type SectionCatalogInput = z.infer<typeof sectionCatalogSchema>;
+
+export const fatigueDamageSchema = z.object({
+  blocks: z.array(z.object({ meanStress: z.number(), alternatingStress: z.number().min(0), cycles: z.number().positive() })).min(1),
+  snCurve: z.array(z.object({ cycles: z.number().positive(), alternatingStress: z.number().positive() })).min(2),
+  ultimateStrength: z.number().positive(),
+  yieldStrength: z.number().positive().optional(),
+  meanStressCorrection: z.enum(["goodman", "none"]).optional(),
+  outputUnits,
+});

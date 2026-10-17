@@ -34,7 +34,7 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("tool registry", () => {
-  it("registers all twelve tools", () => {
+  it("registers all thirteen tools", () => {
     expect(listTools().sort()).toEqual(
       [
         "beam_bending",
@@ -46,6 +46,7 @@ describe("tool registry", () => {
         "bearing_life",
         "von_mises",
         "fatigue_analysis",
+        "fatigue_damage",
         "unit_convert",
         "material_lookup",
         "section_catalog",
@@ -415,6 +416,14 @@ describe("unit_convert tool", () => {
       expect(response.error).toContain("Category mismatch");
     }
   });
+
+  it("converts dynamic viscosity with its quantity category", () => {
+    setup();
+    const response = handlers.unit_convert({ value: 1, from: "Pa.s", to: "cP" });
+    const result = expectOk(response);
+    expect(result.meta?.category).toBe("dynamic viscosity");
+    expect(result.quantities.find((q) => q.key === "convertedValue")?.value).toBeCloseTo(1000, 9);
+  });
 });
 
 describe("material_lookup tool", () => {
@@ -430,5 +439,21 @@ describe("material_lookup tool", () => {
     setup();
     const response = handlers.material_lookup({ query: "adamantium" });
     expect(response.ok).toBe(false);
+  });
+});
+
+describe("fatigue damage integration", () => {
+  it("registers and executes the fatigue damage tool alongside existing fatigue analysis", () => {
+    const context = createContext(":memory:");
+    try {
+      const toolHandlers = createHandlers(context);
+      expect(listTools()).toContain("fatigue_damage");
+      expectOk(toolHandlers.fatigue_damage!({
+        blocks: [{ meanStress: 0, alternatingStress: 200e6, cycles: 1000 }],
+        snCurve: [{ cycles: 1000, alternatingStress: 300e6 }, { cycles: 1e6, alternatingStress: 100e6 }],
+        ultimateStrength: 600e6,
+      }));
+      expect(buildServer(context)).toBeDefined();
+    } finally { context.db.close(); }
   });
 });

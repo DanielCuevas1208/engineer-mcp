@@ -1,3 +1,4 @@
+import { analyzeFatigueDamage, type FatigueDamageInput, type FatigueDamageCriterion } from "./engine/fatigue-damage.js";
 import type { AppContext } from "./context.js";
 import {
   analyzeBeam,
@@ -102,7 +103,7 @@ function buildResult(
   overrides?: Record<string, string>,
 ): ToolResult {
   const { quantities, warnings } = applyUnitOverrides(ctx, computation.quantities, overrides);
-  return {
+  const result: ToolResult = {
     ok: true,
     tool,
     method: computation.method,
@@ -112,6 +113,10 @@ function buildResult(
     references: resolveReferences(ctx, computation.referenceIds),
     warnings: [...computation.warnings, ...warnings],
   };
+  if (computation.rows !== undefined) {
+    result.rows = computation.rows;
+  }
+  return result;
 }
 
 type MaterialValues = {
@@ -538,6 +543,23 @@ function stressHandler(ctx: AppContext): Handler {
   };
 }
 
+function fatigueDamageHandler(ctx: AppContext): Handler {
+  return (input) => {
+    try {
+      const computation = analyzeFatigueDamage({
+        blocks: input.blocks as FatigueDamageInput["blocks"],
+        snCurve: input.snCurve as FatigueDamageInput["snCurve"],
+        ultimateStrength: input.ultimateStrength as number,
+        yieldStrength: input.yieldStrength as number | undefined,
+        meanStressCorrection: input.meanStressCorrection as FatigueDamageCriterion | undefined,
+      });
+      return buildResult(ctx, "fatigue_damage", computation, input.outputUnits as Record<string, string> | undefined);
+    } catch (error) {
+      return failure("fatigue_damage", error instanceof Error ? error.message : String(error), input);
+    }
+  };
+}
+
 function unitConvertHandler(ctx: AppContext): Handler {
   return (input) => {
     const value = input.value as number;
@@ -649,6 +671,7 @@ export function createHandlers(ctx: AppContext): Record<string, Handler> {
     bearing_life: bearingHandler(ctx),
     von_mises: stressHandler(ctx),
     fatigue_analysis: fatigueHandler(ctx),
+    fatigue_damage: fatigueDamageHandler(ctx),
     unit_convert: unitConvertHandler(ctx),
     material_lookup: materialHandler(ctx),
     section_catalog: sectionCatalogHandler(ctx),

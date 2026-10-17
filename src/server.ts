@@ -7,6 +7,7 @@ import {
   bearingSchema,
   boltSchema,
   fatigueSchema,
+  fatigueDamageSchema,
   fitSchema,
   materialSchema,
   sectionCatalogSchema,
@@ -64,6 +65,10 @@ const TOOL_SCHEMAS: Record<string, ToolDef> = {
     description:
       "Endurance limit and fatigue safety factor for cyclic loading. Uses the modified Marin method for steel and a mean-stress criterion.",
     schema: fatigueSchema,
+  },
+  fatigue_damage: {
+    description: "Cumulative Miner fatigue damage from a supplied S-N curve and load spectrum, with optional Goodman correction.",
+    schema: fatigueDamageSchema,
   },
   unit_convert: {
     description: "Convert a value between compatible units. Rejects mismatched dimensions and quantity categories.",

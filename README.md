@@ -9,6 +9,9 @@ Engineer MCP is a Model Context Protocol server for mechanical-engineering calcu
 It gives coding agents verified answers for beams, bolts, springs, shafts, bearings, stress, sections, fits, and units.
 Every result shows the formula, the method, and the source.
 
+Release 0.7 adds a stateful Streamable HTTP transport.
+Use stdio for desktop clients. Use HTTP for local services and network clients.
+
 ## What it provides
 Use Engineer MCP inside an AI coding agent.
 The agent calls a tool and receives a complete engineering answer.
@@ -106,7 +109,7 @@ Key directories:
 
 1. Install Node.js 22.13 or newer.
 2. Clone or copy this repository to your machine.
-3. Run `npm install` to install dependencies.
+3. Run `npm ci` to install the locked dependencies.
 4. Run `npm run build` to compile the server.
 5. Run `npm run demo` to see the demo output.
 
@@ -150,6 +153,15 @@ Use a port of `0` to let the operating system choose a free port.
 The server prints the real port to standard error.
 
 ## Sample output
+
+A local HTTP client can connect to the MCP endpoint:
+
+```text
+HTTP transport listening at http://127.0.0.1:3000/mcp
+POST /mcp initialize                         200 OK
+POST /mcp tools/call unit_convert            200 OK
+Converted value                              1000 cP
+```
 
 A call to `beam_bending` with a 20 kN point load on a 3 m S355 I-beam:
 
@@ -312,6 +324,8 @@ See [docs/transport.md](docs/transport.md) for the full HTTP reference.
 | `npm run demo` | Run the end-to-end demo. |
 | `npm run smoke:http` | Run the HTTP transport smoke check. |
 | `npm run dev` | Start the server from source. |
+| `npm run start:http` | Start the HTTP transport from `dist/`. |
+| `npm run verify:http` | Run the built HTTP smoke test. |
 
 ## Test status
 
@@ -360,6 +374,9 @@ Run `npm test` to reproduce the results.
 - SSE responses are not stored for reconnect.
   The server does not configure an event store.
 - The built-in SQLite module of Node.js is still experimental.
+- HTTP sessions stay in memory and do not survive a process restart.
+- HTTP has no built-in authentication or TLS termination. Put it behind a trusted gateway.
+- HTTP accepts request bodies up to 1 MiB.
 
 Check the cited sources for exact values.
 
@@ -370,6 +387,13 @@ Each release stays useful on its own.
 
 ### Complete
 
+- Viscosity and thermal-conductivity unit categories.
+  The unit converter supports dynamic viscosity, kinematic viscosity, and thermal conductivity.
+- Variable-amplitude fatigue damage assessment.
+  The `fatigue_damage` tool reports block damage, cumulative damage, and repeated-spectrum life.
+- Constant-amplitude fatigue assessment.
+  The `fatigue_analysis` tool reports the stress ratio, the endurance limit, and the governing safety factor.
+  It supports the modified Goodman, Soderberg, and Gerber criteria.
 - Helical compression spring design.
   The `spring_design` tool reports the spring rate, the shear stress, and the safety factor.
 - Standard steel section catalog and data audit.
@@ -394,6 +418,10 @@ Each release stays useful on its own.
 - Configurable HTTP response mode.
   JSON remains the default response mode.
   SSE serves `text/event-stream` responses for clients that require streaming.
+
+- Streamable HTTP transport.
+  The `--http` mode serves stateful MCP sessions at `/mcp`.
+  The default bind address is loopback.
 
 ### Remaining
 

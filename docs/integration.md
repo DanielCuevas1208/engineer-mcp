@@ -40,6 +40,9 @@ Engineer MCP grows in independent releases. Each release stays useful on its own
 
 ### Complete
 
+- Viscosity and thermal-conductivity unit categories. The unit converter supports three added physical dimensions.
+- Variable-amplitude fatigue damage assessment. The `fatigue_damage` tool reports block damage and repeated-spectrum life.
+- Constant-amplitude fatigue assessment. The `fatigue_analysis` tool computes the stress ratio, the endurance limit, and the governing safety factor by the Goodman, Soderberg, or Gerber criterion.
 - Helical compression spring design. The `spring_design` tool computes the spring rate, the shear stress, and the safety factor.
 - Standard section catalog and data audit.
   The `section_catalog` tool searches published IPE, HEA, HEB, and UPN sections.
