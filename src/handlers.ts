@@ -1,3 +1,4 @@
+import { analyzeFatigueDamage, type FatigueDamageInput, type FatigueDamageCriterion } from "./engine/fatigue-damage.js";
 import type { AppContext } from "./context.js";
 import {
   analyzeBeam,
@@ -542,25 +543,6 @@ function stressHandler(ctx: AppContext): Handler {
   };
 }
 
-function fatigueHandler(ctx: AppContext): Handler {
-  return (input) => {
-    try {
-      const computation = analyzeFatigue({
-        meanStress: input.meanStress as number,
-        alternatingStress: input.alternatingStress as number,
-        ultimateStrength: input.ultimateStrength as number,
-        yieldStrength: input.yieldStrength as number | undefined,
-        enduranceLimit: input.enduranceLimit as number | undefined,
-        materialType: input.materialType as FatigueMaterial | undefined,
-        criterion: input.criterion as FatigueCriterion | undefined,
-      });
-      return buildResult(ctx, "fatigue_analysis", computation, input.outputUnits as Record<string, string> | undefined);
-    } catch (error) {
-      return failure("fatigue_analysis", error instanceof Error ? error.message : String(error), input);
-    }
-  };
-}
-
 function fatigueDamageHandler(ctx: AppContext): Handler {
   return (input) => {
     try {
@@ -689,6 +671,7 @@ export function createHandlers(ctx: AppContext): Record<string, Handler> {
     bearing_life: bearingHandler(ctx),
     von_mises: stressHandler(ctx),
     fatigue_analysis: fatigueHandler(ctx),
+    fatigue_damage: fatigueDamageHandler(ctx),
     unit_convert: unitConvertHandler(ctx),
     material_lookup: materialHandler(ctx),
     section_catalog: sectionCatalogHandler(ctx),

@@ -261,3 +261,9 @@ export function analyzeFatigue(input: FatigueInput): Computation {
     warnings,
   };
 }
+
+export function goodmanEquivalentAlternatingStress(meanStress: number, alternatingStress: number, ultimateStrength: number): number {
+  const effectiveMean = Math.max(meanStress, 0);
+  if (effectiveMean >= ultimateStrength) throw new Error("meanStress must be below ultimateStrength for Goodman correction.");
+  return alternatingStress / (1 - effectiveMean / ultimateStrength);
+}

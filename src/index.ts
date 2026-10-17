@@ -6,7 +6,6 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { createHttpServer } from "./http.js";
 import { buildServer, listTools } from "./server.js";
 import { SERVER_NAME, VERSION } from "./version.js";
-import { closeHttpServer, httpServerAddress, startHttpServer } from "./http.js";
 
 const HELP = `${SERVER_NAME} v${VERSION}
 
@@ -143,11 +142,3 @@ async function main(): Promise<void> {
 }
 
 main();
-
-function parsePort(value: string | undefined): number {
-  const port = value === undefined ? 3000 : Number(value);
-  if (!Number.isInteger(port) || port < 0 || port > 65_535) {
-    throw new Error("HTTP port must be an integer from 0 to 65535.");
-  }
-  return port;
-}
