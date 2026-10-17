@@ -9,15 +9,15 @@ type Handlers = {
   beam_bending: Handler;
   section_properties: Handler;
   bolt_strength: Handler;
+  interference_fit: Handler;
   spring_design: Handler;
   shaft_analysis: Handler;
   bearing_life: Handler;
   von_mises: Handler;
   fatigue_analysis: Handler;
-  fatigue_damage: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
-  interference_fit: Handler;
+  section_catalog: Handler;
 };
 
 let ctx: AppContext;
@@ -40,15 +40,15 @@ describe("tool registry", () => {
         "beam_bending",
         "section_properties",
         "bolt_strength",
+        "interference_fit",
         "spring_design",
         "shaft_analysis",
         "bearing_life",
         "von_mises",
         "fatigue_analysis",
-        "fatigue_damage",
         "unit_convert",
         "material_lookup",
-        "interference_fit",
+        "section_catalog",
       ].sort(),
     );
   });
@@ -334,77 +334,65 @@ describe("von_mises tool", () => {
 });
 
 describe("fatigue_analysis tool", () => {
-  it("computes the governing safety factor and converts units", () => {
+  it("returns an envelope with an endurance limit and a safety factor", () => {
     setup();
     const response = handlers.fatigue_analysis({
-      meanStress: 100e6,
-      alternatingStress: 60e6,
-      ultimateStrength: 1000e6,
-      yieldStrength: 700e6,
-      enduranceLimit: 500e6,
-      outputUnits: { maximumStress: "MPa", minimumStress: "MPa", meanStress: "MPa", alternatingStress: "MPa", enduranceLimit: "MPa" },
+      ultimateStrength: 690e6,
+      yieldStrength: 580e6,
+      meanStress: 80e6,
+      alternatingStress: 120e6,
+      surfaceFinish: "ground",
+      reliability: 90,
+      outputUnits: { enduranceLimit: "MPa" },
     });
     const result = expectOk(response);
 
     expect(result.tool).toBe("fatigue_analysis");
     expect(result.method.id).toBe("fatigue-analysis");
-    expect(result.references.length).toBeGreaterThan(0);
+    expect(result.references.map((r) => r.id)).toContain("shigley-2015");
     expect(result.safetyFactor).toBeDefined();
+    expect(result.safetyFactor?.value).toBeGreaterThan(0);
 
-    const stress = result.quantities.find((q) => q.key === "maximumStress");
-    expect(stress?.unit).toBe("MPa");
-    expect(stress?.value).toBeCloseTo(160, 6);
-    const mean = result.quantities.find((q) => q.key === "meanStress");
-    expect(mean?.unit).toBe("MPa");
-    expect(result.quantities.find((q) => q.key === "yieldSafetyFactor")).toBeDefined();
+    const se = result.quantities.find((q) => q.key === "enduranceLimit");
+    expect(se?.unit).toBe("MPa");
+    expect(se?.value).toBeGreaterThan(100);
   });
 
-  it("rejects a non-positive alternating stress", () => {
+  it("uses an explicit endurance limit and converts its unit", () => {
     setup();
     const response = handlers.fatigue_analysis({
-      meanStress: 0,
-      alternatingStress: -1e6,
       ultimateStrength: 800e6,
-    });
-    expect(response.ok).toBe(false);
-  });
-});
-
-describe("fatigue_damage tool", () => {
-  it("returns aggregate damage, block rows, and converted stress", () => {
-    setup();
-    const response = handlers.fatigue_damage({
-      blocks: [
-        { meanStress: 100e6, alternatingStress: 350e6, cycles: 10_000 },
-        { meanStress: 50e6, alternatingStress: 300e6, cycles: 100_000 },
-      ],
-      snCurve: [
-        { cycles: 1_000, alternatingStress: 600e6 },
-        { cycles: 100_000, alternatingStress: 400e6 },
-        { cycles: 1_000_000, alternatingStress: 300e6 },
-      ],
-      ultimateStrength: 800e6,
-      outputUnits: { maximumCorrectedAlternatingStress: "MPa" },
+      yieldStrength: 450e6,
+      enduranceLimit: 200e6,
+      meanStress: 100e6,
+      alternatingStress: 100e6,
+      outputUnits: { enduranceLimit: "MPa" },
     });
     const result = expectOk(response);
-
-    expect(result.tool).toBe("fatigue_damage");
-    expect(result.method.id).toBe("fatigue-damage");
-    expect(result.rows).toHaveLength(2);
-    expect(result.quantities.find((q) => q.key === "maximumCorrectedAlternatingStress")?.unit).toBe("MPa");
-    expect(result.quantities.find((q) => q.key === "cumulativeDamage")?.value).toBeGreaterThan(0);
-    expect(result.references.length).toBeGreaterThan(0);
+    expect(result.safetyFactor?.value).toBeCloseTo(1.6, 5);
+    expect(result.quantities.find((q) => q.key === "enduranceLimit")?.unit).toBe("MPa");
   });
 
-  it("rejects an unordered S-N curve", () => {
+  it("rejects a criterion that lacks a yield strength", () => {
     setup();
-    const response = handlers.fatigue_damage({
-      blocks: [{ meanStress: 0, alternatingStress: 100e6, cycles: 1_000 }],
-      snCurve: [
-        { cycles: 100_000, alternatingStress: 400e6 },
-        { cycles: 1_000, alternatingStress: 600e6 },
-      ],
+    const response = handlers.fatigue_analysis({
       ultimateStrength: 800e6,
+      meanStress: 100e6,
+      alternatingStress: 100e6,
+      criterion: "soderberg",
+    });
+    expect(response.ok).toBe(false);
+    if (!response.ok) {
+      expect(response.error).toContain("yieldStrength");
+    }
+  });
+
+  it("rejects a negative alternating stress", () => {
+    setup();
+    const response = handlers.fatigue_analysis({
+      ultimateStrength: 800e6,
+      meanStress: 100e6,
+      alternatingStress: -5,
     });
     expect(response.ok).toBe(false);
   });

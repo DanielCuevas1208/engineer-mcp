@@ -1,53 +1,91 @@
-# Unit catalog
+# Unit conversion layer
 
-Engineer MCP uses SI units inside every calculation.
-This catalog lists the viscosity and thermal units in the current release.
+The unit layer converts values between compatible units.
+It rejects conversions that mix different quantities.
+It is read-only and has no state.
 
-Unit symbols are case-sensitive.
-Aliases accept common engineering notation.
+## The dimension model
 
-## Dynamic viscosity
+Every unit carries a dimension vector.
+The vector has five axes: length, mass, time, temperature, and angle.
+Each axis holds an integer exponent.
+For example, pressure is length to minus one, mass to one, and time to minus two.
 
-| Symbol | Meaning | Factor to Pa.s |
-| --- | --- | ---: |
-| Pa.s | pascal second | 1 |
-| mPa.s | millipascal second | 0.001 |
-| cP | centipoise | 0.001 |
-| P | poise | 0.1 |
-| lbm/fts | pound mass per foot second | 1.48816394357 |
+A conversion is valid only when the two units have the same dimension vector.
+It is valid only when the two units belong to the same quantity category.
+The category check blocks a torque-to-energy conversion.
+Torque and energy share the same dimension vector but are different quantities.
 
-Pa.s, Pa·s, and Pas identify the same unit.
+## Unit categories
 
-## Kinematic viscosity
+The registry covers these categories:
 
-| Symbol | Meaning | Factor to m2/s |
-| --- | --- | ---: |
-| m2/s | square metre per second | 1 |
-| mm2/s | square millimetre per second | 0.000001 |
-| cSt | centistokes | 0.000001 |
-| cm2/s | square centimetre per second | 0.0001 |
-| St | stokes | 0.0001 |
-| ft2/s | square foot per second | 0.09290304 |
+| Category | Example units | SI unit |
+| --- | --- | --- |
+| length | m, mm, in, ft | m |
+| mass | kg, g, lb, t | kg |
+| time | s, min, h, day | s |
+| angle | rad, deg, rev | rad |
+| temperature | K, degC, degF | K |
+| force | N, kN, lbf, kgf | N |
+| pressure | Pa, MPa, psi, bar | Pa |
+| torque | N·m, kN·m, lbf·ft | N·m |
+| energy | J, kJ, kWh, cal | J |
+| power | W, kW, hp | W |
+| velocity | m/s, km/h, mph | m/s |
+| acceleration | m/s2, g0 | m/s2 |
+| area | m2, mm2, cm2 | m2 |
+| volume | m3, L, gal | m3 |
+| second moment of area | m4, cm4, mm4 | m4 |
+| density | kg/m3, g/cm3 | kg/m3 |
+| linear mass | kg/m, g/m, lb/ft | kg/m |
+| stiffness | N/m, N/mm, lbf/in | N/m |
+| frequency | Hz, rpm, kHz | Hz |
+| dynamic viscosity | Pa·s, cP, P | Pa·s |
+| kinematic viscosity | m2/s, cSt, St | m2/s |
+| thermal conductivity | W/(m·K), BTU/(ft·h·°F) | W/(m·K) |
 
-Dynamic and kinematic viscosity use different dimensions.
-The converter rejects a conversion between them.
+## Viscosity and thermal conductivity
 
-## Thermal conductivity
+Dynamic viscosity measures a fluid's resistance to shear.
+The SI unit is the pascal second.
+One centipoise equals one millipascal second.
+Water at room temperature is about one centipoise.
 
-| Symbol | Meaning | Factor to W/mK |
-| --- | --- | ---: |
-| W/mK | watt per metre kelvin | 1 |
-| mW/mK | milliwatt per metre kelvin | 0.001 |
-| kW/mK | kilowatt per metre kelvin | 1000 |
-| W/cmK | watt per centimetre kelvin | 100 |
-| W/mmK | watt per millimetre kelvin | 1000 |
+Kinematic viscosity is the ratio of dynamic viscosity to density.
+The SI unit is the square metre per second.
+One centistoke equals one square millimetre per second.
+Lubricating oils are usually quoted in centistokes.
 
-The converter accepts W/m·K and W/(mK) as aliases for W/mK.
+Thermal conductivity measures the rate of heat flow through a material.
+The SI unit is the watt per metre kelvin.
+Copper conducts at about 401 watts per metre kelvin.
+Mild steel conducts at about 50 watts per metre kelvin.
 
-## Conversion behavior
+The temperature intervals cancel in these units.
+A change of one degree Celsius equals a change of one kelvin.
+A change of one degree Fahrenheit equals five ninths of a kelvin.
 
-The unit layer checks dimensions and quantity categories.
-The unit_convert tool returns the converted value, SI value, factor, and category.
-Calculation tools accept outputUnits for supported quantity keys.
+## Conversion factors
 
-See [the tool reference](mcp-tools.md) for request examples.
+Each unit stores a factor to its SI unit.
+The factor is exact for SI-derived units.
+It is exact for definitions such as the inch and the pound.
+It is a fixed published constant for old customary units.
+
+The registry stores the conversion factors directly.
+It does not compute them from other units.
+A contributor checks each factor against a published source.
+Add a comment or a test that cites the source.
+
+## How to add a unit
+
+Add the unit to the array in `src/units/registry.ts`.
+Give it a canonical symbol, a category, a dimension, and a factor.
+Add aliases for common alternate spellings.
+The alias list must normalize to distinct keys.
+
+Add deterministic tests in `tests/units.test.ts`.
+Test a forward conversion and a rejection.
+Test against a value you can verify by hand.
+Run `npm test` to reproduce the checks.

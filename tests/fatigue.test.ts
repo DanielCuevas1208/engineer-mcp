@@ -1,161 +1,148 @@
 import { describe, expect, it } from "vitest";
 import {
   analyzeFatigue,
-  enduranceLimitEstimate,
-  fatigueSafetyFactor,
+  enduranceLimit,
+  reliabilityFactor,
+  surfaceFactor,
 } from "../src/engine/fatigue.js";
 
-describe("enduranceLimitEstimate", () => {
-  it("estimates half the ultimate strength for steel", () => {
-    expect(enduranceLimitEstimate("steel", 1000e6)).toBeCloseTo(500e6, 6);
+describe("Marin endurance limit for steel", () => {
+  it("estimates the surface factor for a machined part", () => {
+    expect(surfaceFactor("machined", 690e6)).toBeCloseTo(0.798, 3);
   });
 
-  it("caps the steel estimate at 700 MPa", () => {
-    expect(enduranceLimitEstimate("steel", 2000e6)).toBeCloseTo(700e6, 6);
+  it("estimates the surface factor for a ground part", () => {
+    expect(surfaceFactor("ground", 690e6)).toBeCloseTo(0.906, 3);
   });
 
-  it("estimates 40 percent of the ultimate strength for aluminium", () => {
-    expect(enduranceLimitEstimate("aluminium", 300e6)).toBeCloseTo(120e6, 6);
+  it("caps the test endurance limit for very strong steel", () => {
+    const se = enduranceLimit({
+      ultimateStrength: 1600e6,
+      surfaceFinish: "ground",
+    });
+    expect(se).toBeCloseTo(700e6 * surfaceFactor("ground", 1600e6), 0);
   });
 
-  it("caps the aluminium estimate at 130 MPa", () => {
-    expect(enduranceLimitEstimate("aluminum", 1000e6)).toBeCloseTo(130e6, 6);
+  it("applies the reliability table values", () => {
+    expect(reliabilityFactor(50)).toBeCloseTo(1, 6);
+    expect(reliabilityFactor(90)).toBeCloseTo(0.897, 6);
+    expect(reliabilityFactor(99.9)).toBeCloseTo(0.753, 6);
+  });
+
+  it("interpolates the reliability factor between table rows", () => {
+    expect(reliabilityFactor(99.95)).toBeCloseTo(0.725, 3);
+  });
+
+  it("rejects a reliability outside the table range", () => {
+    expect(() => reliabilityFactor(99.999)).toThrow(/between 50 and 99\.99/);
+  });
+
+  it("honors an explicit endurance limit override", () => {
+    const se = enduranceLimit({ ultimateStrength: 690e6, enduranceLimit: 250e6 });
+    expect(se).toBe(250e6);
   });
 });
 
-describe("fatigueSafetyFactor", () => {
-  const se = 400e6;
-  const sut = 800e6;
-  const sy = 600e6;
+describe("fatigue safety factors", () => {
+  const base = {
+    ultimateStrength: 800e6,
+    yieldStrength: 450e6,
+    enduranceLimit: 200e6,
+    meanStress: 100e6,
+    alternatingStress: 100e6,
+  };
 
-  it("treats a fully reversed cycle by the Goodman criterion", () => {
-    const n = fatigueSafetyFactor("goodman", 0, 100e6, se, sut);
-    expect(n).toBeCloseTo(4, 9);
+  it("computes the modified Goodman safety factor", () => {
+    const result = analyzeFatigue({ ...base });
+    expect(result.safetyFactor?.value).toBeCloseTo(1.6, 6);
   });
 
-  it("combines mean and alternating stress by Goodman", () => {
-    const n = fatigueSafetyFactor("goodman", 100e6, 100e6, se, sut);
-    expect(n).toBeCloseTo(1 / (100e6 / se + 100e6 / sut), 9);
+  it("computes the Gerber safety factor", () => {
+    const result = analyzeFatigue({ ...base, criterion: "gerber" });
+    expect(result.safetyFactor?.value).toBeCloseTo(1.8885, 3);
   });
 
-  it("uses the yield strength for the Soderberg criterion", () => {
-    const n = fatigueSafetyFactor("soderberg", 100e6, 100e6, se, sut, sy);
-    expect(n).toBeCloseTo(1 / (100e6 / se + 100e6 / sy), 9);
+  it("computes the Soderberg safety factor", () => {
+    const result = analyzeFatigue({ ...base, criterion: "soderberg" });
+    expect(result.safetyFactor?.value).toBeCloseTo(1.3846, 3);
   });
 
-  it("solves the quadratic for the Gerber criterion", () => {
-    const n = fatigueSafetyFactor("gerber", 100e6, 100e6, se, sut);
-    const a = (100e6 / sut) ** 2;
-    const b = 100e6 / se;
-    const expected = (-b + Math.sqrt(b * b + 4 * a)) / (2 * a);
-    expect(n).toBeCloseTo(expected, 9);
+  it("computes the ASME-elliptic safety factor", () => {
+    const result = analyzeFatigue({ ...base, criterion: "asme_elliptic" });
+    expect(result.safetyFactor?.value).toBeCloseTo(1.8276, 3);
   });
 
-  it("returns the endurance ratio for a zero mean on Gerber", () => {
-    const n = fatigueSafetyFactor("gerber", 0, 100e6, se, sut);
-    expect(n).toBeCloseTo(4, 9);
+  it("defaults to the modified Goodman criterion", () => {
+    const result = analyzeFatigue({ ...base });
+    expect(result.method.id).toBe("fatigue-analysis");
+    expect(result.safetyFactor?.description).toContain("modified goodman");
   });
 
-  it("treats a compressive mean stress as zero", () => {
-    const goodman = fatigueSafetyFactor("goodman", -100e6, 100e6, se, sut);
-    expect(goodman).toBeCloseTo(4, 9);
+  it("handles a purely alternating stress", () => {
+    const result = analyzeFatigue({ ...base, meanStress: 0 });
+    expect(result.safetyFactor?.value).toBeCloseTo(2, 6);
   });
 
-  it("rejects the Soderberg criterion without a yield strength", () => {
-    expect(() => fatigueSafetyFactor("soderberg", 0, 100e6, se, sut)).toThrow(/yieldStrength/);
-  });
-});
-
-describe("analyzeFatigue", () => {
-  it("reports the stress ratio and cycle stresses", () => {
-    const result = analyzeFatigue({
-      meanStress: 100e6,
-      alternatingStress: 60e6,
-      ultimateStrength: 800e6,
-      yieldStrength: 600e6,
-      enduranceLimit: 400e6,
-    });
-
-    expect(result.quantities.find((q) => q.key === "stressRatio")?.value).toBeCloseTo(0.25, 9);
-    expect(result.quantities.find((q) => q.key === "maximumStress")?.value).toBeCloseTo(160e6, 6);
-    expect(result.quantities.find((q) => q.key === "minimumStress")?.value).toBeCloseTo(40e6, 6);
+  it("handles a purely steady stress", () => {
+    const result = analyzeFatigue({ ...base, alternatingStress: 0 });
+    expect(result.safetyFactor?.value).toBeCloseTo(8, 6);
   });
 
-  it("picks the governing safety factor as the lower margin", () => {
-    const result = analyzeFatigue({
-      meanStress: 200e6,
-      alternatingStress: 100e6,
-      ultimateStrength: 800e6,
-      yieldStrength: 400e6,
-      enduranceLimit: 400e6,
-    });
-
-    const fatigue = result.quantities.find((q) => q.key === "fatigueSafetyFactor");
-    expect(fatigue?.value).toBeCloseTo(1 / (100e6 / 400e6 + 200e6 / 800e6), 9);
-    const yieldQ = result.quantities.find((q) => q.key === "yieldSafetyFactor");
-    expect(yieldQ?.value).toBeCloseTo(400e6 / 300e6, 9);
-    expect(result.safetyFactor?.key).toBe("yieldSafetyFactor");
-    expect(result.safetyFactor?.value).toBeCloseTo(400e6 / 300e6, 9);
-  });
-
-  it("warns when it estimates the endurance limit", () => {
-    const result = analyzeFatigue({
-      meanStress: 50e6,
-      alternatingStress: 30e6,
-      ultimateStrength: 1000e6,
-    });
-    expect(result.quantities.find((q) => q.key === "enduranceLimit")?.value).toBeCloseTo(500e6, 6);
-    expect(result.warnings.some((w) => w.includes("estimate"))).toBe(true);
-  });
-
-  it("warns when the alternating stress reaches the endurance limit", () => {
-    const result = analyzeFatigue({
-      meanStress: 0,
-      alternatingStress: 400e6,
-      ultimateStrength: 1000e6,
-      enduranceLimit: 400e6,
-    });
-    expect(result.warnings.some((w) => w.includes("endurance limit"))).toBe(true);
-  });
-
-  it("warns when the fatigue safety factor is below one", () => {
-    const result = analyzeFatigue({
-      meanStress: 0,
-      alternatingStress: 600e6,
-      ultimateStrength: 1000e6,
-      enduranceLimit: 400e6,
-    });
-    expect(result.safetyFactor?.value).toBeLessThan(1);
-    expect(result.warnings.some((w) => w.includes("below one"))).toBe(true);
-  });
-
-  it("rejects a negative alternating stress", () => {
+  it("requires yieldStrength for the soderberg criterion", () => {
     expect(() =>
       analyzeFatigue({
-        meanStress: 0,
-        alternatingStress: -10e6,
         ultimateStrength: 800e6,
+        meanStress: 100e6,
+        alternatingStress: 100e6,
+        criterion: "soderberg",
       }),
-    ).toThrow(/alternatingStress/);
+    ).toThrow(/requires yieldStrength/);
   });
 
-  it("rejects a non-positive ultimate strength", () => {
+  it("rejects zero stress on both axes", () => {
     expect(() =>
       analyzeFatigue({
-        meanStress: 0,
-        alternatingStress: 10e6,
-        ultimateStrength: 0,
-      }),
-    ).toThrow(/ultimateStrength/);
-  });
-
-  it("rejects a zero stress state", () => {
-    expect(() =>
-      analyzeFatigue({
+        ultimateStrength: 800e6,
         meanStress: 0,
         alternatingStress: 0,
-        ultimateStrength: 800e6,
       }),
-    ).toThrow(/non-zero/);
+    ).toThrow(/cannot both be zero/);
+  });
+
+  it("rejects a mean stress at the ultimate strength for Goodman", () => {
+    expect(() =>
+      analyzeFatigue({
+        ultimateStrength: 800e6,
+        meanStress: 800e6,
+        alternatingStress: 10e6,
+      }),
+    ).toThrow(/no positive safety factor/);
+  });
+
+  it("warns when the static yield check governs", () => {
+    const result = analyzeFatigue({
+      ultimateStrength: 800e6,
+      yieldStrength: 150e6,
+      meanStress: 100e6,
+      alternatingStress: 100e6,
+    });
+    expect(result.warnings.some((w) => w.includes("static yield check"))).toBe(true);
+  });
+
+  it("warns when the safety factor is below unity", () => {
+    const result = analyzeFatigue({
+      ultimateStrength: 800e6,
+      meanStress: 500e6,
+      alternatingStress: 500e6,
+    });
+    expect(result.safetyFactor?.value).toBeLessThan(1);
+    expect(result.warnings.some((w) => w.includes("below 1"))).toBe(true);
+  });
+
+  it("reports the endurance limit quantity", () => {
+    const result = analyzeFatigue({ ...base });
+    const se = result.quantities.find((q) => q.key === "enduranceLimit");
+    expect(se?.value).toBe(200e6);
+    expect(se?.unit).toBe("Pa");
   });
 });

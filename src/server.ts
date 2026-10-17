@@ -6,10 +6,10 @@ import {
   beamSchema,
   bearingSchema,
   boltSchema,
-  fatigueDamageSchema,
   fatigueSchema,
   fitSchema,
   materialSchema,
+  sectionCatalogSchema,
   sectionPropsSchema,
   shaftSchema,
   springSchema,
@@ -62,13 +62,8 @@ const TOOL_SCHEMAS: Record<string, ToolDef> = {
   },
   fatigue_analysis: {
     description:
-      "Fatigue safety factor for a constant-amplitude cyclic stress by the Goodman, Soderberg, or Gerber criterion.",
+      "Endurance limit and fatigue safety factor for cyclic loading. Uses the modified Marin method for steel and a mean-stress criterion.",
     schema: fatigueSchema,
-  },
-  fatigue_damage: {
-    description:
-      "Variable-amplitude fatigue damage from stress blocks and an ordered S-N curve using linear Miner accumulation.",
-    schema: fatigueDamageSchema,
   },
   unit_convert: {
     description: "Convert a value between compatible units. Rejects mismatched dimensions and quantity categories.",
@@ -77,6 +72,11 @@ const TOOL_SCHEMAS: Record<string, ToolDef> = {
   material_lookup: {
     description: "Look up mechanical properties for common engineering materials from the curated database.",
     schema: materialSchema,
+  },
+  section_catalog: {
+    description:
+      "Look up standard rolled steel sections from the catalog. Returns published dimensions, masses, and section properties.",
+    schema: sectionCatalogSchema,
   },
 };
 

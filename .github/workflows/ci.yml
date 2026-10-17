@@ -5,6 +5,13 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
 jobs:
   verify:
     name: verify on Node ${{ matrix.node-version }}
@@ -36,37 +43,22 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Verify the CLI contract
+        run: |
+          node dist/index.js --version | grep -q "^engineer-mcp"
+          node dist/index.js --list | grep -q "beam_bending"
+          node dist/index.js --list | grep -q "section_catalog"
+          node dist/index.js --list | grep -q "interference_fit"
+          node dist/index.js --list | grep -q "fatigue_analysis"
+          node dist/index.js --transport http --list | grep -q "beam_bending"
+          OUTPUT="$(node dist/index.js --transport unknown 2>&1 || true)"
+          echo "$OUTPUT" | grep -q "Unknown transport"
+
       - name: Verify the demo runs
         run: npm run demo
 
       - name: Verify the HTTP transport
-        run: npm run verify:http
-
-      - name: Verify the CLI list pipes to standard output
-        run: |
-          node dist/index.js --version
-          for tool in beam_bending section_properties bolt_strength interference_fit spring_design shaft_analysis bearing_life von_mises fatigue_analysis fatigue_damage unit_convert material_lookup; do
-            node dist/index.js --list | grep -q "$tool" || { echo "Missing tool: $tool"; exit 1; }
-          done
-
-      - name: Verify the extended unit catalog
-        run: |
-          node --input-type=module <<'NODE'
-          import { convertUnit } from "./dist/units/index.js";
-
-          const cases = [
-            [1, "Pa.s", "cP", 1000],
-            [1, "cSt", "m2/s", 1e-6],
-            [1, "W/cmK", "W/mK", 100],
-          ];
-
-          for (const [value, from, to, expected] of cases) {
-            const outcome = convertUnit(value, from, to);
-            if (!outcome.ok || Math.abs(outcome.value - expected) > Math.max(1e-12, Math.abs(expected) * 1e-9)) {
-              throw new Error("Unit check failed: " + from + " to " + to);
-            }
-          }
-          NODE
+        run: npm run smoke:http
 
       - name: Verify the package contents
         run: npm pack --dry-run
