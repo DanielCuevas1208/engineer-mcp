@@ -122,8 +122,8 @@ async function run() {
       throw new Error(`tools/list failed with status ${list.status}.`);
     }
     const tools = list.body.result?.tools ?? [];
-    if (tools.length !== 13) {
-      throw new Error(`Expected 13 tools, received ${tools.length}.`);
+    if (tools.length !== 14) {
+      throw new Error(`Expected 14 tools, received ${tools.length}.`);
     }
     if (!tools.some((tool) => tool.name === "beam_bending")) {
       throw new Error("Expected beam_bending in the tool list.");
@@ -144,11 +144,30 @@ async function run() {
       throw new Error("tools/call did not return the beam_bending result.");
     }
 
+    const toleranceCall = await rpc(mcpUrl, "tools/call", {
+      name: "tolerance_stack",
+      arguments: {
+        dimensions: [
+          { name: "housing", nominal: 10, tolerancePlus: 0.1, toleranceMinus: 0.1, sign: 1, unit: "mm" },
+          { name: "shaft", nominal: 0.9, tolerancePlus: 0.01, toleranceMinus: 0.01, sign: -1, unit: "cm" },
+        ],
+        outputUnits: { nominalStack: "mm", worstCaseLower: "mm", worstCaseUpper: "mm" },
+      },
+    }, init.sessionId);
+    if (
+      toleranceCall.status !== 200 ||
+      toleranceCall.body.result?.structuredContent?.tool !== "tolerance_stack" ||
+      !toleranceCall.body.result?.structuredContent?.references?.some((reference) => reference.id === "asme-y14-5")
+    ) {
+      throw new Error("tools/call did not return the tolerance_stack result with provenance.");
+    }
+
     console.log(`HTTP smoke check passed on port ${port}.`);
     console.log("  initialize: ok");
     console.log("  origin allow-list: ok");
     console.log(`  tools/list: ${tools.length} tools`);
     console.log("  tools/call beam_bending: ok");
+    console.log("  tools/call tolerance_stack: ok");
   } finally {
     child.kill("SIGTERM");
     await new Promise((resolve) => {

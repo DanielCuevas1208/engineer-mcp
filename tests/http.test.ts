@@ -188,7 +188,8 @@ describe("HTTP transport", () => {
     const result = tools.body.result as { tools?: Array<{ name: string }> };
     expect(result.tools?.map((tool) => tool.name)).toContain("beam_bending");
     expect(result.tools?.map((tool) => tool.name)).toContain("section_catalog");
-    expect(result.tools?.length).toBe(13);
+    expect(result.tools?.map((tool) => tool.name)).toContain("tolerance_stack");
+    expect(result.tools?.length).toBe(14);
   });
 
   it("calls a tool and returns the result envelope", async () => {

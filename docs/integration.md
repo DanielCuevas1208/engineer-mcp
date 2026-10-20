@@ -55,9 +55,10 @@ Engineer MCP grows in independent releases. Each release stays useful on its own
 - HTTP transport. The server runs over stdio or Streamable HTTP. The `--transport http` option starts an HTTP endpoint with stateful sessions. See [transport.md](transport.md).
 - HTTP transport security. The server supports bearer authentication and browser origin allow-lists.
 - Configurable HTTP response mode. JSON remains the default. SSE serves `text/event-stream` responses.
+- Signed dimensional tolerance stacks. The `tolerance_stack` tool returns worst-case and independent RSS bounds with explicit assumptions.
 
 ### Remaining
 
-No additional item is scheduled in this release.
+See [../ROADMAP.md](../ROADMAP.md) for the next shaft-load-case and uncertainty-sweep milestones.
 
 Keep each release small and deterministic. Run the full test suite before release.

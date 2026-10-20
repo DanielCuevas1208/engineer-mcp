@@ -15,6 +15,7 @@ import {
   shaftSchema,
   springSchema,
   stressSchema,
+  toleranceStackSchema,
   unitConvertSchema,
 } from "./schemas.js";
 import type { ToolResult } from "./types.js";
@@ -69,6 +70,11 @@ const TOOL_SCHEMAS: Record<string, ToolDef> = {
   fatigue_damage: {
     description: "Cumulative Miner fatigue damage from a supplied S-N curve and load spectrum, with optional Goodman correction.",
     schema: fatigueDamageSchema,
+  },
+  tolerance_stack: {
+    description:
+      "Compute nominal, worst-case, and independent RSS bounds for a signed linear dimensional tolerance stack.",
+    schema: toleranceStackSchema,
   },
   unit_convert: {
     description: "Convert a value between compatible units. Rejects mismatched dimensions and quantity categories.",

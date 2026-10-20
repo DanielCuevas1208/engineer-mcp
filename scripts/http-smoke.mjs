@@ -1,13 +1,12 @@
 import assert from "node:assert/strict";
 import { createContext } from "../dist/context.js";
-import { closeHttpServer, httpServerAddress, startHttpServer } from "../dist/http.js";
+import { createHttpServer } from "../dist/http.js";
 
 const context = createContext(":memory:");
-const server = await startHttpServer(context, { port: 0 });
-const { host, port } = httpServerAddress(server);
+const server = await createHttpServer(context, { host: "127.0.0.1", port: 0 });
 
 try {
-  const endpoint = `http://${host}:${port}/mcp`;
+  const endpoint = `http://${server.host}:${server.port}/mcp`;
   const initialize = await fetch(endpoint, {
     method: "POST",
     headers: { accept: "application/json, text/event-stream", "content-type": "application/json" },
@@ -56,9 +55,36 @@ try {
   assert.equal(result.result.structuredContent.tool, "unit_convert");
   assert.equal(result.result.structuredContent.quantities[0].value, 1000);
 
+  const toleranceCall = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      accept: "application/json, text/event-stream",
+      "content-type": "application/json",
+      "mcp-session-id": sessionId,
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 3,
+      method: "tools/call",
+      params: {
+        name: "tolerance_stack",
+        arguments: {
+          dimensions: [
+            { name: "housing", nominal: 10, tolerancePlus: 0.1, toleranceMinus: 0.1, sign: 1, unit: "mm" },
+            { name: "shaft", nominal: 0.9, tolerancePlus: 0.01, toleranceMinus: 0.01, sign: -1, unit: "cm" },
+          ],
+        },
+      },
+    }),
+  });
+  assert.equal(toleranceCall.status, 200);
+  const toleranceResult = await readMcpJson(toleranceCall);
+  assert.equal(toleranceResult.result.structuredContent.tool, "tolerance_stack");
+  assert.equal(toleranceResult.result.structuredContent.references[0].id, "asme-y14-5");
+
   console.log("HTTP smoke test passed");
 } finally {
-  await closeHttpServer(server);
+  await server.close();
   context.db.close();
 }
 

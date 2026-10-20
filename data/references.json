@@ -6,6 +6,13 @@
     "section": "Chapters 3, 5, 6, 8, 11, and 12",
     "note": "Standard reference for strength, fatigue, fasteners, and bearings."
   },
+  "asme-y14-5": {
+    "title": "Dimensioning and Tolerancing",
+    "source": "American Society of Mechanical Engineers",
+    "edition": "ASME Y14.5-2018",
+    "section": "Plus and minus tolerancing",
+    "note": "Defines dimension and tolerance notation. The RSS result adds an explicit independent-variation assumption."
+  },
   "roark-2011": {
     "title": "Roark's Formulas for Stress and Strain",
     "source": "McGraw-Hill Education",
