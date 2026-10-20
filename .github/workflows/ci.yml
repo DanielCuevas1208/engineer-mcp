@@ -50,6 +50,7 @@ jobs:
           node dist/index.js --list | grep -q "section_catalog"
           node dist/index.js --list | grep -q "interference_fit"
           node dist/index.js --list | grep -q "fatigue_analysis"
+          node dist/index.js --list | grep -q "tolerance_stack"
           node dist/index.js --transport http --list | grep -q "beam_bending"
           OUTPUT="$(node dist/index.js --transport unknown 2>&1 || true)"
           echo "$OUTPUT" | grep -q "Unknown transport"
@@ -59,6 +60,9 @@ jobs:
 
       - name: Verify the HTTP transport
         run: npm run smoke:http
+
+      - name: Verify the in-process HTTP smoke check
+        run: node scripts/http-smoke.mjs
 
       - name: Verify the package contents
         run: npm pack --dry-run

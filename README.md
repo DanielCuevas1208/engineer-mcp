@@ -9,7 +9,7 @@ Engineer MCP is a Model Context Protocol server for mechanical-engineering calcu
 It gives coding agents verified answers for beams, bolts, springs, shafts, bearings, stress, sections, fits, and units.
 Every result shows the formula, the method, and the source.
 
-Release 0.7 adds a stateful Streamable HTTP transport.
+Release 0.10 adds signed dimensional tolerance stacks with worst-case and independent RSS bounds.
 Use stdio for desktop clients. Use HTTP for local services and network clients.
 
 ## What it provides
@@ -32,6 +32,7 @@ The release covers these domains:
   The catalog returns the separate source for published section properties.
 - Bearer authentication and browser origin allow-lists for HTTP clients.
 - Dimension-safe unit conversion, including viscosity and thermal conductivity.
+- Signed dimensional tolerance stacks with worst-case and independent RSS bounds.
 - Material property lookup.
 - Stdio and HTTP transports.
   The HTTP mode serves the same tools over the Streamable HTTP protocol.
@@ -67,11 +68,14 @@ Warnings surface when a method uses an approximation.
 | `unit_convert` | Conversion between compatible units. |
 | `material_lookup` | Curated mechanical properties of materials. |
 | `section_catalog` | Published IPE, HEA, HEB, and UPN steel sections. |
+| `tolerance_stack` | Signed worst-case and independent RSS dimensional tolerance stacks. |
 
 See [docs/mcp-tools.md](docs/mcp-tools.md) for the full reference.
 See [docs/section-catalog.md](docs/section-catalog.md) for the covered range, the value provenance, and the data audit.
 See [docs/units.md](docs/units.md) for the unit model and the full category list.
 See [docs/transport.md](docs/transport.md) for the HTTP transport reference.
+See [docs/tolerance-stack.md](docs/tolerance-stack.md) for the stack model and assumptions.
+See [ROADMAP.md](ROADMAP.md) for release status and future milestones.
 
 ## Architecture
 
@@ -286,6 +290,23 @@ References:
   - European sections - dimensions and section properties
 ```
 
+A call to `tolerance_stack` compares a housing and shaft dimension:
+
+```text
+Nominal stack                         1 mm
+Worst-case lower bound              0.8 mm
+Worst-case upper bound              1.2 mm
+RSS lower bound                  0.8586 mm
+RSS upper bound                  1.141 mm
+
+Method: Linear dimensional tolerance stack
+References:
+  - Dimensioning and Tolerancing (ASME Y14.5-2018)
+Warnings:
+  - Worst-case bounds assume every dimension reaches its limiting value at the same time.
+  - Independent RSS bounds assume zero-mean, independent variation. They are not guaranteed limits.
+```
+
 In SSE mode, an initialize response uses this event format:
 
 ```text
@@ -332,7 +353,7 @@ See [docs/transport.md](docs/transport.md) for the full HTTP reference.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, the tools, the catalog data, and the HTTP transport.
 
-- 189 tests across 15 files.
+- The suite covers deterministic fixtures for 14 MCP tools across 17 test files.
 - The CI matrix tests Node 22 and Node 24.
 - The HTTP tests run a real server on an ephemeral port.
   They complete the full handshake over a real TCP connection.
@@ -340,6 +361,8 @@ It covers the engines, the unit layer, the database, the tools, the catalog data
 - The CI workflow runs typecheck, tests, build, demo, a package check, and the HTTP smoke check.
 - The CI workflow verifies the CLI contract over standard output.
 - The CI workflow verifies both transport modes.
+- Local verification passed for typecheck, build, CLI checks, core tolerance-stack smoke, and in-process HTTP smoke.
+- This restricted Windows sandbox prevented Vitest, child-process HTTP smoke, and package dry-run checks.
 
 Run `npm test` to reproduce the results.
 
@@ -377,57 +400,14 @@ Run `npm test` to reproduce the results.
 - HTTP sessions stay in memory and do not survive a process restart.
 - HTTP has no built-in authentication or TLS termination. Put it behind a trusted gateway.
 - HTTP accepts request bodies up to 1 MiB.
+- The tolerance stack models linear dimensions only.
+  It does not model geometric tolerancing, correlation, angular errors, or Monte Carlo distributions.
 
 Check the cited sources for exact values.
 
 ## Roadmap
 
-The server grows in independent releases.
-Each release stays useful on its own.
-
-### Complete
-
-- Viscosity and thermal-conductivity unit categories.
-  The unit converter supports dynamic viscosity, kinematic viscosity, and thermal conductivity.
-- Variable-amplitude fatigue damage assessment.
-  The `fatigue_damage` tool reports block damage, cumulative damage, and repeated-spectrum life.
-- Constant-amplitude fatigue assessment.
-  The `fatigue_analysis` tool reports the stress ratio, the endurance limit, and the governing safety factor.
-  It supports the modified Goodman, Soderberg, and Gerber criteria.
-- Helical compression spring design.
-  The `spring_design` tool reports the spring rate, the shear stress, and the safety factor.
-- Standard steel section catalog and data audit.
-  The `section_catalog` tool searches the published IPE, HEA, HEB, and UPN series.
-  Each row carries source IDs for dimensions and section properties.
-  The `beam_bending` and `section_properties` tools accept a catalog designation.
-  The result cites EN 10365 for dimensions and masses.
-  It cites ArcelorMittal for section properties.
-- Press and shrink fit analysis.
-  The `interference_fit` tool reports the interface pressure, the hoop stresses, and the friction capacity.
-- Fatigue analysis.
-  The `fatigue_analysis` tool estimates the endurance limit for steel and reports the fatigue safety factor for a selected mean-stress criterion.
-- Viscosity and thermal conductivity units.
-  The `unit_convert` tool converts dynamic viscosity, kinematic viscosity, and thermal conductivity.
-  The registry covers centipoise, centistokes, and the imperial conductivity units.
-- HTTP transport.
-  The server runs over stdio or Streamable HTTP.
-  The `--transport http` option starts an HTTP endpoint with stateful sessions.
-- HTTP transport security.
-  The server supports bearer authentication.
-  It rejects browser origins outside the configured allow-list.
-- Configurable HTTP response mode.
-  JSON remains the default response mode.
-  SSE serves `text/event-stream` responses for clients that require streaming.
-
-- Streamable HTTP transport.
-  The `--http` mode serves stateful MCP sessions at `/mcp`.
-  The default bind address is loopback.
-
-### Remaining
-
-No additional item is scheduled in this release.
-
-See [docs/integration.md](docs/integration.md) for the EngineerKit plan.
+Read [ROADMAP.md](ROADMAP.md) for completed milestones, acceptance criteria, verification commands, and future work.
 
 ## EngineerKit
 

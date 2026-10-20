@@ -409,3 +409,42 @@ Inputs:
 
 - `query`: a material name or category.
 - `limit`: the maximum number of rows. The default is 10.
+
+## tolerance_stack
+
+Compute signed linear dimensional tolerance bounds.
+
+Inputs:
+
+- `dimensions`: one to 100 uniquely named dimensions.
+- `dimensions[].nominal`: positive nominal dimension magnitude.
+- `dimensions[].tolerancePlus`: positive upper deviation magnitude.
+- `dimensions[].toleranceMinus`: positive lower deviation magnitude.
+- `dimensions[].sign`: `1` adds the dimension; `-1` subtracts it.
+- `dimensions[].unit`: optional length unit. The default is `m`.
+- `outputUnits`: optional quantity-to-length-unit map.
+
+Outputs:
+
+- `nominalStack`: signed nominal sum.
+- `worstCaseLower` and `worstCaseUpper`: simultaneous-limit bounds.
+- `worstCaseToleranceMinus` and `worstCaseTolerancePlus`: one-sided worst-case limits.
+- `rssLowerBound` and `rssUpperBound`: independent RSS bounds.
+- `rssToleranceMinus` and `rssTolerancePlus`: one-sided RSS magnitudes.
+- `rows`: signed dimension values and deviations in SI metres.
+
+Worst-case results assume simultaneous limits.
+RSS results assume independent, zero-mean variation.
+The result cites ASME Y14.5-2018 and repeats these assumptions in warnings.
+
+Example:
+
+```json
+{
+  "dimensions": [
+    { "name": "housing", "nominal": 10, "tolerancePlus": 0.1, "toleranceMinus": 0.1, "sign": 1, "unit": "mm" },
+    { "name": "shaft", "nominal": 0.9, "tolerancePlus": 0.01, "toleranceMinus": 0.01, "sign": -1, "unit": "cm" }
+  ],
+  "outputUnits": { "nominalStack": "mm", "worstCaseLower": "mm", "worstCaseUpper": "mm" }
+}
+```

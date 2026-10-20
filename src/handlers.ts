@@ -8,12 +8,15 @@ import {
   analyzePressFit,
   analyzeShaft,
   analyzeSpring,
+  analyzeToleranceStack,
   computeSection,
   vonMises,
   type FatigueCriterion,
   type SectionDef,
   type SpringEndType,
   type SurfaceFinish,
+  type ToleranceDimension,
+  type ToleranceSign,
 } from "./engine/index.js";
 import type { Computation, MethodRecord, Quantity, ReferenceRecord, ToolFailure, ToolResponse, ToolResult } from "./types.js";
 import type { UnitOutcome } from "./units/index.js";
@@ -560,6 +563,70 @@ function fatigueDamageHandler(ctx: AppContext): Handler {
   };
 }
 
+function toleranceStackHandler(ctx: AppContext): Handler {
+  return (input) => {
+    if (!Array.isArray(input.dimensions)) {
+      return failure("tolerance_stack", "Provide a dimensions array.", input);
+    }
+
+    const rawDimensions = input.dimensions as unknown[];
+    const dimensions: ToleranceDimension[] = [];
+    const lengthKeys = ["nominal", "tolerancePlus", "toleranceMinus"] as const;
+
+    for (const [index, rawDimension] of rawDimensions.entries()) {
+      if (!rawDimension || typeof rawDimension !== "object") {
+        return failure("tolerance_stack", `dimensions[${index}] must be an object.`, input);
+      }
+      const dimension = rawDimension as Record<string, unknown>;
+      const name = dimension.name;
+      const unit = dimension.unit === undefined ? "m" : dimension.unit;
+      const sign = dimension.sign;
+      if (typeof name !== "string" || name.trim().length === 0) {
+        return failure("tolerance_stack", `dimensions[${index}].name must be a non-empty string.`, input);
+      }
+      if (typeof unit !== "string" || unit.length === 0) {
+        return failure("tolerance_stack", `dimensions[${index}].unit must be a non-empty string.`, input);
+      }
+      if (sign !== 1 && sign !== -1) {
+        return failure("tolerance_stack", `dimensions[${index}].sign must be 1 or -1.`, input);
+      }
+
+      const converted: Record<(typeof lengthKeys)[number], number> = {
+        nominal: 0,
+        tolerancePlus: 0,
+        toleranceMinus: 0,
+      };
+      for (const key of lengthKeys) {
+        const value = dimension[key];
+        if (typeof value !== "number") {
+          return failure("tolerance_stack", `dimensions[${index}].${key} must be a number.`, input);
+        }
+        const outcome = ctx.convertUnit(value, unit, "m");
+        if (!outcome.ok) {
+          return failure("tolerance_stack", `Could not convert dimensions[${index}].${key}: ${outcome.error}`, input);
+        }
+        converted[key] = outcome.value;
+      }
+
+      dimensions.push({
+        name,
+        nominal: converted.nominal,
+        tolerancePlus: converted.tolerancePlus,
+        toleranceMinus: converted.toleranceMinus,
+        sign: sign as ToleranceSign,
+      });
+    }
+
+    try {
+      const computation = analyzeToleranceStack({ dimensions });
+      computation.inputs = { dimensions: input.dimensions, calculationUnit: "m" };
+      return buildResult(ctx, "tolerance_stack", computation, input.outputUnits as Record<string, string> | undefined);
+    } catch (error) {
+      return failure("tolerance_stack", error instanceof Error ? error.message : String(error), input);
+    }
+  };
+}
+
 function unitConvertHandler(ctx: AppContext): Handler {
   return (input) => {
     const value = input.value as number;
@@ -672,6 +739,7 @@ export function createHandlers(ctx: AppContext): Record<string, Handler> {
     von_mises: stressHandler(ctx),
     fatigue_analysis: fatigueHandler(ctx),
     fatigue_damage: fatigueDamageHandler(ctx),
+    tolerance_stack: toleranceStackHandler(ctx),
     unit_convert: unitConvertHandler(ctx),
     material_lookup: materialHandler(ctx),
     section_catalog: sectionCatalogHandler(ctx),

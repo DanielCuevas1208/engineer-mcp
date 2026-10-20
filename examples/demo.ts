@@ -42,6 +42,12 @@ function show(name: string, handler: Handler, input: Record<string, unknown>): v
           `  - ${String(row.designation)} | h ${row.heightMm} mm | I ${row.secondMomentCm4} cm4 | W ${row.sectionModulusCm3} cm3 | ${row.massPerMetreKgM} kg/m${provenance}`,
         );
       } else {
+        if (row.signedNominalM !== undefined) {
+          console.log(
+            `  - ${String(row.name)} | sign ${row.sign} | signed nominal ${formatNumber(Number(row.signedNominalM))} m | lower deviation ${formatNumber(Number(row.signedLowerDeviationM))} m | upper deviation ${formatNumber(Number(row.signedUpperDeviationM))} m`,
+          );
+          continue;
+        }
         console.log(`  - ${String(row.name)} | yield ${row.yieldStrengthMPa} MPa | E ${row.elasticModulusGPa} GPa | density ${row.densityKgM3} kg/m3`);
       }
     }
@@ -89,6 +95,7 @@ type ToolHandlers = {
   unit_convert: Handler;
   material_lookup: Handler;
   section_catalog: Handler;
+  tolerance_stack: Handler;
 };
 
 async function main(): Promise<void> {
@@ -116,6 +123,7 @@ async function main(): Promise<void> {
     ["section_catalog", toolHandlers.section_catalog],
     ["beam_bending (IPE 300)", toolHandlers.beam_bending],
     ["interference_fit", toolHandlers.interference_fit],
+    ["tolerance_stack", toolHandlers.tolerance_stack],
   ];
 
   const inputs: Array<Record<string, unknown>> = [
@@ -241,6 +249,19 @@ async function main(): Promise<void> {
         shaftTangentialStress: "MPa",
         axialForceCapacity: "kN",
         torqueCapacity: "kN·m",
+      },
+    },
+    {
+      dimensions: [
+        { name: "housing", nominal: 10, tolerancePlus: 0.1, toleranceMinus: 0.1, sign: 1, unit: "mm" },
+        { name: "shaft", nominal: 0.9, tolerancePlus: 0.01, toleranceMinus: 0.01, sign: -1, unit: "cm" },
+      ],
+      outputUnits: {
+        nominalStack: "mm",
+        worstCaseLower: "mm",
+        worstCaseUpper: "mm",
+        rssLowerBound: "mm",
+        rssUpperBound: "mm",
       },
     },
   ];

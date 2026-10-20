@@ -214,6 +214,26 @@ export type MaterialInput = z.infer<typeof materialSchema>;
 export type FitInput = z.infer<typeof fitSchema>;
 export type SectionCatalogInput = z.infer<typeof sectionCatalogSchema>;
 
+export const toleranceStackSchema = z.object({
+  dimensions: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(80).describe("Unique dimension name."),
+        nominal: z.number().positive().describe("Nominal dimension magnitude."),
+        tolerancePlus: z.number().min(0).describe("Positive upper deviation magnitude."),
+        toleranceMinus: z.number().min(0).describe("Positive lower deviation magnitude."),
+        sign: z.union([z.literal(1), z.literal(-1)]).describe("Signed stack direction: 1 adds the dimension, -1 subtracts it."),
+        unit: z.string().min(1).optional().describe("Input length unit. Defaults to metres."),
+      }),
+    )
+    .min(1)
+    .max(100)
+    .describe("Ordered dimensions in a linear stack."),
+  outputUnits,
+});
+
+export type ToleranceStackInput = z.infer<typeof toleranceStackSchema>;
+
 export const fatigueDamageSchema = z.object({
   blocks: z.array(z.object({ meanStress: z.number(), alternatingStress: z.number().min(0), cycles: z.number().positive() })).min(1),
   snCurve: z.array(z.object({ cycles: z.number().positive(), alternatingStress: z.number().positive() })).min(2),
