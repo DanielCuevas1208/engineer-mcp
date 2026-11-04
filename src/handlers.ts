@@ -7,6 +7,7 @@ import {
   analyzeFatigue,
   analyzePressFit,
   analyzeShaft,
+  analyzeShaftLoadCases,
   analyzeSpring,
   analyzeToleranceStack,
   computeSection,
@@ -17,6 +18,8 @@ import {
   type SurfaceFinish,
   type ToleranceDimension,
   type ToleranceSign,
+  type ShaftLoadCase,
+  type ShaftLoadCaseSection,
 } from "./engine/index.js";
 import type { Computation, MethodRecord, Quantity, ReferenceRecord, ToolFailure, ToolResponse, ToolResult } from "./types.js";
 import type { UnitOutcome } from "./units/index.js";
@@ -118,6 +121,9 @@ function buildResult(
   };
   if (computation.rows !== undefined) {
     result.rows = computation.rows;
+  }
+  if (computation.meta !== undefined) {
+    result.meta = computation.meta;
   }
   return result;
 }
@@ -563,6 +569,116 @@ function fatigueDamageHandler(ctx: AppContext): Handler {
   };
 }
 
+function shaftLoadCasesHandler(ctx: AppContext): Handler {
+  return (input) => {
+    if (!Array.isArray(input.sections)) {
+      return failure("shaft_load_cases", "Provide a sections array.", input);
+    }
+    if (!Array.isArray(input.loadCases)) {
+      return failure("shaft_load_cases", "Provide a loadCases array.", input);
+    }
+
+    const materialName = input.material as string | undefined;
+    const values = materialName ? materialValues(ctx, materialName) : undefined;
+    if (materialName && !values) {
+      return failure("shaft_load_cases", `Unknown material: ${materialName}`, input);
+    }
+    const yieldStrength = (input.yieldStrength as number | undefined) ?? values?.yieldStrengthPa;
+    if (!yieldStrength) {
+      return failure("shaft_load_cases", "Provide yieldStrength or a known material with yield data.", input);
+    }
+
+    const rawSections = input.sections as unknown[];
+    const sections: ShaftLoadCaseSection[] = [];
+    for (const [index, rawSection] of rawSections.entries()) {
+      if (!rawSection || typeof rawSection !== "object") {
+        return failure("shaft_load_cases", `sections[${index}] must be an object.`, input);
+      }
+      const section = rawSection as Record<string, unknown>;
+      const name = section.name;
+      if (typeof name !== "string" || name.trim().length === 0) {
+        return failure("shaft_load_cases", `sections[${index}].name must be a non-empty string.`, input);
+      }
+      const unit = section.unit === undefined ? "m" : section.unit;
+      if (typeof unit !== "string" || unit.length === 0) {
+        return failure("shaft_load_cases", `sections[${index}].unit must be a non-empty string.`, input);
+      }
+      const outerDiameter = section.outerDiameter;
+      if (typeof outerDiameter !== "number") {
+        return failure("shaft_load_cases", `sections[${index}].outerDiameter must be a number.`, input);
+      }
+      const outerOutcome = ctx.convertUnit(outerDiameter, unit, "m");
+      if (!outerOutcome.ok) {
+        return failure("shaft_load_cases", `Could not convert sections[${index}].outerDiameter: ${outerOutcome.error}`, input);
+      }
+      let innerDiameterM = 0;
+      if (section.innerDiameter !== undefined) {
+        if (typeof section.innerDiameter !== "number") {
+          return failure("shaft_load_cases", `sections[${index}].innerDiameter must be a number.`, input);
+        }
+        const innerOutcome = ctx.convertUnit(section.innerDiameter as number, unit, "m");
+        if (!innerOutcome.ok) {
+          return failure("shaft_load_cases", `Could not convert sections[${index}].innerDiameter: ${innerOutcome.error}`, input);
+        }
+        innerDiameterM = innerOutcome.value;
+      }
+      sections.push({
+        name,
+        outerDiameter: outerOutcome.value,
+        innerDiameter: innerDiameterM === 0 ? undefined : innerDiameterM,
+      });
+    }
+
+    const rawLoadCases = input.loadCases as unknown[];
+    const loadCases: ShaftLoadCase[] = [];
+    for (const [index, rawCase] of rawLoadCases.entries()) {
+      if (!rawCase || typeof rawCase !== "object") {
+        return failure("shaft_load_cases", `loadCases[${index}] must be an object.`, input);
+      }
+      const loadCase = rawCase as Record<string, unknown>;
+      const name = loadCase.name;
+      if (typeof name !== "string" || name.trim().length === 0) {
+        return failure("shaft_load_cases", `loadCases[${index}].name must be a non-empty string.`, input);
+      }
+      const momentUnit = loadCase.momentUnit === undefined ? "N·m" : loadCase.momentUnit;
+      if (typeof momentUnit !== "string" || momentUnit.length === 0) {
+        return failure("shaft_load_cases", `loadCases[${index}].momentUnit must be a non-empty string.`, input);
+      }
+      const bendingMomentRaw = loadCase.bendingMoment ?? 0;
+      const torqueRaw = loadCase.torque ?? 0;
+      if (typeof bendingMomentRaw !== "number" || typeof torqueRaw !== "number") {
+        return failure("shaft_load_cases", `loadCases[${index}] bendingMoment and torque must be numbers.`, input);
+      }
+      const bendingOutcome = ctx.convertUnit(bendingMomentRaw, momentUnit, "N·m");
+      if (!bendingOutcome.ok) {
+        return failure("shaft_load_cases", `Could not convert loadCases[${index}].bendingMoment: ${bendingOutcome.error}`, input);
+      }
+      const torqueOutcome = ctx.convertUnit(torqueRaw, momentUnit, "N·m");
+      if (!torqueOutcome.ok) {
+        return failure("shaft_load_cases", `Could not convert loadCases[${index}].torque: ${torqueOutcome.error}`, input);
+      }
+      loadCases.push({
+        name,
+        bendingMoment: bendingOutcome.value,
+        torque: torqueOutcome.value,
+      });
+    }
+
+    try {
+      const computation = analyzeShaftLoadCases({ sections, loadCases, yieldStrength });
+      computation.inputs = {
+        sections: input.sections,
+        loadCases: input.loadCases,
+        yieldStrength: input.yieldStrength ?? materialName,
+        calculationUnits: { length: "m", moment: "N·m" },
+      };
+      return buildResult(ctx, "shaft_load_cases", computation, input.outputUnits as Record<string, string> | undefined);
+    } catch (error) {
+      return failure("shaft_load_cases", error instanceof Error ? error.message : String(error), input);
+    }
+  };
+}
+
 function toleranceStackHandler(ctx: AppContext): Handler {
   return (input) => {
     if (!Array.isArray(input.dimensions)) {
@@ -740,6 +856,7 @@ export function createHandlers(ctx: AppContext): Record<string, Handler> {
     fatigue_analysis: fatigueHandler(ctx),
     fatigue_damage: fatigueDamageHandler(ctx),
     tolerance_stack: toleranceStackHandler(ctx),
+    shaft_load_cases: shaftLoadCasesHandler(ctx),
     unit_convert: unitConvertHandler(ctx),
     material_lookup: materialHandler(ctx),
     section_catalog: sectionCatalogHandler(ctx),

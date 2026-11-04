@@ -122,8 +122,8 @@ async function run() {
       throw new Error(`tools/list failed with status ${list.status}.`);
     }
     const tools = list.body.result?.tools ?? [];
-    if (tools.length !== 14) {
-      throw new Error(`Expected 14 tools, received ${tools.length}.`);
+    if (tools.length !== 15) {
+      throw new Error(`Expected 15 tools, received ${tools.length}.`);
     }
     if (!tools.some((tool) => tool.name === "beam_bending")) {
       throw new Error("Expected beam_bending in the tool list.");
@@ -168,6 +168,23 @@ async function run() {
     console.log(`  tools/list: ${tools.length} tools`);
     console.log("  tools/call beam_bending: ok");
     console.log("  tools/call tolerance_stack: ok");
+
+    const shaftCall = await rpc(mcpUrl, "tools/call", {
+      name: "shaft_load_cases",
+      arguments: {
+        sections: [{ name: "midspan", outerDiameter: 0.05 }],
+        loadCases: [{ name: "peak", bendingMoment: 500, torque: 300 }],
+        material: "Structural steel S355",
+      },
+    }, init.sessionId);
+    if (
+      shaftCall.status !== 200 ||
+      shaftCall.body.result?.structuredContent?.tool !== "shaft_load_cases" ||
+      !shaftCall.body.result?.structuredContent?.references?.some((reference) => reference.id === "shigley-2015")
+    ) {
+      throw new Error("tools/call did not return the shaft_load_cases result with provenance.");
+    }
+    console.log("  tools/call shaft_load_cases: ok");
   } finally {
     child.kill("SIGTERM");
     await new Promise((resolve) => {

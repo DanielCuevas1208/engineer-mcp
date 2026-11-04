@@ -32,6 +32,7 @@ export type Computation = {
   rows?: Record<string, unknown>[];
   referenceIds: string[];
   warnings: string[];
+  meta?: Record<string, string | number>;
 };
 
 export type ToolResult = {

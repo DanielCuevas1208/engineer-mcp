@@ -448,3 +448,40 @@ Example:
   "outputUnits": { "nominalStack": "mm", "worstCaseLower": "mm", "worstCaseUpper": "mm" }
 }
 ```
+
+## shaft_load_cases
+
+Compare round shaft sections under bending and torque load cases.
+
+Inputs:
+
+- `sections`: one to 20 round sections with `name`, `outerDiameter`, optional `innerDiameter`, and optional `unit`.
+- `loadCases`: one to 20 cases with `name`, optional `bendingMoment`, optional `torque`, and optional `momentUnit`.
+- `yieldStrength`: tensile yield strength in pascals, or `material` from the database.
+- `outputUnits`: optional quantity-to-unit map.
+
+Outputs:
+
+- `governingSectionIndex` and `governingLoadCaseIndex`: one-based indices of the governing pair.
+- `governingVonMisesStress`: highest von Mises stress among the pairs.
+- `minimumYieldSafetyFactor`: yield strength divided by the governing von Mises stress.
+- `rows`: per-pair stresses, safety factors, criterion, and `referenceId`.
+- `meta.governingSection`, `meta.governingLoadCase`, and `meta.governingCriterion`.
+
+The method uses plane-stress von Mises with zero axial load.
+It does not model stress concentrations or fatigue.
+See [shaft-load-cases.md](shaft-load-cases.md) for formulas and limits.
+
+Example:
+
+```json
+{
+  "sections": [{ "name": "midspan", "outerDiameter": 0.05 }],
+  "loadCases": [
+    { "name": "service_bend", "bendingMoment": 500, "torque": 0 },
+    { "name": "peak_combined", "bendingMoment": 500, "torque": 300 }
+  ],
+  "material": "Structural steel S355",
+  "outputUnits": { "governingVonMisesStress": "MPa" }
+}
+```

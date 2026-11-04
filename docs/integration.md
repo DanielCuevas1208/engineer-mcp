@@ -56,9 +56,10 @@ Engineer MCP grows in independent releases. Each release stays useful on its own
 - HTTP transport security. The server supports bearer authentication and browser origin allow-lists.
 - Configurable HTTP response mode. JSON remains the default. SSE serves `text/event-stream` responses.
 - Signed dimensional tolerance stacks. The `tolerance_stack` tool returns worst-case and independent RSS bounds with explicit assumptions.
+- Shaft combined load cases. The `shaft_load_cases` tool compares bending and torque pairs on round sections and names the governing case.
 
 ### Remaining
 
-See [../ROADMAP.md](../ROADMAP.md) for the next shaft-load-case and uncertainty-sweep milestones.
+See [../ROADMAP.md](../ROADMAP.md) for the uncertainty-sweep and shaft-fatigue-screen milestones.
 
 Keep each release small and deterministic. Run the full test suite before release.

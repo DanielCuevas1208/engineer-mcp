@@ -12,6 +12,7 @@ type Handlers = {
   interference_fit: Handler;
   spring_design: Handler;
   shaft_analysis: Handler;
+  shaft_load_cases: Handler;
   bearing_life: Handler;
   von_mises: Handler;
   fatigue_analysis: Handler;
@@ -34,7 +35,7 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("tool registry", () => {
-  it("registers all fourteen tools", () => {
+  it("registers all fifteen tools", () => {
     expect(listTools().sort()).toEqual(
       [
         "beam_bending",
@@ -43,6 +44,7 @@ describe("tool registry", () => {
         "interference_fit",
         "spring_design",
         "shaft_analysis",
+        "shaft_load_cases",
         "bearing_life",
         "von_mises",
         "fatigue_analysis",
@@ -397,6 +399,26 @@ describe("fatigue_analysis tool", () => {
       alternatingStress: -5,
     });
     expect(response.ok).toBe(false);
+  });
+});
+
+describe("shaft_load_cases tool", () => {
+  it("returns a governing combined case with references", () => {
+    setup();
+    const response = handlers.shaft_load_cases({
+      sections: [{ name: "a", outerDiameter: 0.05 }],
+      loadCases: [
+        { name: "bend", bendingMoment: 500, torque: 0 },
+        { name: "combined", bendingMoment: 500, torque: 300 },
+      ],
+      yieldStrength: 300e6,
+      outputUnits: { governingVonMisesStress: "MPa" },
+    });
+    const result = expectOk(response);
+    expect(result.tool).toBe("shaft_load_cases");
+    expect(result.meta?.governingLoadCase).toBe("combined");
+    expect(result.references.map((ref) => ref.id)).toContain("shigley-2015");
+    expect(result.rows?.some((row) => row.isGoverning)).toBe(true);
   });
 });
 

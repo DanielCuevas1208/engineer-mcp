@@ -9,6 +9,7 @@ Engineer MCP is a Model Context Protocol server for mechanical-engineering calcu
 It gives coding agents verified answers for beams, bolts, springs, shafts, bearings, stress, sections, fits, and units.
 Every result shows the formula, the method, and the source.
 
+Release 0.11 adds shaft combined load-case comparison with von Mises safety factors and source-linked report rows.
 Release 0.10 adds signed dimensional tolerance stacks with worst-case and independent RSS bounds.
 Use stdio for desktop clients. Use HTTP for local services and network clients.
 
@@ -23,6 +24,7 @@ The release covers these domains:
 - Bolt tensile design to ISO 898.
 - Helical compression spring design.
 - Shaft torsion and first critical speed.
+- Shaft combined bending and torque load-case comparison on round sections.
 - Bearing rating life to ISO 281.
 - von Mises equivalent stress.
 - Fatigue analysis for cyclic loads.
@@ -62,6 +64,7 @@ Warnings surface when a method uses an approximation.
 | `interference_fit` | Interface pressure, hoop stresses, and friction capacity of a press or shrink fit. |
 | `spring_design` | Spring rate, shear stress, and safety factor of a compression spring. |
 | `shaft_analysis` | Torsion stress, twist, and critical speed. |
+| `shaft_load_cases` | Combined bending and torque cases with governing section report. |
 | `bearing_life` | ISO 281 rating life in revolutions and hours. |
 | `von_mises` | Equivalent stress and yield safety factor. |
 | `fatigue_analysis` | Endurance limit and fatigue safety factor for cyclic loads. |
@@ -75,6 +78,7 @@ See [docs/section-catalog.md](docs/section-catalog.md) for the covered range, th
 See [docs/units.md](docs/units.md) for the unit model and the full category list.
 See [docs/transport.md](docs/transport.md) for the HTTP transport reference.
 See [docs/tolerance-stack.md](docs/tolerance-stack.md) for the stack model and assumptions.
+See [docs/shaft-load-cases.md](docs/shaft-load-cases.md) for the load-case model and limits.
 See [ROADMAP.md](ROADMAP.md) for release status and future milestones.
 
 ## Architecture
@@ -307,6 +311,26 @@ Warnings:
   - Independent RSS bounds assume zero-mean, independent variation. They are not guaranteed limits.
 ```
 
+A call to `shaft_load_cases` compares bending and torque cases on a 50 mm shoulder:
+
+```text
+Governing section index                   1
+Governing load case index                 2
+Governing von Mises stress            45.92 MPa
+Minimum yield safety factor             7.732
+
+Rows:
+  - peak_combined | section midspan | sigma_vm 45.92 MPa | SF 7.732 | ref shigley-2015
+
+Method: Shaft combined bending and torsion load cases
+References:
+  - Shigley's Mechanical Engineering Design (McGraw-Hill Education, Tenth edition, 2015)
+  - Roark's Formulas for Stress and Strain (McGraw-Hill Education, Eighth edition, 2011)
+Warnings:
+  - Plane-stress von Mises stress assumes zero axial load and elastic material behavior.
+  - The comparison does not include stress concentrations, fatigue, or dynamic amplification.
+```
+
 In SSE mode, an initialize response uses this event format:
 
 ```text
@@ -353,7 +377,7 @@ See [docs/transport.md](docs/transport.md) for the full HTTP reference.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, the tools, the catalog data, and the HTTP transport.
 
-- The suite covers deterministic fixtures for 14 MCP tools across 17 test files.
+- The suite covers deterministic fixtures for 15 MCP tools across 18 test files.
 - The CI matrix tests Node 22 and Node 24.
 - The HTTP tests run a real server on an ephemeral port.
   They complete the full handshake over a real TCP connection.
@@ -361,8 +385,7 @@ It covers the engines, the unit layer, the database, the tools, the catalog data
 - The CI workflow runs typecheck, tests, build, demo, a package check, and the HTTP smoke check.
 - The CI workflow verifies the CLI contract over standard output.
 - The CI workflow verifies both transport modes.
-- Local verification passed for typecheck, build, CLI checks, core tolerance-stack smoke, and in-process HTTP smoke.
-- This restricted Windows sandbox prevented Vitest, child-process HTTP smoke, and package dry-run checks.
+- Local verification passed for typecheck, build, CLI checks, shaft load-case tests, and the full test suite on the development host.
 
 Run `npm test` to reproduce the results.
 
@@ -402,6 +425,8 @@ Run `npm test` to reproduce the results.
 - HTTP accepts request bodies up to 1 MiB.
 - The tolerance stack models linear dimensions only.
   It does not model geometric tolerancing, correlation, angular errors, or Monte Carlo distributions.
+- The shaft load-case tool models round sections with plane-stress von Mises stress.
+  It does not model axial load, fatigue, keyways, or stress concentrations.
 
 Check the cited sources for exact values.
 
