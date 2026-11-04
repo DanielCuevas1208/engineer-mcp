@@ -48,6 +48,12 @@ function show(name: string, handler: Handler, input: Record<string, unknown>): v
           );
           continue;
         }
+        if (row.loadCaseName !== undefined) {
+          console.log(
+            `  - ${String(row.loadCaseName)} | section ${row.sectionName} | sigma_vm ${formatNumber(Number(row.vonMisesStressPa) / 1e6)} MPa | SF ${formatNumber(Number(row.yieldSafetyFactor))} | ref ${row.referenceId}${row.isGoverning ? " | governing" : ""}`,
+          );
+          continue;
+        }
         console.log(`  - ${String(row.name)} | yield ${row.yieldStrengthMPa} MPa | E ${row.elasticModulusGPa} GPa | density ${row.densityKgM3} kg/m3`);
       }
     }
@@ -59,7 +65,13 @@ function show(name: string, handler: Handler, input: Record<string, unknown>): v
     printed.add(response.safetyFactor.key);
   }
 
-  if (response.meta) {
+  if (response.meta?.governingSection) {
+    console.log(
+      `Governing: ${response.meta.governingSection} / ${response.meta.governingLoadCase} (${response.meta.governingCriterion})`,
+    );
+  }
+
+  if (response.meta?.factor !== undefined && response.meta.category !== undefined) {
     console.log(`Factor: ${formatNumber(response.meta.factor as number)} (${response.meta.category})`);
   }
 
@@ -96,6 +108,7 @@ type ToolHandlers = {
   material_lookup: Handler;
   section_catalog: Handler;
   tolerance_stack: Handler;
+  shaft_load_cases: Handler;
 };
 
 async function main(): Promise<void> {
@@ -124,6 +137,7 @@ async function main(): Promise<void> {
     ["beam_bending (IPE 300)", toolHandlers.beam_bending],
     ["interference_fit", toolHandlers.interference_fit],
     ["tolerance_stack", toolHandlers.tolerance_stack],
+    ["shaft_load_cases", toolHandlers.shaft_load_cases],
   ];
 
   const inputs: Array<Record<string, unknown>> = [
@@ -263,6 +277,15 @@ async function main(): Promise<void> {
         rssLowerBound: "mm",
         rssUpperBound: "mm",
       },
+    },
+    {
+      sections: [{ name: "midspan", outerDiameter: 0.05 }],
+      loadCases: [
+        { name: "service_bend", bendingMoment: 500, torque: 0 },
+        { name: "peak_combined", bendingMoment: 500, torque: 300 },
+      ],
+      material: "Structural steel S355",
+      outputUnits: { governingVonMisesStress: "MPa" },
     },
   ];
 

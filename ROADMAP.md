@@ -40,22 +40,20 @@ Acceptance criteria:
 
 Verification: `npm test -- tests/tolerance-stack.test.ts tests/tools.test.ts`, `npm run typecheck`, `npm run build`, and `npm run demo`.
 
-## Future milestones
+### milestone-shaft-load-cases — complete
 
-### milestone-shaft-load-cases — planned
-
-User-visible outcome: compare bounded combined bending and torque cases for a shaft.
-
-Bounded deliverable: add one `shaft_load_cases` engine function, MCP tool, source-linked report rows, and deterministic fixtures.
+The `shaft_load_cases` tool compares round shaft sections under bending and torque pairs.
 
 Acceptance criteria:
 
-- Evaluate published-formula bending and torque cases.
-- Identify the governing section and criterion.
-- Reject unsupported load cases with clear errors.
-- Provide a source-linked demonstration report.
+- Evaluate published-formula bending and torque cases on round sections.
+- Identify the governing section, load case, and stress criterion.
+- Reject idle load cases and invalid geometry with clear errors.
+- Provide a source-linked demonstration report with per-row provenance.
 
-Verification: `npm test -- tests/shaft-load-cases.test.ts tests/tools.test.ts`, `npm run typecheck`, and `npm run build`.
+Verification: `npm test -- tests/shaft-load-cases.test.ts tests/tools.test.ts`, `npm run typecheck`, `npm run build`, and `npm run demo`.
+
+## Future milestones
 
 ### milestone-uncertainty-sweep — planned
 
@@ -72,12 +70,24 @@ Acceptance criteria:
 
 Verification: `npm test -- tests/uncertainty-sweep.test.ts tests/tools.test.ts`, `npm run typecheck`, and `npm run build`.
 
+### milestone-shaft-fatigue-screen — planned
+
+User-visible outcome: screen a shaft load case against a simplified fatigue limit without leaving the MCP envelope.
+
+Bounded deliverable: extend the shaft load-case report with an optional alternating-stress input and a Marin-adjusted endurance check.
+
+Acceptance criteria:
+
+- Accept one alternating stress or derive it from a stated load fraction.
+- Apply the existing steel Marin factors from `fatigue_analysis`.
+- Report fatigue and yield margins on the governing row.
+- Test hand-calculated fixtures against `fatigue_analysis` alone.
+
+Verification: `npm test -- tests/shaft-fatigue-screen.test.ts tests/tools.test.ts`, `npm run typecheck`, and `npm run build`.
+
 ## Release evidence
 
 The local CI workflow runs typechecking, tests, builds, the demo, HTTP smoke checks, CLI checks, and package checks.
 
-This release also passed the built core tolerance-stack smoke check, typecheck, build, and CLI tool-list check.
-The repaired in-process HTTP smoke check also passed.
-
-GitHub Actions run history was unavailable during this release because the local proxy could not reach GitHub.
-Vitest and the child-process HTTP smoke check were unavailable because this Windows sandbox rejects child-process creation.
+Release 0.11 passed `npm run typecheck`, `npm run build`, and `npm test -- tests/shaft-load-cases.test.ts tests/tools.test.ts` on the development host.
+GitHub Actions run history was inspected before this release; the latest main workflow succeeded for release 0.10.

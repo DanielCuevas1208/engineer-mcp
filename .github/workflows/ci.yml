@@ -51,6 +51,7 @@ jobs:
           node dist/index.js --list | grep -q "interference_fit"
           node dist/index.js --list | grep -q "fatigue_analysis"
           node dist/index.js --list | grep -q "tolerance_stack"
+          node dist/index.js --list | grep -q "shaft_load_cases"
           node dist/index.js --transport http --list | grep -q "beam_bending"
           OUTPUT="$(node dist/index.js --transport unknown 2>&1 || true)"
           echo "$OUTPUT" | grep -q "Unknown transport"

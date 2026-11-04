@@ -16,6 +16,17 @@ export { analyzePressFit, PRESS_FIT_METHOD, type FitInput } from "./fit.js";
 export { computeSection, SECTION_METHOD, type SectionDef, type SectionProperties } from "./sections.js";
 export { analyzeShaft, SHAFT_METHOD, type ShaftInput } from "./shaft.js";
 export {
+  analyzeShaftLoadCases,
+  combinedVonMisesStress,
+  roundShaftBendingStress,
+  roundShaftTorsionalShear,
+  SHAFT_LOAD_CASES_METHOD,
+  type ShaftLoadCase,
+  type ShaftLoadCaseSection,
+  type ShaftLoadCasesInput,
+  type ShaftStressCriterion,
+} from "./shaft-load-cases.js";
+export {
   analyzeSpring,
   solidHeight,
   SPRING_METHOD,

@@ -16,6 +16,7 @@ import {
   springSchema,
   stressSchema,
   toleranceStackSchema,
+  shaftLoadCasesSchema,
   unitConvertSchema,
 } from "./schemas.js";
 import type { ToolResult } from "./types.js";
@@ -75,6 +76,11 @@ const TOOL_SCHEMAS: Record<string, ToolDef> = {
     description:
       "Compute nominal, worst-case, and independent RSS bounds for a signed linear dimensional tolerance stack.",
     schema: toleranceStackSchema,
+  },
+  shaft_load_cases: {
+    description:
+      "Compare round shaft sections under bending and torque load cases. Report von Mises stress, safety factors, and a governing case.",
+    schema: shaftLoadCasesSchema,
   },
   unit_convert: {
     description: "Convert a value between compatible units. Rejects mismatched dimensions and quantity categories.",

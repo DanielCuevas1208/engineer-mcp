@@ -234,6 +234,38 @@ export const toleranceStackSchema = z.object({
 
 export type ToleranceStackInput = z.infer<typeof toleranceStackSchema>;
 
+export const shaftLoadCasesSchema = z.object({
+  sections: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(80).describe("Section label along the shaft."),
+        outerDiameter: z.number().positive().describe("Outer diameter of the round section."),
+        innerDiameter: z.number().min(0).optional().describe("Inner diameter for a hollow section. Defaults to zero."),
+        unit: z.string().min(1).optional().describe("Input length unit for diameters. Defaults to metres."),
+      }),
+    )
+    .min(1)
+    .max(20)
+    .describe("Round shaft sections to compare."),
+  loadCases: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(80).describe("Load case label."),
+        bendingMoment: z.number().min(0).optional().describe("Bending moment in newton-metres. Defaults to zero."),
+        torque: z.number().min(0).optional().describe("Torque in newton-metres. Defaults to zero."),
+        momentUnit: z.string().min(1).optional().describe("Input unit for bendingMoment and torque. Defaults to N·m."),
+      }),
+    )
+    .min(1)
+    .max(20)
+    .describe("Bending and torque load cases to evaluate on every section."),
+  yieldStrength: z.number().positive().optional().describe("Tensile yield strength in pascals."),
+  material: z.string().min(1).optional().describe("Material name from the database. Supplies yieldStrength when omitted."),
+  outputUnits,
+});
+
+export type ShaftLoadCasesSchemaInput = z.infer<typeof shaftLoadCasesSchema>;
+
 export const fatigueDamageSchema = z.object({
   blocks: z.array(z.object({ meanStress: z.number(), alternatingStress: z.number().min(0), cycles: z.number().positive() })).min(1),
   snCurve: z.array(z.object({ cycles: z.number().positive(), alternatingStress: z.number().positive() })).min(2),
