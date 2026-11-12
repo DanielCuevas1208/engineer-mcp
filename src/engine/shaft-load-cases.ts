@@ -26,7 +26,7 @@ export const SHAFT_LOAD_CASES_METHOD: MethodRecord = {
   formula:
     "sigma = 32 M D / (pi (D^4 - d^4)); tau = 16 T D / (pi (D^4 - d^4)); sigma_vm = sqrt(sigma^2 + 3 tau^2)",
   notes:
-    "Each row evaluates a round shaft section under one bending and torque pair. The von Mises rule uses plane stress with zero axial stress. Axial loads, fatigue, and keyed stress concentrations are not modeled.",
+    "Each row evaluates a round shaft section under one bending and torque pair. The von Mises rule uses plane stress with zero axial stress. Axial loads and keyed stress concentrations are not modeled. An optional fatigue screen reuses the existing Marin method.",
   referenceIds: ["shigley-2015", "roark-2011"],
 };
 

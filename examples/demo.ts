@@ -49,8 +49,15 @@ function show(name: string, handler: Handler, input: Record<string, unknown>): v
           continue;
         }
         if (row.loadCaseName !== undefined) {
+          const fatigue = row.fatigueSafetyFactor === undefined ? "" : ` | fatigue SF ${formatNumber(Number(row.fatigueSafetyFactor))}`;
           console.log(
-            `  - ${String(row.loadCaseName)} | section ${row.sectionName} | sigma_vm ${formatNumber(Number(row.vonMisesStressPa) / 1e6)} MPa | SF ${formatNumber(Number(row.yieldSafetyFactor))} | ref ${row.referenceId}${row.isGoverning ? " | governing" : ""}`,
+            `  - ${String(row.loadCaseName)} | section ${row.sectionName} | sigma_vm ${formatNumber(Number(row.vonMisesStressPa) / 1e6)} MPa | SF ${formatNumber(Number(row.yieldSafetyFactor))}${fatigue} | ref ${row.referenceId}${row.isGoverning ? " | governing" : ""}`,
+          );
+          continue;
+        }
+        if (row.parameter !== undefined) {
+          console.log(
+            `  - #${row.rank} ${String(row.parameter)} | ${row.lowValue}–${row.highValue} ${row.inputUnit} | SF ${formatNumber(Number(row.lowFatigueSafetyFactor))} → ${formatNumber(Number(row.highFatigueSafetyFactor))} | effect ${formatNumber(Number(row.absoluteEffect))}`,
           );
           continue;
         }
@@ -104,6 +111,7 @@ type ToolHandlers = {
   bearing_life: Handler;
   von_mises: Handler;
   fatigue_analysis: Handler;
+  uncertainty_sweep: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
   section_catalog: Handler;
@@ -127,6 +135,7 @@ async function main(): Promise<void> {
     ["bearing_life", toolHandlers.bearing_life],
     ["von_mises", toolHandlers.von_mises],
     ["fatigue_analysis", toolHandlers.fatigue_analysis],
+    ["uncertainty_sweep", toolHandlers.uncertainty_sweep],
     ["unit_convert", toolHandlers.unit_convert],
     ["unit_convert (torque to energy)", toolHandlers.unit_convert],
     ["unit_convert (dynamic viscosity)", toolHandlers.unit_convert],
@@ -204,6 +213,21 @@ async function main(): Promise<void> {
       surfaceFinish: "ground",
       reliability: 90,
       outputUnits: { enduranceLimit: "MPa" },
+    },
+    {
+      calculation: "fatigue_analysis",
+      baseline: {
+        ultimateStrength: 690e6,
+        yieldStrength: 580e6,
+        meanStress: 80e6,
+        alternatingStress: 120e6,
+        surfaceFinish: "ground",
+        reliability: 90,
+      },
+      sweeps: [
+        { parameter: "meanStress", low: 60, high: 100, unit: "MPa" },
+        { parameter: "alternatingStress", low: 100, high: 140, unit: "MPa" },
+      ],
     },
     {
       value: 1000,
@@ -285,7 +309,8 @@ async function main(): Promise<void> {
         { name: "peak_combined", bendingMoment: 500, torque: 300 },
       ],
       material: "Structural steel S355",
-      outputUnits: { governingVonMisesStress: "MPa" },
+      fatigue: { loadFraction: 0.5, surfaceFinish: "ground", reliability: 90 },
+      outputUnits: { governingVonMisesStress: "MPa", fatigueEnduranceLimit: "MPa" },
     },
   ];
 

@@ -401,6 +401,49 @@ Example:
 }
 ```
 
+## uncertainty_sweep
+
+Rank one-factor endpoint effects through `fatigue_analysis`.
+
+Inputs:
+
+- `calculation`: `fatigue_analysis`.
+- `baseline`: complete `fatigue_analysis` inputs.
+- `sweeps`: one to five numeric inputs with `low`, `high`, and optional `unit`.
+
+Stress sweep units use pressure units.
+Factor sweeps use unit `1`.
+Reliability sweeps use `%`.
+
+Outputs:
+
+- `baselineFatigueSafetyFactor`: baseline fatigue margin.
+- `largestAbsoluteEffect`: largest endpoint safety-factor change.
+- `sweptParameterCount`: number of independent sweeps.
+- `rows`: endpoint values, safety factors, ranks, units, assumptions, and reference IDs.
+
+The tool changes one input per row.
+It does not estimate probability or input interaction.
+
+Example:
+
+```json
+{
+  "calculation": "fatigue_analysis",
+  "baseline": {
+    "ultimateStrength": 690000000,
+    "yieldStrength": 580000000,
+    "meanStress": 80000000,
+    "alternatingStress": 120000000,
+    "surfaceFinish": "ground",
+    "reliability": 90
+  },
+  "sweeps": [
+    { "parameter": "meanStress", "low": 60, "high": 100, "unit": "MPa" }
+  ]
+}
+```
+
 ## material_lookup
 
 Look up mechanical properties of common engineering materials.
@@ -458,6 +501,11 @@ Inputs:
 - `sections`: one to 20 round sections with `name`, `outerDiameter`, optional `innerDiameter`, and optional `unit`.
 - `loadCases`: one to 20 cases with `name`, optional `bendingMoment`, optional `torque`, and optional `momentUnit`.
 - `yieldStrength`: tensile yield strength in pascals, or `material` from the database.
+- `fatigue`: optional fatigue screen for the governing row.
+  Provide exactly one `alternatingStress` or `loadFraction`.
+  The load fraction multiplies the governing von Mises stress.
+  `ultimateStrength` can use a known material value.
+  `stressUnit` defaults to `Pa`.
 - `outputUnits`: optional quantity-to-unit map.
 
 Outputs:
@@ -465,11 +513,14 @@ Outputs:
 - `governingSectionIndex` and `governingLoadCaseIndex`: one-based indices of the governing pair.
 - `governingVonMisesStress`: highest von Mises stress among the pairs.
 - `minimumYieldSafetyFactor`: yield strength divided by the governing von Mises stress.
+- `fatigueEnduranceLimit`, `fatigueSafetyFactor`, and `fatigueStaticYieldSafetyFactor` appear when `fatigue` is supplied.
 - `rows`: per-pair stresses, safety factors, criterion, and `referenceId`.
+  The governing row also contains fatigue stress and safety fields.
 - `meta.governingSection`, `meta.governingLoadCase`, and `meta.governingCriterion`.
 
 The method uses plane-stress von Mises with zero axial load.
-It does not model stress concentrations or fatigue.
+The optional fatigue screen treats that governing von Mises stress as mean stress.
+It does not model stress concentrations, variable-amplitude loading, or finite life.
 See [shaft-load-cases.md](shaft-load-cases.md) for formulas and limits.
 
 Example:

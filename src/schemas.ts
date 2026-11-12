@@ -234,6 +234,58 @@ export const toleranceStackSchema = z.object({
 
 export type ToleranceStackInput = z.infer<typeof toleranceStackSchema>;
 
+const fatigueSweepParameterSchema = z.enum([
+  "ultimateStrength",
+  "yieldStrength",
+  "meanStress",
+  "alternatingStress",
+  "enduranceLimit",
+  "sizeFactor",
+  "loadFactor",
+  "temperatureFactor",
+  "reliabilityFactor",
+  "reliability",
+  "miscellaneousFactor",
+]);
+
+export const uncertaintySweepSchema = z.object({
+  calculation: z.literal("fatigue_analysis").describe("Existing calculation to sweep. The bounded release supports fatigue_analysis."),
+  baseline: fatigueSchema.omit({ outputUnits: true }).describe("Baseline inputs for the fatigue_analysis calculation. Stress values use pascals."),
+  sweeps: z
+    .array(
+      z.object({
+        parameter: fatigueSweepParameterSchema.describe("Numeric fatigue input to vary independently."),
+        low: z.number().describe("Lower endpoint in unit."),
+        high: z.number().describe("Upper endpoint in unit."),
+        unit: z.string().min(1).optional().describe("Unit for the endpoints. Stress defaults to Pa; factors use 1; reliability uses %."),
+      }),
+    )
+    .min(1)
+    .max(5)
+    .describe("One to five independent endpoint sweeps."),
+});
+
+export type UncertaintySweepSchemaInput = z.infer<typeof uncertaintySweepSchema>;
+
+const shaftFatigueScreenSchema = fatigueSchema
+  .omit({ meanStress: true, alternatingStress: true, yieldStrength: true, outputUnits: true })
+  .partial()
+  .extend({
+    alternatingStress: z.number().min(0).optional().describe("Alternating stress amplitude for the governing shaft row."),
+    loadFraction: z.number().min(0).max(1).optional().describe("Fraction of the governing von Mises stress used as alternating stress."),
+    stressUnit: z.string().min(1).optional().describe("Unit for alternatingStress, ultimateStrength, and enduranceLimit. Defaults to Pa."),
+  })
+  .superRefine((value, context) => {
+    const alternatives = [value.alternatingStress !== undefined, value.loadFraction !== undefined].filter(Boolean).length;
+    if (alternatives !== 1) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["alternatingStress"],
+        message: "Provide exactly one of alternatingStress or loadFraction.",
+      });
+    }
+  });
+
 export const shaftLoadCasesSchema = z.object({
   sections: z
     .array(
@@ -261,6 +313,9 @@ export const shaftLoadCasesSchema = z.object({
     .describe("Bending and torque load cases to evaluate on every section."),
   yieldStrength: z.number().positive().optional().describe("Tensile yield strength in pascals."),
   material: z.string().min(1).optional().describe("Material name from the database. Supplies yieldStrength when omitted."),
+  fatigue: shaftFatigueScreenSchema
+    .optional()
+    .describe("Optional infinite-life fatigue screen for the governing row. The governing von Mises stress is its mean stress."),
   outputUnits,
 });
 
