@@ -7,12 +7,16 @@ import {
   analyzeFatigue,
   analyzePressFit,
   analyzeShaft,
+  analyzeShaftFatigueScreen,
   analyzeShaftLoadCases,
   analyzeSpring,
   analyzeToleranceStack,
+  analyzeUncertaintySweep,
+  FATIGUE_SWEEP_PARAMETERS,
   computeSection,
   vonMises,
   type FatigueCriterion,
+  type FatigueInput,
   type SectionDef,
   type SpringEndType,
   type SurfaceFinish,
@@ -20,6 +24,8 @@ import {
   type ToleranceSign,
   type ShaftLoadCase,
   type ShaftLoadCaseSection,
+  type FatigueSweepParameter,
+  type UncertaintySweepCase,
 } from "./engine/index.js";
 import type { Computation, MethodRecord, Quantity, ReferenceRecord, ToolFailure, ToolResponse, ToolResult } from "./types.js";
 import type { UnitOutcome } from "./units/index.js";
@@ -133,6 +139,7 @@ type MaterialValues = {
   shearModulusPa?: number;
   densityKgM3?: number;
   yieldStrengthPa?: number;
+  ultimateStrengthPa?: number;
 };
 
 type SectionInput = SectionDef | { shape: "standard"; designation: string };
@@ -166,6 +173,7 @@ function materialValues(ctx: AppContext, name: string): MaterialValues | undefin
     shearModulusPa: material.shearModulusGPa ? material.shearModulusGPa * 1e9 : undefined,
     densityKgM3: material.densityKgM3,
     yieldStrengthPa: material.yieldStrengthMPa ? material.yieldStrengthMPa * 1e6 : undefined,
+    ultimateStrengthPa: material.ultimateStrengthMPa * 1e6,
   };
 }
 
@@ -569,6 +577,249 @@ function fatigueDamageHandler(ctx: AppContext): Handler {
   };
 }
 
+const STRESS_SWEEP_PARAMETERS = new Set<FatigueSweepParameter>([
+  "ultimateStrength",
+  "yieldStrength",
+  "meanStress",
+  "alternatingStress",
+  "enduranceLimit",
+]);
+
+function uncertaintySweepHandler(ctx: AppContext): Handler {
+  return (input) => {
+    if (input.calculation !== "fatigue_analysis") {
+      return failure("uncertainty_sweep", "Only the fatigue_analysis calculation is supported.", input);
+    }
+    if (!input.baseline || typeof input.baseline !== "object") {
+      return failure("uncertainty_sweep", "Provide a baseline object.", input);
+    }
+    if (!Array.isArray(input.sweeps)) {
+      return failure("uncertainty_sweep", "Provide a sweeps array.", input);
+    }
+
+    const baseline = input.baseline as FatigueInput;
+    const sweeps: UncertaintySweepCase[] = [];
+    const seen = new Set<string>();
+    for (const [index, rawSweep] of (input.sweeps as unknown[]).entries()) {
+      if (!rawSweep || typeof rawSweep !== "object") {
+        return failure("uncertainty_sweep", `sweeps[${index}] must be an object.`, input);
+      }
+      const sweep = rawSweep as Record<string, unknown>;
+      const parameter = sweep.parameter;
+      if (typeof parameter !== "string" || !isFatigueSweepParameter(parameter)) {
+        return failure("uncertainty_sweep", `sweeps[${index}].parameter is not sweepable.`, input);
+      }
+      if (seen.has(parameter)) {
+        return failure("uncertainty_sweep", `Sweep parameters must be unique: ${parameter}.`, input);
+      }
+      seen.add(parameter);
+      const low = sweep.low;
+      const high = sweep.high;
+      if (typeof low !== "number" || typeof high !== "number") {
+        return failure("uncertainty_sweep", `sweeps[${index}] endpoints must be numbers.`, input);
+      }
+      if (!(low < high)) {
+        return failure("uncertainty_sweep", `sweeps[${index}].low must be smaller than high.`, input);
+      }
+
+      const unit = sweep.unit === undefined ? defaultSweepUnit(parameter) : sweep.unit;
+      if (typeof unit !== "string" || unit.length === 0) {
+        return failure("uncertainty_sweep", `sweeps[${index}].unit must be a non-empty string.`, input);
+      }
+      const lowNormalized = normalizeSweepValue(ctx, parameter, low, unit, `sweeps[${index}].low`);
+      if (!lowNormalized.ok) {
+        return failure("uncertainty_sweep", lowNormalized.error, input);
+      }
+      const highNormalized = normalizeSweepValue(ctx, parameter, high, unit, `sweeps[${index}].high`);
+      if (!highNormalized.ok) {
+        return failure("uncertainty_sweep", highNormalized.error, input);
+      }
+      const baselineValue = baseline[parameter];
+      if (typeof baselineValue !== "number" || !Number.isFinite(baselineValue)) {
+        return failure("uncertainty_sweep", `baseline.${parameter} must be provided as a finite number.`, input);
+      }
+      const baselineDisplay = displaySweepValue(ctx, parameter, baselineValue, unit, `baseline.${parameter}`);
+      if (!baselineDisplay.ok) {
+        return failure("uncertainty_sweep", baselineDisplay.error, input);
+      }
+
+      sweeps.push({
+        parameter,
+        low: lowNormalized.value,
+        high: highNormalized.value,
+        inputUnit: unit,
+        calculationUnit: lowNormalized.calculationUnit,
+        baselineDisplayValue: baselineDisplay.value,
+        lowDisplayValue: low,
+        highDisplayValue: high,
+      });
+    }
+
+    try {
+      const computation = analyzeUncertaintySweep({ calculation: "fatigue_analysis", baseline, sweeps });
+      computation.inputs = {
+        calculation: input.calculation,
+        baseline: input.baseline,
+        sweeps: input.sweeps,
+        calculationUnits: { stress: "Pa", factors: "1", reliability: "%" },
+      };
+      return buildResult(ctx, "uncertainty_sweep", computation);
+    } catch (error) {
+      return failure("uncertainty_sweep", error instanceof Error ? error.message : String(error), input);
+    }
+  };
+}
+
+function isFatigueSweepParameter(value: string): value is FatigueSweepParameter {
+  return FATIGUE_SWEEP_PARAMETERS.includes(value as FatigueSweepParameter);
+}
+
+function defaultSweepUnit(parameter: FatigueSweepParameter): string {
+  if (STRESS_SWEEP_PARAMETERS.has(parameter)) {
+    return "Pa";
+  }
+  return parameter === "reliability" ? "%" : "1";
+}
+
+type SweepValue = { ok: true; value: number; calculationUnit: string } | { ok: false; error: string };
+
+function normalizeSweepValue(ctx: AppContext, parameter: FatigueSweepParameter, value: number, unit: string, label: string): SweepValue {
+  if (!Number.isFinite(value)) {
+    return { ok: false, error: `${label} must be finite.` };
+  }
+  if (STRESS_SWEEP_PARAMETERS.has(parameter)) {
+    const outcome = ctx.convertUnit(value, unit, "Pa");
+    return outcome.ok ? { ok: true, value: outcome.value, calculationUnit: "Pa" } : { ok: false, error: `Could not convert ${label}: ${outcome.error}` };
+  }
+  if (parameter === "reliability") {
+    if (!(unit === "%" || unit === "percent" || unit === "pct")) {
+      return { ok: false, error: `${label} must use % or percent.` };
+    }
+    return { ok: true, value, calculationUnit: "%" };
+  }
+  if (unit !== "1") {
+    return { ok: false, error: `${label} must use unit 1 because it is dimensionless.` };
+  }
+  return { ok: true, value, calculationUnit: "1" };
+}
+
+function displaySweepValue(ctx: AppContext, parameter: FatigueSweepParameter, value: number, unit: string, label: string): SweepValue {
+  if (STRESS_SWEEP_PARAMETERS.has(parameter)) {
+    const outcome = ctx.convertUnit(value, "Pa", unit);
+    return outcome.ok ? { ok: true, value: outcome.value, calculationUnit: "Pa" } : { ok: false, error: `Could not convert ${label}: ${outcome.error}` };
+  }
+  if (parameter === "reliability") {
+    return unit === "%" || unit === "percent" || unit === "pct"
+      ? { ok: true, value, calculationUnit: "%" }
+      : { ok: false, error: `${label} must use % or percent.` };
+  }
+  return unit === "1"
+    ? { ok: true, value, calculationUnit: "1" }
+    : { ok: false, error: `${label} must use unit 1 because it is dimensionless.` };
+}
+
+function optionalFiniteFatigueNumber(config: Record<string, unknown>, key: string): number | undefined {
+  const value = config[key];
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error(`fatigue.${key} must be a finite number.`);
+  }
+  return value;
+}
+
+function convertFatigueStress(ctx: AppContext, value: number, unit: string, label: string): number {
+  if (!Number.isFinite(value)) {
+    throw new Error(`${label} must be finite.`);
+  }
+  const outcome = ctx.convertUnit(value, unit, "Pa");
+  if (!outcome.ok) {
+    throw new Error(`Could not convert ${label}: ${outcome.error}`);
+  }
+  return outcome.value;
+}
+
+function isFatigueCriterion(value: unknown): value is FatigueCriterion {
+  return value === "modified_goodman" || value === "soderberg" || value === "gerber" || value === "asme_elliptic";
+}
+
+function buildShaftFatigueInput(
+  ctx: AppContext,
+  rawConfig: unknown,
+  material: MaterialValues | undefined,
+  meanStress: number,
+  yieldStrength: number,
+): { input: FatigueInput; usesLoadFraction: boolean; loadFraction?: number } {
+  if (!rawConfig || typeof rawConfig !== "object") {
+    throw new Error("fatigue must be an object.");
+  }
+  const config = rawConfig as Record<string, unknown>;
+  const hasAlternatingStress = config.alternatingStress !== undefined;
+  const hasLoadFraction = config.loadFraction !== undefined;
+  if (hasAlternatingStress === hasLoadFraction) {
+    throw new Error("Provide exactly one of fatigue.alternatingStress or fatigue.loadFraction.");
+  }
+
+  const stressUnit = config.stressUnit ?? "Pa";
+  if (typeof stressUnit !== "string" || stressUnit.length === 0) {
+    throw new Error("fatigue.stressUnit must be a non-empty string.");
+  }
+
+  const rawUltimateStrength = config.ultimateStrength ?? material?.ultimateStrengthPa;
+  if (typeof rawUltimateStrength !== "number") {
+    throw new Error("Provide fatigue.ultimateStrength or a known material with ultimate-strength data.");
+  }
+  const ultimateStrength = config.ultimateStrength === undefined
+    ? rawUltimateStrength
+    : convertFatigueStress(ctx, rawUltimateStrength, stressUnit, "fatigue.ultimateStrength");
+
+  let alternatingStress: number;
+  let loadFraction: number | undefined;
+  if (hasAlternatingStress) {
+    const rawAlternatingStress = config.alternatingStress;
+    if (typeof rawAlternatingStress !== "number") {
+      throw new Error("fatigue.alternatingStress must be a number.");
+    }
+    alternatingStress = convertFatigueStress(ctx, rawAlternatingStress, stressUnit, "fatigue.alternatingStress");
+  } else {
+    loadFraction = optionalFiniteFatigueNumber(config, "loadFraction");
+    if (loadFraction === undefined || loadFraction < 0 || loadFraction > 1) {
+      throw new Error("fatigue.loadFraction must be between 0 and 1.");
+    }
+    alternatingStress = meanStress * loadFraction;
+  }
+
+  const rawEnduranceLimit = optionalFiniteFatigueNumber(config, "enduranceLimit");
+  const enduranceLimit = rawEnduranceLimit === undefined
+    ? undefined
+    : convertFatigueStress(ctx, rawEnduranceLimit, stressUnit, "fatigue.enduranceLimit");
+  const criterion = config.criterion;
+  if (criterion !== undefined && !isFatigueCriterion(criterion)) {
+    throw new Error(`Unsupported fatigue criterion: ${String(criterion)}.`);
+  }
+
+  return {
+    input: {
+      ultimateStrength,
+      yieldStrength,
+      meanStress,
+      alternatingStress,
+      criterion,
+      enduranceLimit,
+      surfaceFinish: config.surfaceFinish as SurfaceFinish | undefined,
+      sizeFactor: optionalFiniteFatigueNumber(config, "sizeFactor"),
+      loadFactor: optionalFiniteFatigueNumber(config, "loadFactor"),
+      temperatureFactor: optionalFiniteFatigueNumber(config, "temperatureFactor"),
+      reliabilityFactor: optionalFiniteFatigueNumber(config, "reliabilityFactor"),
+      reliability: optionalFiniteFatigueNumber(config, "reliability"),
+      miscellaneousFactor: optionalFiniteFatigueNumber(config, "miscellaneousFactor"),
+    },
+    usesLoadFraction: hasLoadFraction,
+    loadFraction,
+  };
+}
+
 function shaftLoadCasesHandler(ctx: AppContext): Handler {
   return (input) => {
     if (!Array.isArray(input.sections)) {
@@ -666,10 +917,66 @@ function shaftLoadCasesHandler(ctx: AppContext): Handler {
 
     try {
       const computation = analyzeShaftLoadCases({ sections, loadCases, yieldStrength });
+      if (input.fatigue !== undefined) {
+        const governingRow = computation.rows?.find((row) => row.isGoverning);
+        if (!governingRow) {
+          throw new Error("The shaft load-case report did not produce a governing row.");
+        }
+        const governingVonMises = governingRow.vonMisesStressPa;
+        if (typeof governingVonMises !== "number" || !Number.isFinite(governingVonMises)) {
+          throw new Error("The governing row did not produce a finite von Mises stress.");
+        }
+        const fatigueConfig = buildShaftFatigueInput(ctx, input.fatigue, values, governingVonMises, yieldStrength);
+        const fatigue = analyzeShaftFatigueScreen(fatigueConfig.input);
+        governingRow.fatigueMeanStressPa = fatigue.meanStressPa;
+        governingRow.fatigueAlternatingStressPa = fatigue.alternatingStressPa;
+        governingRow.fatigueEnduranceLimitPa = fatigue.enduranceLimitPa;
+        governingRow.fatigueSafetyFactor = fatigue.fatigueSafetyFactor;
+        governingRow.fatigueStaticYieldSafetyFactor = fatigue.staticYieldSafetyFactor;
+        governingRow.fatigueCriterion = fatigue.criterion;
+        governingRow.fatigueReferenceId = "shigley-2015";
+        computation.quantities.push({
+          key: "fatigueEnduranceLimit",
+          label: "Fatigue endurance limit",
+          value: fatigue.enduranceLimitPa,
+          unit: "Pa",
+          description: "Fully corrected endurance limit from the existing modified Marin method.",
+        });
+        computation.quantities.push({
+          key: "fatigueSafetyFactor",
+          label: "Fatigue safety factor",
+          value: fatigue.fatigueSafetyFactor,
+          unit: "",
+          description: "Fatigue safety factor for the governing shaft row.",
+        });
+        if (fatigue.staticYieldSafetyFactor !== undefined) {
+          computation.quantities.push({
+            key: "fatigueStaticYieldSafetyFactor",
+            label: "Fatigue static yield safety factor",
+            value: fatigue.staticYieldSafetyFactor,
+            unit: "",
+            description: "Yield strength divided by the governing mean plus alternating stress.",
+          });
+        }
+        computation.warnings.push(
+          "The fatigue screen treats the governing von Mises stress as mean stress.",
+          fatigueConfig.usesLoadFraction
+            ? `The alternating stress equals ${(fatigueConfig.loadFraction ?? 0) * 100}% of the governing von Mises stress.`
+            : "The supplied alternating stress applies to the governing row.",
+          ...fatigue.warnings,
+        );
+        computation.meta = {
+          ...computation.meta,
+          fatigueCriterion: fatigue.criterion,
+          fatigueMeanStressSource: "governing von Mises stress",
+          fatigueAlternatingStressSource: fatigueConfig.usesLoadFraction ? "load fraction" : "supplied input",
+        };
+      }
       computation.inputs = {
         sections: input.sections,
         loadCases: input.loadCases,
         yieldStrength: input.yieldStrength ?? materialName,
+        fatigue: input.fatigue,
         calculationUnits: { length: "m", moment: "N·m" },
       };
       return buildResult(ctx, "shaft_load_cases", computation, input.outputUnits as Record<string, string> | undefined);
@@ -855,6 +1162,7 @@ export function createHandlers(ctx: AppContext): Record<string, Handler> {
     von_mises: stressHandler(ctx),
     fatigue_analysis: fatigueHandler(ctx),
     fatigue_damage: fatigueDamageHandler(ctx),
+    uncertainty_sweep: uncertaintySweepHandler(ctx),
     tolerance_stack: toleranceStackHandler(ctx),
     shaft_load_cases: shaftLoadCasesHandler(ctx),
     unit_convert: unitConvertHandler(ctx),

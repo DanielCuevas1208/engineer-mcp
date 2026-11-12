@@ -53,41 +53,76 @@ Acceptance criteria:
 
 Verification: `npm test -- tests/shaft-load-cases.test.ts tests/tools.test.ts`, `npm run typecheck`, `npm run build`, and `npm run demo`.
 
-## Future milestones
+### milestone-uncertainty-sweep — complete
 
-### milestone-uncertainty-sweep — planned
+User-visible outcome: rank how selected fatigue inputs affect a fatigue safety factor.
 
-User-visible outcome: rank how uncertain design inputs affect an existing calculation.
-
-Bounded deliverable: add one deterministic sweep over selected inputs and return endpoint comparisons with units and assumptions.
+Bounded deliverable: add `uncertainty_sweep` for one-factor endpoint sweeps through `fatigue_analysis`.
 
 Acceptance criteria:
 
-- Sweep a bounded range through one existing calculation.
-- Rank input effects deterministically.
-- Preserve units and assumptions in every row.
-- Match sweep endpoints against individual tool calls.
+- Sweep one to five numeric fatigue inputs with deterministic endpoints.
+- Rank input effects by absolute safety-factor change.
+- Preserve input and calculation units in every report row.
+- State fixed-input assumptions and cite the fatigue method.
+- Match every endpoint against an individual `fatigue_analysis` call.
 
-Verification: `npm test -- tests/uncertainty-sweep.test.ts tests/tools.test.ts`, `npm run typecheck`, and `npm run build`.
+Verification: `npm test -- tests/uncertainty-sweep.test.ts tests/tools.test.ts`, `npm run typecheck`, `npm run build`, and `npm run smoke:http`.
 
-### milestone-shaft-fatigue-screen — planned
+### milestone-shaft-fatigue-screen — complete
 
 User-visible outcome: screen a shaft load case against a simplified fatigue limit without leaving the MCP envelope.
 
-Bounded deliverable: extend the shaft load-case report with an optional alternating-stress input and a Marin-adjusted endurance check.
+Bounded deliverable: extend `shaft_load_cases` with an optional governing-row fatigue screen.
 
 Acceptance criteria:
 
-- Accept one alternating stress or derive it from a stated load fraction.
+- Accept exactly one alternating stress or derive it from a stated load fraction.
 - Apply the existing steel Marin factors from `fatigue_analysis`.
 - Report fatigue and yield margins on the governing row.
 - Test hand-calculated fixtures against `fatigue_analysis` alone.
 
-Verification: `npm test -- tests/shaft-fatigue-screen.test.ts tests/tools.test.ts`, `npm run typecheck`, and `npm run build`.
+Verification: `npm test -- tests/shaft-fatigue-screen.test.ts tests/tools.test.ts`, `npm run typecheck`, `npm run build`, and `npm run demo`.
+
+## Future milestones
+
+### milestone-uncertainty-interactions — planned
+
+User-visible outcome: identify whether two uncertain fatigue inputs amplify each other.
+
+Bounded deliverable: add a deterministic paired-endpoint comparison for two approved fatigue inputs.
+
+Acceptance criteria:
+
+- Evaluate the four low/high endpoint combinations for two inputs.
+- Report interaction effect beside the one-factor results.
+- Preserve units, fixed-input assumptions, and fatigue provenance.
+- Reject duplicate parameters and more than one input pair.
+
+Verification: `npm test -- tests/uncertainty-interactions.test.ts tests/tools.test.ts`, `npm run typecheck`, and `npm run build`.
+
+### milestone-finite-life-fatigue — planned
+
+User-visible outcome: estimate finite-life fatigue margin when infinite-life design does not pass.
+
+Bounded deliverable: add a documented finite-life S-N estimate beside the existing endurance-limit check.
+
+Acceptance criteria:
+
+- Accept a bounded S-N curve with monotonic validation.
+- Report estimated cycles and the source-linked interpolation rule.
+- Preserve the existing infinite-life result and API.
+- Test interpolation endpoints and unsupported curve shapes.
+
+Verification: `npm test -- tests/finite-life-fatigue.test.ts tests/tools.test.ts`, `npm run typecheck`, and `npm run build`.
 
 ## Release evidence
 
 The local CI workflow runs typechecking, tests, builds, the demo, HTTP smoke checks, CLI checks, and package checks.
 
-Release 0.11 passed `npm run typecheck`, `npm run build`, and `npm test -- tests/shaft-load-cases.test.ts tests/tools.test.ts` on the development host.
-GitHub Actions run history was inspected before this release; the latest main workflow succeeded for release 0.10.
+Release 0.13 adds the governing-row shaft fatigue screen.
+The previous HTTP tool-count failure was repaired by updating the contract from 15 to 16 tools.
+The GitHub Actions connector returned no pull-request workflow runs for commit `1035f2b`.
+Local verification passed `npm run typecheck`, `npm run build`, compiled CLI checks, compiled fatigue fixtures, and `node scripts/http-smoke.mjs`.
+`npm test` was blocked by host `spawn EPERM` while Vitest loaded its configuration.
+`npm run demo`, `npm run smoke:http`, and `npm pack --dry-run` were blocked by host process or npm-cache permissions.

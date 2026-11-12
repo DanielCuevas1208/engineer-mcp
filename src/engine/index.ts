@@ -45,3 +45,16 @@ export {
 } from "./tolerance-stack.js";
 
 export { analyzeFatigueDamage, allowableCycles, type FatigueDamageInput, type FatigueDamageCriterion } from "./fatigue-damage.js";
+export {
+  analyzeShaftFatigueScreen,
+  type ShaftFatigueScreenInput,
+  type ShaftFatigueScreenResult,
+} from "./shaft-fatigue-screen.js";
+export {
+  analyzeUncertaintySweep,
+  FATIGUE_SWEEP_PARAMETERS,
+  UNCERTAINTY_SWEEP_METHOD,
+  type FatigueSweepParameter,
+  type UncertaintySweepCase,
+  type UncertaintySweepInput,
+} from "./uncertainty-sweep.js";

@@ -190,7 +190,8 @@ describe("HTTP transport", () => {
     expect(result.tools?.map((tool) => tool.name)).toContain("section_catalog");
     expect(result.tools?.map((tool) => tool.name)).toContain("tolerance_stack");
     expect(result.tools?.map((tool) => tool.name)).toContain("shaft_load_cases");
-    expect(result.tools?.length).toBe(15);
+    expect(result.tools?.map((tool) => tool.name)).toContain("uncertainty_sweep");
+    expect(result.tools?.length).toBe(16);
   });
 
   it("calls a tool and returns the result envelope", async () => {

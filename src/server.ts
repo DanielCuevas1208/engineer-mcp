@@ -17,6 +17,7 @@ import {
   stressSchema,
   toleranceStackSchema,
   shaftLoadCasesSchema,
+  uncertaintySweepSchema,
   unitConvertSchema,
 } from "./schemas.js";
 import type { ToolResult } from "./types.js";
@@ -81,6 +82,11 @@ const TOOL_SCHEMAS: Record<string, ToolDef> = {
     description:
       "Compare round shaft sections under bending and torque load cases. Report von Mises stress, safety factors, and a governing case.",
     schema: shaftLoadCasesSchema,
+  },
+  uncertainty_sweep: {
+    description:
+      "Run a bounded one-factor sweep through fatigue_analysis and rank endpoint effects with units, assumptions, and provenance.",
+    schema: uncertaintySweepSchema,
   },
   unit_convert: {
     description: "Convert a value between compatible units. Rejects mismatched dimensions and quantity categories.",

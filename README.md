@@ -9,6 +9,8 @@ Engineer MCP is a Model Context Protocol server for mechanical-engineering calcu
 It gives coding agents verified answers for beams, bolts, springs, shafts, bearings, stress, sections, fits, and units.
 Every result shows the formula, the method, and the source.
 
+Release 0.13 adds an optional fatigue screen for the governing shaft load case.
+Release 0.12 adds a deterministic uncertainty sweep for fatigue inputs.
 Release 0.11 adds shaft combined load-case comparison with von Mises safety factors and source-linked report rows.
 Release 0.10 adds signed dimensional tolerance stacks with worst-case and independent RSS bounds.
 Use stdio for desktop clients. Use HTTP for local services and network clients.
@@ -35,6 +37,7 @@ The release covers these domains:
 - Bearer authentication and browser origin allow-lists for HTTP clients.
 - Dimension-safe unit conversion, including viscosity and thermal conductivity.
 - Signed dimensional tolerance stacks with worst-case and independent RSS bounds.
+- One-factor fatigue uncertainty sweeps with ranked endpoint effects.
 - Material property lookup.
 - Stdio and HTTP transports.
   The HTTP mode serves the same tools over the Streamable HTTP protocol.
@@ -64,14 +67,16 @@ Warnings surface when a method uses an approximation.
 | `interference_fit` | Interface pressure, hoop stresses, and friction capacity of a press or shrink fit. |
 | `spring_design` | Spring rate, shear stress, and safety factor of a compression spring. |
 | `shaft_analysis` | Torsion stress, twist, and critical speed. |
-| `shaft_load_cases` | Combined bending and torque cases with governing section report. |
+| `shaft_load_cases` | Combined bending and torque cases with optional governing-row fatigue screening. |
 | `bearing_life` | ISO 281 rating life in revolutions and hours. |
 | `von_mises` | Equivalent stress and yield safety factor. |
 | `fatigue_analysis` | Endurance limit and fatigue safety factor for cyclic loads. |
+| `fatigue_damage` | Miner damage and repeated-spectrum life from an S-N curve. |
 | `unit_convert` | Conversion between compatible units. |
 | `material_lookup` | Curated mechanical properties of materials. |
 | `section_catalog` | Published IPE, HEA, HEB, and UPN steel sections. |
 | `tolerance_stack` | Signed worst-case and independent RSS dimensional tolerance stacks. |
+| `uncertainty_sweep` | Rank one-factor fatigue endpoint effects with units and assumptions. |
 
 See [docs/mcp-tools.md](docs/mcp-tools.md) for the full reference.
 See [docs/section-catalog.md](docs/section-catalog.md) for the covered range, the value provenance, and the data audit.
@@ -79,6 +84,7 @@ See [docs/units.md](docs/units.md) for the unit model and the full category list
 See [docs/transport.md](docs/transport.md) for the HTTP transport reference.
 See [docs/tolerance-stack.md](docs/tolerance-stack.md) for the stack model and assumptions.
 See [docs/shaft-load-cases.md](docs/shaft-load-cases.md) for the load-case model and limits.
+See [docs/uncertainty-sweep.md](docs/uncertainty-sweep.md) for the sweep model and limits.
 See [ROADMAP.md](ROADMAP.md) for release status and future milestones.
 
 ## Architecture
@@ -121,7 +127,7 @@ Key directories:
 4. Run `npm run build` to compile the server.
 5. Run `npm run demo` to see the demo output.
 
-The demo prints results for every tool.
+The demo prints representative results for each calculation family.
 It runs against an in-memory database.
 It needs no API keys and no network access.
 
@@ -239,6 +245,26 @@ References:
   - Shigley's Mechanical Engineering Design (Tenth edition, 2015)
 ```
 
+A call to `uncertainty_sweep` ranks two fatigue inputs for the same baseline:
+
+```text
+Baseline fatigue safety factor       1.839
+Largest absolute endpoint effect     0.4908
+Swept parameter count                    2
+
+Rows:
+  - #1 alternatingStress | 100–140 MPa | SF 2.117 → 1.626 | effect 0.4908
+  - #2 meanStress | 60–100 MPa | SF 1.943 → 1.746 | effect 0.1967
+
+Method: One-factor fatigue sensitivity sweep
+References:
+  - Shigley's Mechanical Engineering Design (Tenth edition, 2015)
+Warnings:
+  - Each row varies one input while all other baseline inputs remain fixed.
+  - The rank measures endpoint change in fatigue safety factor. It is not a probability or a statistical sensitivity estimate.
+  - The sweep does not model interactions between uncertain inputs.
+```
+
 A call to `unit_convert` with a torque-to-energy request fails safely:
 
 ```text
@@ -331,6 +357,21 @@ Warnings:
   - The comparison does not include stress concentrations, fatigue, or dynamic amplification.
 ```
 
+The same call can add a governing-row fatigue screen:
+
+```text
+Fatigue endurance limit                 205.1 MPa
+Fatigue safety factor                    4.863
+Fatigue static yield safety factor       5.154
+
+Rows:
+  - peak_combined | sigma_vm 45.92 MPa | yield SF 7.732 | fatigue SF 4.863 | governing
+
+Warnings:
+  - The fatigue screen treats the governing von Mises stress as mean stress.
+  - The alternating stress equals 50% of the governing von Mises stress.
+```
+
 In SSE mode, an initialize response uses this event format:
 
 ```text
@@ -377,7 +418,7 @@ See [docs/transport.md](docs/transport.md) for the full HTTP reference.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, the tools, the catalog data, and the HTTP transport.
 
-- The suite covers deterministic fixtures for 15 MCP tools across 18 test files.
+- The suite covers deterministic fixtures for 16 MCP tools across 20 test files.
 - The CI matrix tests Node 22 and Node 24.
 - The HTTP tests run a real server on an ephemeral port.
   They complete the full handshake over a real TCP connection.
@@ -385,9 +426,12 @@ It covers the engines, the unit layer, the database, the tools, the catalog data
 - The CI workflow runs typecheck, tests, build, demo, a package check, and the HTTP smoke check.
 - The CI workflow verifies the CLI contract over standard output.
 - The CI workflow verifies both transport modes.
-- Local verification passed for typecheck, build, CLI checks, shaft load-case tests, and the full test suite on the development host.
+- Local verification passed for typecheck, build, CLI checks, compiled fatigue fixtures, and the in-process HTTP smoke check.
+- `npm test` could not start because this host blocks the Vitest esbuild child process with `spawn EPERM`.
+- `npm run demo` and `npm run smoke:http` use the same blocked child-process path.
+- `npm pack --dry-run` could not write the host npm cache because of `EPERM`.
 
-Run `npm test` to reproduce the results.
+Run `npm test` on a host that permits the Vitest esbuild process.
 
 ## Limitations
 
@@ -426,7 +470,11 @@ Run `npm test` to reproduce the results.
 - The tolerance stack models linear dimensions only.
   It does not model geometric tolerancing, correlation, angular errors, or Monte Carlo distributions.
 - The shaft load-case tool models round sections with plane-stress von Mises stress.
-  It does not model axial load, fatigue, keyways, or stress concentrations.
+  It does not model axial load, keyways, stress concentrations, variable-amplitude loading, or finite life.
+  Its optional fatigue screen treats the governing von Mises stress as mean stress.
+- The uncertainty sweep supports `fatigue_analysis` only.
+  It changes one numeric input at a time.
+  It does not estimate probabilities or input interactions.
 
 Check the cited sources for exact values.
 

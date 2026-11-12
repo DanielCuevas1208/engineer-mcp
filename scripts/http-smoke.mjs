@@ -82,6 +82,69 @@ try {
   assert.equal(toleranceResult.result.structuredContent.tool, "tolerance_stack");
   assert.equal(toleranceResult.result.structuredContent.references[0].id, "asme-y14-5");
 
+  const uncertaintyCall = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "accept": "application/json, text/event-stream",
+      "content-type": "application/json",
+      "mcp-session-id": sessionId,
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 4,
+      method: "tools/call",
+      params: {
+        name: "uncertainty_sweep",
+        arguments: {
+          calculation: "fatigue_analysis",
+          baseline: {
+            ultimateStrength: 690000000,
+            yieldStrength: 580000000,
+            meanStress: 80000000,
+            alternatingStress: 120000000,
+            surfaceFinish: "ground",
+            reliability: 90,
+          },
+          sweeps: [{ parameter: "meanStress", low: 60, high: 100, unit: "MPa" }],
+        },
+      },
+    }),
+  });
+  assert.equal(uncertaintyCall.status, 200);
+  const uncertaintyResult = await readMcpJson(uncertaintyCall);
+  assert.equal(uncertaintyResult.result.structuredContent.tool, "uncertainty_sweep");
+  assert.equal(uncertaintyResult.result.structuredContent.rows[0].inputUnit, "MPa");
+  assert.equal(uncertaintyResult.result.structuredContent.references[0].id, "shigley-2015");
+
+  const shaftCall = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      accept: "application/json, text/event-stream",
+      "content-type": "application/json",
+      "mcp-session-id": sessionId,
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 5,
+      method: "tools/call",
+      params: {
+        name: "shaft_load_cases",
+        arguments: {
+          sections: [{ name: "midspan", outerDiameter: 0.05 }],
+          loadCases: [{ name: "peak", bendingMoment: 500, torque: 300 }],
+          material: "Structural steel S355",
+          fatigue: { loadFraction: 0.5 },
+        },
+      },
+    }),
+  });
+  assert.equal(shaftCall.status, 200);
+  const shaftResult = await readMcpJson(shaftCall);
+  assert.equal(shaftResult.result.structuredContent.tool, "shaft_load_cases");
+  assert.equal(shaftResult.result.structuredContent.rows[0].fatigueCriterion, "modified_goodman");
+  assert.ok(shaftResult.result.structuredContent.rows[0].fatigueSafetyFactor > 0);
+  assert.equal(shaftResult.result.structuredContent.references[0].id, "shigley-2015");
+
   console.log("HTTP smoke test passed");
 } finally {
   await server.close();

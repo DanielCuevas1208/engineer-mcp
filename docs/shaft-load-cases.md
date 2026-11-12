@@ -37,6 +37,27 @@ The governing row carries `isGoverning: true`.
 Top-level quantities name the governing section index, load case index, and von Mises stress.
 The result meta block repeats the governing section name, load case name, and criterion.
 
+## Optional fatigue screen
+
+Add `fatigue` to screen the governing row with the existing `fatigue_analysis` method.
+The governing von Mises stress becomes the mean stress.
+
+Provide exactly one alternating-stress source:
+
+- `alternatingStress` supplies one stress amplitude.
+- `loadFraction` multiplies the governing von Mises stress.
+
+`ultimateStrength` is required unless `material` supplies it.
+Use `stressUnit` for fatigue stress fields.
+The default is `Pa`.
+
+The governing row reports `fatigueSafetyFactor`, `fatigueStaticYieldSafetyFactor`, and `fatigueEnduranceLimitPa`.
+The existing `yieldSafetyFactor` remains the static load-case margin.
+The top-level result reports the same fatigue quantities.
+
+The screen applies the modified Marin endurance-limit method and the selected mean-stress criterion.
+It does not estimate finite-life cycles or variable-amplitude damage.
+
 ## Supported inputs
 
 - Round sections only.
@@ -49,7 +70,7 @@ The result meta block repeats the governing section name, load case name, and cr
 ## Unsupported inputs
 
 - Axial loads.
-- Fatigue or alternating loads.
+- Variable-amplitude or finite-life fatigue.
 - Keyways, fillets, and stress concentrations.
 - Non-round cross-sections.
 
