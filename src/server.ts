@@ -18,6 +18,7 @@ import {
   toleranceStackSchema,
   shaftLoadCasesSchema,
   uncertaintySweepSchema,
+  uncertaintyInteractionsSchema,
   unitConvertSchema,
 } from "./schemas.js";
 import type { ToolResult } from "./types.js";
@@ -87,6 +88,11 @@ const TOOL_SCHEMAS: Record<string, ToolDef> = {
     description:
       "Run a bounded one-factor sweep through fatigue_analysis and rank endpoint effects with units, assumptions, and provenance.",
     schema: uncertaintySweepSchema,
+  },
+  uncertainty_interactions: {
+    description:
+      "Evaluate four fatigue endpoint corners for one parameter pair. Report interaction beside one-factor spans with units and provenance.",
+    schema: uncertaintyInteractionsSchema,
   },
   unit_convert: {
     description: "Convert a value between compatible units. Rejects mismatched dimensions and quantity categories.",

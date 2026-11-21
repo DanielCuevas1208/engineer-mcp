@@ -58,3 +58,9 @@ export {
   type UncertaintySweepCase,
   type UncertaintySweepInput,
 } from "./uncertainty-sweep.js";
+export {
+  analyzeUncertaintyInteractions,
+  UNCERTAINTY_INTERACTIONS_METHOD,
+  type UncertaintyInteractionEndpoint,
+  type UncertaintyInteractionsInput,
+} from "./uncertainty-interactions.js";

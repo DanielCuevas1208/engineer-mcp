@@ -11,8 +11,10 @@ import {
   analyzeShaftLoadCases,
   analyzeSpring,
   analyzeToleranceStack,
+  analyzeUncertaintyInteractions,
   analyzeUncertaintySweep,
   FATIGUE_SWEEP_PARAMETERS,
+  type UncertaintyInteractionEndpoint,
   computeSection,
   vonMises,
   type FatigueCriterion,
@@ -584,6 +586,115 @@ const STRESS_SWEEP_PARAMETERS = new Set<FatigueSweepParameter>([
   "alternatingStress",
   "enduranceLimit",
 ]);
+
+type InteractionEndpointOutcome =
+  | { ok: true; endpoint: UncertaintyInteractionEndpoint }
+  | { ok: false; error: string };
+
+function buildInteractionEndpoint(
+  ctx: AppContext,
+  baseline: FatigueInput,
+  role: "parameterA" | "parameterB",
+  raw: Record<string, unknown>,
+  prefix: "A" | "B",
+): InteractionEndpointOutcome {
+  const parameter = raw[`parameter${prefix}`];
+  if (typeof parameter !== "string" || !isFatigueSweepParameter(parameter)) {
+    return { ok: false, error: `${role}.parameter is not sweepable.` };
+  }
+  const low = raw[`low${prefix}`];
+  const high = raw[`high${prefix}`];
+  if (typeof low !== "number" || typeof high !== "number") {
+    return { ok: false, error: `${role} endpoints must be numbers.` };
+  }
+  if (!(low < high)) {
+    return { ok: false, error: `${role}.low must be smaller than high.` };
+  }
+  const unit = raw[`unit${prefix}`] === undefined ? defaultSweepUnit(parameter) : raw[`unit${prefix}`];
+  if (typeof unit !== "string" || unit.length === 0) {
+    return { ok: false, error: `${role}.unit must be a non-empty string.` };
+  }
+  const lowNormalized = normalizeSweepValue(ctx, parameter, low, unit, `${role}.low`);
+  if (!lowNormalized.ok) {
+    return { ok: false, error: lowNormalized.error };
+  }
+  const highNormalized = normalizeSweepValue(ctx, parameter, high, unit, `${role}.high`);
+  if (!highNormalized.ok) {
+    return { ok: false, error: highNormalized.error };
+  }
+  const baselineValue = baseline[parameter];
+  if (typeof baselineValue !== "number" || !Number.isFinite(baselineValue)) {
+    return { ok: false, error: `baseline.${parameter} must be provided as a finite number.` };
+  }
+  const baselineDisplay = displaySweepValue(ctx, parameter, baselineValue, unit, `baseline.${parameter}`);
+  if (!baselineDisplay.ok) {
+    return { ok: false, error: baselineDisplay.error };
+  }
+  return {
+    ok: true,
+    endpoint: {
+      parameter,
+      low: lowNormalized.value,
+      high: highNormalized.value,
+      inputUnit: unit,
+      calculationUnit: lowNormalized.calculationUnit,
+      baselineDisplayValue: baselineDisplay.value,
+      lowDisplayValue: low,
+      highDisplayValue: high,
+    },
+  };
+}
+
+function uncertaintyInteractionsHandler(ctx: AppContext): Handler {
+  return (input) => {
+    if (input.calculation !== "fatigue_analysis") {
+      return failure("uncertainty_interactions", "Only the fatigue_analysis calculation is supported.", input);
+    }
+    if (!input.baseline || typeof input.baseline !== "object") {
+      return failure("uncertainty_interactions", "Provide a baseline object.", input);
+    }
+    if (!input.pair || typeof input.pair !== "object") {
+      return failure("uncertainty_interactions", "Provide exactly one pair object.", input);
+    }
+    const pair = input.pair as Record<string, unknown>;
+    const baseline = input.baseline as FatigueInput;
+    const parameterA = pair.parameterA;
+    const parameterB = pair.parameterB;
+    if (typeof parameterA !== "string" || typeof parameterB !== "string") {
+      return failure("uncertainty_interactions", "pair.parameterA and pair.parameterB are required.", input);
+    }
+    if (parameterA === parameterB) {
+      return failure("uncertainty_interactions", "Interaction parameters must differ.", input);
+    }
+
+    const builtA = buildInteractionEndpoint(ctx, baseline, "parameterA", pair, "A");
+    if (!builtA.ok) {
+      return failure("uncertainty_interactions", builtA.error, input);
+    }
+    const builtB = buildInteractionEndpoint(ctx, baseline, "parameterB", pair, "B");
+    if (!builtB.ok) {
+      return failure("uncertainty_interactions", builtB.error, input);
+    }
+
+    try {
+      const computation = analyzeUncertaintyInteractions({
+        calculation: "fatigue_analysis",
+        baseline,
+        parameterA: builtA.endpoint,
+        parameterB: builtB.endpoint,
+      });
+      computation.inputs = {
+        calculation: input.calculation,
+        baseline: input.baseline,
+        pair: input.pair,
+        calculationUnits: { stress: "Pa", factors: "1", reliability: "%" },
+      };
+      return buildResult(ctx, "uncertainty_interactions", computation);
+    } catch (error) {
+      return failure("uncertainty_interactions", error instanceof Error ? error.message : String(error), input);
+    }
+  };
+}
 
 function uncertaintySweepHandler(ctx: AppContext): Handler {
   return (input) => {
@@ -1163,6 +1274,7 @@ export function createHandlers(ctx: AppContext): Record<string, Handler> {
     fatigue_analysis: fatigueHandler(ctx),
     fatigue_damage: fatigueDamageHandler(ctx),
     uncertainty_sweep: uncertaintySweepHandler(ctx),
+    uncertainty_interactions: uncertaintyInteractionsHandler(ctx),
     tolerance_stack: toleranceStackHandler(ctx),
     shaft_load_cases: shaftLoadCasesHandler(ctx),
     unit_convert: unitConvertHandler(ctx),
