@@ -267,6 +267,34 @@ export const uncertaintySweepSchema = z.object({
 
 export type UncertaintySweepSchemaInput = z.infer<typeof uncertaintySweepSchema>;
 
+export const uncertaintyInteractionsSchema = z.object({
+  calculation: z.literal("fatigue_analysis").describe("Existing calculation to compare. The bounded release supports fatigue_analysis."),
+  baseline: fatigueSchema.omit({ outputUnits: true }).describe("Baseline inputs for the fatigue_analysis calculation. Stress values use pascals."),
+  pair: z
+    .object({
+      parameterA: fatigueSweepParameterSchema.describe("First numeric fatigue input in the pair."),
+      lowA: z.number().describe("Lower endpoint for parameter A in unitA."),
+      highA: z.number().describe("Upper endpoint for parameter A in unitA."),
+      unitA: z.string().min(1).optional().describe("Unit for parameter A endpoints. Stress defaults to Pa; factors use 1; reliability uses %."),
+      parameterB: fatigueSweepParameterSchema.describe("Second numeric fatigue input in the pair."),
+      lowB: z.number().describe("Lower endpoint for parameter B in unitB."),
+      highB: z.number().describe("Upper endpoint for parameter B in unitB."),
+      unitB: z.string().min(1).optional().describe("Unit for parameter B endpoints. Stress defaults to Pa; factors use 1; reliability uses %."),
+    })
+    .superRefine((value, context) => {
+      if (value.parameterA === value.parameterB) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["parameterB"],
+          message: "parameterA and parameterB must differ.",
+        });
+      }
+    })
+    .describe("Exactly one parameter pair with low and high endpoints for each input."),
+});
+
+export type UncertaintyInteractionsSchemaInput = z.infer<typeof uncertaintyInteractionsSchema>;
+
 const shaftFatigueScreenSchema = fatigueSchema
   .omit({ meanStress: true, alternatingStress: true, yieldStrength: true, outputUnits: true })
   .partial()

@@ -9,6 +9,7 @@ Engineer MCP is a Model Context Protocol server for mechanical-engineering calcu
 It gives coding agents verified answers for beams, bolts, springs, shafts, bearings, stress, sections, fits, and units.
 Every result shows the formula, the method, and the source.
 
+Release 0.14 adds paired fatigue uncertainty interactions with four corner checks.
 Release 0.13 adds an optional fatigue screen for the governing shaft load case.
 Release 0.12 adds a deterministic uncertainty sweep for fatigue inputs.
 Release 0.11 adds shaft combined load-case comparison with von Mises safety factors and source-linked report rows.
@@ -38,6 +39,7 @@ The release covers these domains:
 - Dimension-safe unit conversion, including viscosity and thermal conductivity.
 - Signed dimensional tolerance stacks with worst-case and independent RSS bounds.
 - One-factor fatigue uncertainty sweeps with ranked endpoint effects.
+- Paired fatigue uncertainty interactions with one-factor spans and corner rows.
 - Material property lookup.
 - Stdio and HTTP transports.
   The HTTP mode serves the same tools over the Streamable HTTP protocol.
@@ -77,6 +79,7 @@ Warnings surface when a method uses an approximation.
 | `section_catalog` | Published IPE, HEA, HEB, and UPN steel sections. |
 | `tolerance_stack` | Signed worst-case and independent RSS dimensional tolerance stacks. |
 | `uncertainty_sweep` | Rank one-factor fatigue endpoint effects with units and assumptions. |
+| `uncertainty_interactions` | Compare two fatigue inputs at four corners with an interaction effect. |
 
 See [docs/mcp-tools.md](docs/mcp-tools.md) for the full reference.
 See [docs/section-catalog.md](docs/section-catalog.md) for the covered range, the value provenance, and the data audit.
@@ -85,6 +88,7 @@ See [docs/transport.md](docs/transport.md) for the HTTP transport reference.
 See [docs/tolerance-stack.md](docs/tolerance-stack.md) for the stack model and assumptions.
 See [docs/shaft-load-cases.md](docs/shaft-load-cases.md) for the load-case model and limits.
 See [docs/uncertainty-sweep.md](docs/uncertainty-sweep.md) for the sweep model and limits.
+See [docs/uncertainty-interactions.md](docs/uncertainty-interactions.md) for the interaction model and limits.
 See [ROADMAP.md](ROADMAP.md) for release status and future milestones.
 
 ## Architecture
@@ -265,6 +269,23 @@ Warnings:
   - The sweep does not model interactions between uncertain inputs.
 ```
 
+A call to `uncertainty_interactions` compares mean stress and alternating stress at four corners:
+
+```text
+Interaction effect                    -0.0812
+Paired corner span                     0.5719
+
+Rows:
+  - one-factor meanStress | 60–100 MPa | SF 1.943 → 1.746 | effect 0.1967
+  - one-factor alternatingStress | 100–140 MPa | SF 2.117 → 1.626 | effect 0.4908
+  - corner lowLow | meanStress 60 MPa | alternatingStress 100 MPa | SF 2.117
+  - corner highHigh | meanStress 100 MPa | alternatingStress 140 MPa | SF 1.545
+
+Method: Two-factor fatigue endpoint interaction
+References:
+  - Shigley's Mechanical Engineering Design (Tenth edition, 2015)
+```
+
 A call to `unit_convert` with a torque-to-energy request fails safely:
 
 ```text
@@ -418,7 +439,7 @@ See [docs/transport.md](docs/transport.md) for the full HTTP reference.
 The test suite is deterministic and offline.
 It covers the engines, the unit layer, the database, the tools, the catalog data, and the HTTP transport.
 
-- The suite covers deterministic fixtures for 16 MCP tools across 20 test files.
+- The suite covers deterministic fixtures for 17 MCP tools across 21 test files.
 - The CI matrix tests Node 22 and Node 24.
 - The HTTP tests run a real server on an ephemeral port.
   They complete the full handshake over a real TCP connection.
@@ -426,12 +447,7 @@ It covers the engines, the unit layer, the database, the tools, the catalog data
 - The CI workflow runs typecheck, tests, build, demo, a package check, and the HTTP smoke check.
 - The CI workflow verifies the CLI contract over standard output.
 - The CI workflow verifies both transport modes.
-- Local verification passed for typecheck, build, CLI checks, compiled fatigue fixtures, and the in-process HTTP smoke check.
-- `npm test` could not start because this host blocks the Vitest esbuild child process with `spawn EPERM`.
-- `npm run demo` and `npm run smoke:http` use the same blocked child-process path.
-- `npm pack --dry-run` could not write the host npm cache because of `EPERM`.
-
-Run `npm test` on a host that permits the Vitest esbuild process.
+- Local verification passed for `npm run typecheck`, `npm test` (229 tests), `npm run build`, `npm run demo`, and `npm run smoke:http` (17 tools).
 
 ## Limitations
 
@@ -475,6 +491,9 @@ Run `npm test` on a host that permits the Vitest esbuild process.
 - The uncertainty sweep supports `fatigue_analysis` only.
   It changes one numeric input at a time.
   It does not estimate probabilities or input interactions.
+- The uncertainty interaction tool supports `fatigue_analysis` and one parameter pair.
+  It evaluates four corners only.
+  It does not sample between endpoints.
 
 Check the cited sources for exact values.
 

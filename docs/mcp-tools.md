@@ -401,6 +401,49 @@ Example:
 }
 ```
 
+## uncertainty_interactions
+
+Compare one pair of uncertain fatigue inputs through four endpoint corners.
+
+Inputs:
+
+- `calculation`: `fatigue_analysis`.
+- `baseline`: complete `fatigue_analysis` inputs.
+- `pair`: two different parameters with `lowA`, `highA`, `lowB`, `highB`, and optional `unitA` and `unitB`.
+
+Outputs:
+
+- `interactionEffect`: signed two-way contrast from the low-low corner.
+- `pairedCornerSpan`: safety-factor change from low-low to high-high.
+- `oneFactorSpanA` and `oneFactorSpanB`: single-parameter spans at the low corner.
+- `rows`: one-factor and corner rows with units, assumptions, and reference IDs.
+
+Example:
+
+```json
+{
+  "calculation": "fatigue_analysis",
+  "baseline": {
+    "ultimateStrength": 690000000,
+    "yieldStrength": 580000000,
+    "meanStress": 80000000,
+    "alternatingStress": 120000000,
+    "surfaceFinish": "ground",
+    "reliability": 90
+  },
+  "pair": {
+    "parameterA": "meanStress",
+    "lowA": 60,
+    "highA": 100,
+    "unitA": "MPa",
+    "parameterB": "alternatingStress",
+    "lowB": 100,
+    "highB": 140,
+    "unitB": "MPa"
+  }
+}
+```
+
 ## uncertainty_sweep
 
 Rank one-factor endpoint effects through `fatigue_analysis`.

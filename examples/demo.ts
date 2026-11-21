@@ -55,6 +55,18 @@ function show(name: string, handler: Handler, input: Record<string, unknown>): v
           );
           continue;
         }
+        if (row.corner !== undefined) {
+          console.log(
+            `  - corner ${String(row.corner)} | ${String(row.parameterA)} ${row.parameterAValue} ${row.parameterAInputUnit} | ${String(row.parameterB)} ${row.parameterBValue} ${row.parameterBInputUnit} | SF ${formatNumber(Number(row.fatigueSafetyFactor))}`,
+          );
+          continue;
+        }
+        if (row.parameter !== undefined && row.rowKind === "one_factor") {
+          console.log(
+            `  - one-factor ${String(row.parameter)} | ${row.lowValue}–${row.highValue} ${row.inputUnit} | SF ${formatNumber(Number(row.lowFatigueSafetyFactor))} → ${formatNumber(Number(row.highFatigueSafetyFactor))} | effect ${formatNumber(Number(row.absoluteEffect))}`,
+          );
+          continue;
+        }
         if (row.parameter !== undefined) {
           console.log(
             `  - #${row.rank} ${String(row.parameter)} | ${row.lowValue}–${row.highValue} ${row.inputUnit} | SF ${formatNumber(Number(row.lowFatigueSafetyFactor))} → ${formatNumber(Number(row.highFatigueSafetyFactor))} | effect ${formatNumber(Number(row.absoluteEffect))}`,
@@ -112,6 +124,7 @@ type ToolHandlers = {
   von_mises: Handler;
   fatigue_analysis: Handler;
   uncertainty_sweep: Handler;
+  uncertainty_interactions: Handler;
   unit_convert: Handler;
   material_lookup: Handler;
   section_catalog: Handler;
@@ -136,6 +149,7 @@ async function main(): Promise<void> {
     ["von_mises", toolHandlers.von_mises],
     ["fatigue_analysis", toolHandlers.fatigue_analysis],
     ["uncertainty_sweep", toolHandlers.uncertainty_sweep],
+    ["uncertainty_interactions", toolHandlers.uncertainty_interactions],
     ["unit_convert", toolHandlers.unit_convert],
     ["unit_convert (torque to energy)", toolHandlers.unit_convert],
     ["unit_convert (dynamic viscosity)", toolHandlers.unit_convert],
@@ -228,6 +242,27 @@ async function main(): Promise<void> {
         { parameter: "meanStress", low: 60, high: 100, unit: "MPa" },
         { parameter: "alternatingStress", low: 100, high: 140, unit: "MPa" },
       ],
+    },
+    {
+      calculation: "fatigue_analysis",
+      baseline: {
+        ultimateStrength: 690e6,
+        yieldStrength: 580e6,
+        meanStress: 80e6,
+        alternatingStress: 120e6,
+        surfaceFinish: "ground",
+        reliability: 90,
+      },
+      pair: {
+        parameterA: "meanStress",
+        lowA: 60,
+        highA: 100,
+        unitA: "MPa",
+        parameterB: "alternatingStress",
+        lowB: 100,
+        highB: 140,
+        unitB: "MPa",
+      },
     },
     {
       value: 1000,

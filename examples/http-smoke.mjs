@@ -122,8 +122,8 @@ async function run() {
       throw new Error(`tools/list failed with status ${list.status}.`);
     }
     const tools = list.body.result?.tools ?? [];
-    if (tools.length !== 16) {
-      throw new Error(`Expected 16 tools, received ${tools.length}.`);
+    if (tools.length !== 17) {
+      throw new Error(`Expected 17 tools, received ${tools.length}.`);
     }
     if (!tools.some((tool) => tool.name === "beam_bending")) {
       throw new Error("Expected beam_bending in the tool list.");

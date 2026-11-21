@@ -35,7 +35,7 @@ function expectOk(response: Awaited<ReturnType<Handler>>): ToolResult {
 }
 
 describe("tool registry", () => {
-  it("registers all sixteen tools", () => {
+  it("registers all seventeen tools", () => {
     expect(listTools().sort()).toEqual(
       [
         "beam_bending",
@@ -50,6 +50,7 @@ describe("tool registry", () => {
         "fatigue_analysis",
         "fatigue_damage",
         "uncertainty_sweep",
+        "uncertainty_interactions",
         "tolerance_stack",
         "unit_convert",
         "material_lookup",
